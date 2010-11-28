@@ -88,7 +88,7 @@ namespace etude {
       typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, A)> arguments;               \
                                                                               \
       explicit in_place_factory( BOOST_PP_ENUM_BINARY_PARAMS( n, A, && a ) )  \
-        : x( ETUDE_GEN_FORWARD_SEQ_( n, A, a ) ) {}                           \
+        : x( BOOST_PP_ENUM( n, ETUDE_GEN_FORWARD_, _ ) ) {}                   \
                                                                               \
       in_place_factory( arguments const& t )                                  \
         : x( t ) {}                                                           \
@@ -103,11 +103,11 @@ namespace etude {
                                                                               \
       template<class T>                                                       \
       T* apply( void* addr ) const {                                          \
-        return ::new (addr) T( ETUDE_GEN_TUPLE_SEQ_( n, x ) );                \
+        return ::new (addr) T( BOOST_PP_ENUM( n, ETUDE_GEN_GET_X_, _ ) );     \
       }                                                                       \
       template<class T>                                                       \
       T* move_apply( void* addr ) {                                           \
-        return ::new (addr) T( ETUDE_GEN_MOVE_TUPLE_SEQ_( n, A, x ) );        \
+        return ::new (addr) T( BOOST_PP_ENUM( n, ETUDE_GEN_MOVE_X_, _ ) );    \
       }                                                                       \
                                                                               \
       arguments const& get_arguments() const { return x; }                    \
@@ -121,32 +121,22 @@ namespace etude {
     };                                                                        \
   /* ETUDE_GEN_IN_PLACE_ */
   
-  #define ETUDE_GEN_FORWARD_SEQ_( n, A, a )   \
-    BOOST_PP_ENUM( n, ETUDE_GEN_FORWARD_SEQ_I_, (A, a) )
-  #define ETUDE_GEN_FORWARD_SEQ_I_( z, n, d )                       \
-    std::forward<BOOST_PP_CAT( BOOST_PP_TUPLE_ELEM( 2, 0, d ), n )> \
-      ( BOOST_PP_CAT( BOOST_PP_TUPLE_ELEM( 2, 1, d ), n ) )
+  #define ETUDE_GEN_FORWARD_( z, n, d )   \
+    std::forward<BOOST_PP_CAT( A, n )>( BOOST_PP_CAT( a, n ) )
   
-  #define ETUDE_GEN_TUPLE_SEQ_( n, x )   \
-    BOOST_PP_ENUM( n, ETUDE_GEN_TUPLE_SEQ_I_, x )
-  #define ETUDE_GEN_TUPLE_SEQ_I_( z, n, x ) std::get<n>(x)
-  
-  #define ETUDE_GEN_MOVE_TUPLE_SEQ_( n, A, x )  \
-    BOOST_PP_ENUM( n, ETUDE_GEN_MOVE_TUPLE_SEQ_I_, (A, x) )
-  #define ETUDE_GEN_MOVE_TUPLE_SEQ_I_( z, n, d )  \
-    std::forward<BOOST_PP_CAT( BOOST_PP_TUPLE_ELEM( 2, 0, d ), n )>(  \
-      std::get<n>( BOOST_PP_TUPLE_ELEM( 2, 1, d ) ) )
+  #define ETUDE_GEN_GET_X_( z, n, d )     \
+    std::get<n>(x)
+    
+  #define ETUDE_GEN_MOVE_X_( z, n, d )    \
+    std::forward<BOOST_PP_CAT( A, n )>( std::get<n>(x) )
   
   // コード生成
   BOOST_PP_REPEAT_FROM_TO( 1, BOOST_PP_INC(ETUDE_MAX_ARGS), ETUDE_GEN_IN_PLACE_, _ )
   
   #undef ETUDE_GEN_IN_PLACE_
-  #undef ETUDE_GEN_FORWARD_SEQ_
-  #undef ETUDE_GEN_FORWARD_SEQ_I_
-  #undef ETUDE_GEN_TUPLE_SEQ_
-  #undef ETUDE_GEN_TUPLE_SEQ_I_
-  #undef ETUDE_GEN_MOVE_TUPLE_SEQ_
-  #undef ETUDE_GEN_MOVE_TUPLE_SEQ_I_
+  #undef ETUDE_GEN_FORWARD_
+  #undef ETUDE_GEN_GET_X_
+  #undef ETUDE_GEN_MOVE_X_
   
   
   // helper function
