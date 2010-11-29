@@ -74,7 +74,7 @@ namespace etude {
     template<class U,
       class = typename std::enable_if<std::is_convertible<U, impl_t>::value>::type >
     typed_in_place_factory( U && x )
-      : impl_( x ) {}
+      : impl_( std::forward<U>(x) ) {}
     
     // 他の typed_in_place_factory からの構築
     // 構築するオブジェクトの型は同じじゃないと意味論的におかしい
@@ -112,7 +112,7 @@ namespace etude {
   // こちらは関数の戻り値として使わない限りは auto で束縛しても問題ない。
   // ただし、使い回す場合は、参照なので不意な変更に注意！
   template<class T, class... Args>
-  inline typed_in_place_factory<T, Args...> in_place_safe( Args&& ...args ) {
+  inline typed_in_place_factory<T, Args...> in_place_by_ref( Args&& ...args ) {
     return typed_in_place_factory<T, Args...>( std::forward<Args>(args)... );
   }
   
