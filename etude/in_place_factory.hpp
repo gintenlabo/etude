@@ -57,7 +57,7 @@ namespace etude {
     template<class...Args>
     friend class in_place_factory;
     
-    typedef std::tuple<> arguments;
+    typedef std::tuple<> tuple_type;
     
     explicit in_place_factory() {}
     in_place_factory( std::tuple<> ) {}
@@ -71,11 +71,11 @@ namespace etude {
       return ::new(addr) T();
     }
     
-    arguments const& get_arguments() const {
+    tuple_type const& get_tuple() const {
       return *this;
     }
-    arguments&& move_arguments() {
-      return static_cast<arguments&&>(*this);
+    tuple_type&& move_tuple() {
+      return static_cast<tuple_type&&>(*this);
     }
     
   };
@@ -85,14 +85,14 @@ namespace etude {
     struct in_place_factory<BOOST_PP_ENUM_PARAMS(n, A)>                       \
       : in_place_factory_base                                                 \
     {                                                                         \
-      typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, A)> arguments;               \
+      typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, A)> tuple_type;              \
                                                                               \
       explicit in_place_factory( BOOST_PP_ENUM_BINARY_PARAMS( n, A, && a ) )  \
         : x( BOOST_PP_ENUM( n, ETUDE_GEN_FORWARD_, _ ) ) {}                   \
                                                                               \
-      in_place_factory( arguments const& t )                                  \
+      in_place_factory( tuple_type const& t )                                 \
         : x( t ) {}                                                           \
-      in_place_factory( arguments && t )                                      \
+      in_place_factory( tuple_type && t )                                     \
         : x( std::move(t) ) {}                                                \
       template<class...Args>                                                  \
       in_place_factory( in_place_factory<Args...> const& src )                \
@@ -110,11 +110,11 @@ namespace etude {
         return ::new (addr) T( BOOST_PP_ENUM( n, ETUDE_GEN_MOVE_X_, _ ) );    \
       }                                                                       \
                                                                               \
-      arguments const& get_arguments() const { return x; }                    \
-      arguments&& move_arguments() { return std::move(x); }                   \
+      tuple_type const& get_tuple() const { return x; }                       \
+      tuple_type&& move_tuple() { return std::move(x); }                      \
                                                                               \
      private:                                                                 \
-      arguments x;                                                            \
+      tuple_type x;                                                           \
                                                                               \
       template<class...Args>                                                  \
       friend class in_place_factory;                                          \
@@ -139,19 +139,40 @@ namespace etude {
   #undef ETUDE_GEN_MOVE_X_
   
   
-  // helper function
+  // helper functions
   
   // 一時オブジェクトを rvalue-reference として束縛
-  // auto を使って束縛されると危険
+  // auto を使って束縛されると危険だが、 std::unique_ptr 等に重宝する
   template<class... Args>
   inline in_place_factory<Args&&...> in_place( Args&& ...args ) {
     return in_place_factory<Args&&...>( std::forward<Args&&>(args)... );
   }
-  // auto で束縛しても問題ない安全版。しかし明らかに処理は増える
-  // std::unique_ptr 等の move だけ可能な引数を使う場合にはこっちは使えません
+  // 一時オブジェクトは値として、それ以外は参照として束縛する
+  // こちらは関数の戻り値として使わない限りは auto で束縛しても問題ない。
+  // ただし、使い回す場合は、参照なので不意な変更に注意！
   template<class... Args>
-  inline in_place_factory<Args...> in_place_safe( Args&& ...args ) {
+  inline in_place_factory<Args...> in_place_by_ref( Args&& ...args ) {
     return in_place_factory<Args...>( std::forward<Args>(args)... );
+  }
+  
+  // タプルを in_place_factory に変換する版。
+  // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
+  template<class... Args>
+  inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& t ) {
+    return t;
+  }
+  template<class... Args>
+  inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && t ) {
+    return std::move(t);
+  }
+  
+  // すべて値で束縛する安全版。関数の戻り値としても使える。
+  // 参照を束縛したい場合は std::ref を使う。
+  template<class... Args>
+  inline auto in_place_by_val( Args&& ...args )
+    -> decltype( in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) ) )
+  {
+    return in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) );
   }
   
   
@@ -176,6 +197,16 @@ namespace etude {
   inline T* apply_in_place( in_place_factory<Args...> && x, void* addr ) {
     return x.template move_apply<T>( addr );
   }
+  
+  
+  // to_tuple の自由関数版
+  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
+  template<class... Args>
+  inline auto get_argument_tuple( in_place_factory<Args...> const& x )
+    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
+  template<class... Args>
+  inline auto get_argument_tuple( in_place_factory<Args...> && x )
+    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }
 

@@ -26,9 +26,31 @@ namespace etude {
   using boost::typed_in_place_factory_base;
   
   // ヘルパメタ関数
+  
+  // typed_in_place_factory か否か
   template<class T>
-  struct is_typed_in_place_factory
-    : std::is_base_of<typed_in_place_factory_base, T> {};
+  struct is_typed_in_place_factory :
+    std::is_base_of<
+      typed_in_place_factory_base, typename std::remove_reference<T>::type
+    >
+  {};
+  
+  // typed_in_place_factory なら、関連付けられてる型を得る
+  // そうでなければ type は定義されない
+  template<class T, class = void>
+  struct typed_in_place_factory_get_type_impl_ {};
+  template<class InPlace>
+  struct typed_in_place_factory_get_type_impl_<InPlace,
+    typename std::enable_if<is_typed_in_place_factory<InPlace>::value>::type
+  >{
+    typedef typename InPlace::value_type type;
+  };
+  template<class T>
+  struct typed_in_place_factory_get_type :
+    typed_in_place_factory_get_type_impl_<
+      typename std::remove_reference<T>::type
+    >
+  {};
   
   template<class T, class... Args>
   class typed_in_place_factory
@@ -42,7 +64,7 @@ namespace etude {
     
    public:
     typedef T value_type;
-    typedef typename impl_t::arguments arguments;
+    typedef typename impl_t::tuple_type tuple_type;
     
     // 構築
     explicit typed_in_place_factory( Args&& ...args )
@@ -72,26 +94,50 @@ namespace etude {
     }
     
     // 情報取得
-    arguments const& get_arguments() const { return impl_.get_arguments(); }
-    arguments&& move_arguments() { return impl_.move_arguments(); }
+    tuple_type const& get_tuple() const { return impl_.get_tuple(); }
+    tuple_type&& move_tuple() { return impl_.move_tuple(); }
     
   };
   
   
-  
-  // helper function
+  // helper functions
   
   // 一時オブジェクトを rvalue-reference として束縛
-  // auto を使って束縛されると危険
+  // auto を使って束縛されると危険だが、 std::unique_ptr 等に重宝する
   template<class T, class... Args>
   inline typed_in_place_factory<T, Args&&...> in_place( Args&& ...args ) {
     return typed_in_place_factory<T, Args&&...>( std::forward<Args&&>(args)... );
   }
-  // 安全版。しかし明らかに処理は増える
-  // std::unique_ptr を使う場合にはこっちは使えません
+  // 一時オブジェクトは値として、それ以外は参照として束縛する
+  // こちらは関数の戻り値として使わない限りは auto で束縛しても問題ない。
+  // ただし、使い回す場合は、参照なので不意な変更に注意！
   template<class T, class... Args>
   inline typed_in_place_factory<T, Args...> in_place_safe( Args&& ...args ) {
     return typed_in_place_factory<T, Args...>( std::forward<Args>(args)... );
+  }
+  
+  // タプルを in_place_factory に変換する版。
+  // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
+  template<class T, class... Args>
+  inline typed_in_place_factory<T, Args...>
+    in_place_from_tuple( std::tuple<Args...> const& t )
+  {
+    return t;
+  }
+  template<class T, class... Args>
+  inline typed_in_place_factory<T, Args...>
+    in_place_from_tuple( std::tuple<Args...> && t )
+  {
+    return std::move(t);
+  }
+  
+  // すべて値で束縛する安全版。関数の戻り値としても使える。
+  // 参照を束縛したい場合は std::ref を使う。
+  template<class T, class... Args>
+  inline auto in_place_by_val( Args&& ...args )
+    -> decltype( in_place_from_tuple<T>( std::make_tuple( std::forward<Args>(args)... ) ) )
+  {
+    return in_place_from_tuple<T>( std::make_tuple( std::forward<Args>(args)... ) );
   }
   
   
@@ -119,6 +165,15 @@ namespace etude {
   inline T* apply_in_place( typed_in_place_factory<T, Args...> && x, void* addr ) {
     return x.move_apply( addr );
   }
+  
+  // to_tuple の自由関数版
+  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
+  template<class T, class... Args>
+  inline auto get_argument_tuple( typed_in_place_factory<T, Args...> const& x )
+    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
+  template<class T, class... Args>
+  inline auto get_argument_tuple( typed_in_place_factory<T, Args...> && x )
+    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }
 
