@@ -34,8 +34,8 @@
 #include <boost/preprocessor/tuple/elem.hpp>
 
 // 設定
-#ifndef ETUDE_MAX_ARGS
-  #define ETUDE_MAX_ARGS 10
+#ifndef ETUDE_MAX_ARITY
+  #define ETUDE_MAX_ARITY 10
 #endif
 
 namespace etude {
@@ -131,7 +131,7 @@ namespace etude {
     std::forward<BOOST_PP_CAT( A, n )>( std::get<n>(x) )
   
   // コード生成
-  BOOST_PP_REPEAT_FROM_TO( 1, BOOST_PP_INC(ETUDE_MAX_ARGS), ETUDE_GEN_IN_PLACE_, _ )
+  BOOST_PP_REPEAT_FROM_TO( 1, BOOST_PP_INC(ETUDE_MAX_ARITY), ETUDE_GEN_IN_PLACE_, _ )
   
   #undef ETUDE_GEN_IN_PLACE_
   #undef ETUDE_GEN_FORWARD_
