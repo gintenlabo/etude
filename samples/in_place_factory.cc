@@ -33,16 +33,18 @@ struct fuga
 template<class T, class InPlace,
   class = typename std::enable_if<etude::is_in_place<T, InPlace>::value>::type >
 std::unique_ptr<T> make_unique( InPlace && x ) {
+  using namespace etude;
   // TODO: T::operator new 対策 && 例外安全
   void* const vp = operator new( sizeof(T) );
-  return std::unique_ptr<T>( etude::apply_in_place<T>( std::forward<InPlace>(x), vp ) );
+  return std::unique_ptr<T>( apply_in_place<T>( std::forward<InPlace>(x), vp ) );
 }
 template<class TypedInPlace,
   class T = typename etude::typed_in_place_factory_get_type<TypedInPlace>::type >
 inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
+  using namespace etude;
   // 同じく T::operator new 対策 && 例外安全はサボり中
   void* const vp = operator new( sizeof(T) );
-  return std::unique_ptr<T>( etude::apply_typed_in_place( std::forward<TypedInPlace>(x), vp ) );
+  return std::unique_ptr<T>( apply_typed_in_place( std::forward<TypedInPlace>(x), vp ) );
 }
 
 #include <iostream>
