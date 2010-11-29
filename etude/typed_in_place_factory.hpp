@@ -145,9 +145,7 @@ namespace etude {
   
   // boost 対応
   template<class InPlace,
-    typename T = typename std::enable_if<
-      is_typed_in_place_factory<InPlace>::value, typename InPlace::value_type
-    >::type
+    class T = typename typed_in_place_factory_get_type<InPlace>::type
   >
   inline T* apply_in_place( InPlace const& x, void* addr ) {
     x.apply( addr );
