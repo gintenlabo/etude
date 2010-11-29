@@ -64,4 +64,14 @@ int main()
   // Boost.InPlace から正しく apply_in_place 出来るかチェック
   make_unique<hoge>( boost::in_place( 2, 3 ) );
   make_unique( boost::in_place<hoge>( 4, 5 ) );
+  // これが出来ると嬉しい
+  make_unique<hoge>( boost::in_place<hoge>( 4, 5 ) );
+  make_unique<hoge>( etude::in_place<hoge>( 4, 5 ) );
+  // これはコンパイルエラー。
+  // make_unique<int>( boost::in_place<hoge>( 4, 5 ) );
+  
+  std::cout << std::boolalpha;
+  std::cout << etude::is_in_place< hoge, etude::in_place_factory<> >::value << std::endl;
+  std::cout << etude::is_in_place< hoge, etude::typed_in_place_factory<hoge> >::value << std::endl;
+  std::cout << etude::is_in_place< hoge, etude::typed_in_place_factory<int> >::value << std::endl;
 }

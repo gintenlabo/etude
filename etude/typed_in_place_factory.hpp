@@ -164,6 +164,37 @@ namespace etude {
     return x.move_apply( addr );
   }
   
+  // apply_in_place<T>( in_place<T>(), addr ) という表現が出来ると嬉しい
+  // 型が明確な場合に InPlaceFactory と TypedInPlaceFactory の両方を取るのは単に面倒。
+  template<class T, class InPlace,
+    class = typename std::enable_if<
+      std::is_same< T,
+        typename typed_in_place_factory_get_type<InPlace>::type
+      >::value
+    >::type
+  >
+  inline T* apply_in_place( InPlace && x, void* addr ) {
+    return apply_in_place( std::forward<InPlace>(x), addr );
+  }
+  
+  // 広義の in_place_factory, つまり apply_in_place<T>( x, addr ) と書けるかどうか
+  template<class T, class InPlace, class = void>
+  struct is_in_place_impl_
+    : is_in_place_factory<InPlace> {};
+  
+  template<class T, class InPlace>
+  struct is_in_place_impl_< T, InPlace,
+    typename std::enable_if<
+      std::is_same< T,
+        typename typed_in_place_factory_get_type<InPlace>::type
+      >::value
+    >::type
+  > : std::true_type {};
+  
+  template<class T, class InPlace>
+  struct is_in_place : is_in_place_impl_<T, InPlace> {};
+  
+  
   // to_tuple の自由関数版
   // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
   template<class T, class... Args>
