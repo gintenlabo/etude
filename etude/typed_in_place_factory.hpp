@@ -147,7 +147,7 @@ namespace etude {
   template<class InPlace,
     class T = typename typed_in_place_factory_get_type<InPlace>::type
   >
-  inline T* apply_in_place( InPlace const& x, void* addr ) {
+  inline T* apply_typed_in_place( InPlace const& x, void* addr ) {
     x.apply( addr );
     return static_cast<T*>( addr );
   }
@@ -155,12 +155,12 @@ namespace etude {
   // etude::in_place_factory 版
   // const 参照
   template<class T, class... Args>
-  inline T* apply_in_place( typed_in_place_factory<T, Args...> const& x, void* addr ) {
+  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> const& x, void* addr ) {
     return x.apply( addr );
   }
   // move
   template<class T, class... Args>
-  inline T* apply_in_place( typed_in_place_factory<T, Args...> && x, void* addr ) {
+  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> && x, void* addr ) {
     return x.move_apply( addr );
   }
   
@@ -174,7 +174,7 @@ namespace etude {
     >::type
   >
   inline T* apply_in_place( InPlace && x, void* addr ) {
-    return apply_in_place( std::forward<InPlace>(x), addr );
+    return apply_typed_in_place( std::forward<InPlace>(x), addr );
   }
   
   // 広義の in_place_factory, つまり apply_in_place<T>( x, addr ) と書けるかどうか
