@@ -45,7 +45,7 @@ namespace etude {
   // ヘルパメタ関数
   template<class T>
   struct is_in_place_factory
-    : std::is_base_of<in_place_factory_base, T> {};
+    : std::is_base_of<in_place_factory_base, typename std::remove_reference<T>::type> {};
   
   template<class... Args>
   struct in_place_factory;
