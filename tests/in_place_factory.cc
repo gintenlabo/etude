@@ -1,8 +1,11 @@
 #include "../etude/in_place_factory.hpp"
+#include "../etude/typed_in_place_factory.hpp"
 
 // 一応実体化テスト
 template class etude::in_place_factory<>;
 template class etude::in_place_factory<int>;
+template class etude::typed_in_place_factory<int>;
+template class etude::typed_in_place_factory<int, int>;
 
 // boost::optional でテスト
 #include <boost/optional.hpp>
@@ -33,6 +36,13 @@ std::unique_ptr<T> make_unique( InPlace && x ) {
   void* const vp = operator new( sizeof(T) );
   return std::unique_ptr<T>( etude::apply_in_place<T>( std::forward<InPlace>(x), vp ) );
 }
+template<class TypedInPlace,
+  class T = typename etude::typed_in_place_factory_get_type<TypedInPlace>::type >
+inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
+  // 同じく T::operator new 対策 && 例外安全はサボり中
+  void* const vp = operator new( sizeof(T) );
+  return std::unique_ptr<T>( etude::apply_in_place( std::forward<TypedInPlace>(x), vp ) );
+}
 
 #include <iostream>
 #include <typeinfo>
@@ -41,8 +51,12 @@ int main()
 {
   int i = 0;
   
-  std::unique_ptr<fuga> x;
-  x = make_unique<fuga>( etude::in_place( make_unique<hoge>( boost::in_place( i, 2u ) ) ) );
+  auto const args = etude::in_place_by_ref( i, 2u );
+  i = 1;
+  
+  auto proxy = etude::in_place_by_val<fuga>( make_unique<hoge>( args ) );
+  
+  std::unique_ptr<fuga> x = make_unique( std::move(proxy) );
   
   std::cout << x->p->x << std::endl;
   std::cout << x->p->y << std::endl;
