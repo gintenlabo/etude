@@ -60,4 +60,8 @@ int main()
   
   std::cout << x->p->x << std::endl;
   std::cout << x->p->y << std::endl;
+  
+  // Boost.InPlace から正しく apply_in_place 出来るかチェック
+  make_unique<hoge>( boost::in_place( 2, 3 ) );
+  make_unique( boost::in_place<hoge>( 4, 5 ) );
 }
