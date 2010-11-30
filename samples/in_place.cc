@@ -7,8 +7,10 @@ template class etude::typed_in_place_factory<int>;
 template class etude::typed_in_place_factory<int, int>;
 
 // boost::optional でテスト
+#include <boost/assert.hpp>
 #include <boost/optional.hpp>
 #include <boost/noncopyable.hpp>
+#include <functional>   // for std::ref
 
 struct hoge
   : private boost::noncopyable
@@ -16,9 +18,59 @@ struct hoge
   hoge( int x_, int y_ )
     : x(x_), y(y_) {}
   
+  // 参照をとるコンストラクタ
+  // 人工的だけど勘弁して下さい＞＜
+  hoge( int x_, int y_, int& z )
+    : x(x_), y(y_)
+  {
+    z = x + y;
+  }
+  
   int x, y;
 };
 
+// 基本的な使い方
+// 普通の人は boost.optional への引数としてしか使わないと思うので、それで。
+void basic_usage()
+{
+  boost::optional<hoge> x;
+  
+  // x = hoge( 1, 2 ); // ダメ
+  
+  // 代わりにこう使う
+  x = etude::in_place( 1, 2 );
+  // typed in-place factory でもおｋ
+  x = etude::in_place<hoge>( 2, 3 );
+  
+  // boost との違いは、参照を扱えること。
+  int z = 0;
+  x = etude::in_place( 3, 4, z );
+  // x = boost::in_place( 3, 4, z );  // ダメ。
+  BOOST_ASSERT( z == 7 );
+  
+  // 注意！ 変数に格納して使い回す場合は in_place は使っちゃダメ
+  // auto in_place_0 = etude::in_place( 5, 6 ); // 一時変数も参照キャプチャするので危険
+  // 代わりに in_place_by_val/in_place_by_ref を使う
+  auto in_place_1 = etude::in_place_by_val( z, 8 );
+  auto in_place_2 = etude::in_place_by_ref( z, 10 );
+  // 違いは簡単で、変数を値としてキャプチャするか、参照としてキャプチャするか
+  z = 9;
+  x = in_place_1; BOOST_ASSERT( x->x == 7 );
+  x = in_place_2; BOOST_ASSERT( x->x == 9 );  // 参照キャプチャ！
+  
+  // in_place_by_val の場合に参照キャプチャしたい場合は、 std::ref を使う
+  x = etude::in_place_by_val( 10, 23, std::ref(z) );
+  BOOST_ASSERT( z == 33 );
+  // in_place_by_val の束縛法は std::make_tuple と同じ。
+  
+  // なお、束縛された引数は、 get_tuple によって tuple として取得できる
+  BOOST_ASSERT( std::get<0>( get_tuple(in_place_1) ) == 7 );
+  // ただし、参照を束縛していない限り、代入は出来ない
+  // std::get<0>( get_tuple(in_place_1) ) = 42 // ダメ
+}
+
+
+// 発展例。 std::unique_ptr を使う（これは boost では無理）
 #include <memory>
 struct fuga
 {
@@ -51,6 +103,8 @@ inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
 
 int main()
 {
+  basic_usage();
+  
   int i = 0;
   
   auto const args = etude::in_place_by_ref( i, 2u );
