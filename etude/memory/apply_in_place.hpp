@@ -17,8 +17,8 @@
 #ifndef ETUDE_MEMORY_INCLUDED_APPLY_IN_PLACE_
 #define ETUDE_MEMORY_INCLUDED_APPLY_IN_PLACE_
 
-#include "in_place_factory.hpp"
-#include "typed_in_place_factory.hpp"
+#include "is_in_place_factory.hpp"
+#include "is_typed_in_place_factory.hpp"
 
 #include <utility>
 #include <boost/utility/addressof.hpp>
@@ -26,8 +26,9 @@
 namespace etude {
 
   // function template apply_typed_in_place
+  // TypedInPlaceFactory の apply の自由関数版
   
-  // Boost.TypedInPlaceFactory 用
+  // 一般用
   template<class InPlace,
     class T = typename get_in_place_binding_type<InPlace>::type
   >
@@ -36,10 +37,12 @@ namespace etude {
     return static_cast<T*>( addr );
   }
   
-  // etude:: typed_in_place_factory 版は  typed_in_place_factory.hpp で定義されている
+  // etude:: typed_in_place_factory 版は typed_in_place_factory.hpp で定義されている
   
   
   // function template apply_in_place
+  // InPlaceFactory の template apply の自由関数版
+  // 加えて、 TypedInPlaceFactory も受け入れられるように
   
   // 実装用クラス
   

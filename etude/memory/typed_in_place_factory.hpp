@@ -13,45 +13,21 @@
 #ifndef ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_
 #define ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_
 
-#include "in_place_factory.hpp"
 #include <boost/utility/typed_in_place_factory.hpp>
+
+#include "in_place_factory.hpp"
+#include "is_typed_in_place_factory.hpp"
 
 #include <utility>
 #include <new>
 #include <type_traits>
 
-
 namespace etude {
 
-  using boost::typed_in_place_factory_base;
+  // class template typed_in_place_factory
   
-  // ヘルパメタ関数
-  
-  // typed_in_place_factory か否か
-  template<class T>
-  struct is_typed_in_place_factory :
-    std::is_base_of<
-      typed_in_place_factory_base, typename std::remove_reference<T>::type
-    >
-  {};
-  
-  // typed_in_place_factory なら、関連付けられてる型を得る
-  // そうでなければ type は定義されない
-  template<class T, class = void>
-  struct get_in_place_binding_type_impl_ {};
-  template<class InPlace>
-  struct get_in_place_binding_type_impl_<InPlace,
-    typename std::enable_if<is_typed_in_place_factory<InPlace>::value>::type
-  >{
-    typedef typename InPlace::value_type type;
-  };
-  template<class T>
-  struct get_in_place_binding_type :
-    get_in_place_binding_type_impl_<
-      typename std::remove_reference<T>::type
-    >
-  {};
-  
+  // Variadic Templates を使って書かれた InPlaceFactory
+  // rvalue-reference にも対応している
   template<class T, class... Args>
   class typed_in_place_factory
     : public typed_in_place_factory_base

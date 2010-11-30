@@ -39,15 +39,14 @@
   #define ETUDE_MAX_ARITY 10
 #endif
 
+#include "is_in_place_factory.hpp"
+
 namespace etude {
 
-  using boost::in_place_factory_base;
+  // class template in_place_factory
   
-  // ヘルパメタ関数
-  template<class T>
-  struct is_in_place_factory
-    : std::is_base_of<in_place_factory_base, typename std::remove_reference<T>::type> {};
-  
+  // Variadic Templates を使って書かれた InPlaceFactory
+  // rvalue-reference にも対応している
   template<class... Args>
   struct in_place_factory;
   
