@@ -195,13 +195,13 @@ namespace etude {
   struct is_in_place : is_in_place_impl_<T, InPlace> {};
   
   
-  // to_tuple の自由関数版
+  // get_tuple の自由関数版
   // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
   template<class T, class... Args>
-  inline auto get_argument_tuple( typed_in_place_factory<T, Args...> const& x )
+  inline auto get_tuple( typed_in_place_factory<T, Args...> const& x )
     -> decltype( x.get_tuple() ) { return x.get_tuple(); }
   template<class T, class... Args>
-  inline auto get_argument_tuple( typed_in_place_factory<T, Args...> && x )
+  inline auto get_tuple( typed_in_place_factory<T, Args...> && x )
     -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }

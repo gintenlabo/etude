@@ -199,13 +199,13 @@ namespace etude {
   }
   
   
-  // to_tuple の自由関数版
+  // get_tuple の自由関数版
   // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
   template<class... Args>
-  inline auto get_argument_tuple( in_place_factory<Args...> const& x )
+  inline auto get_tuple( in_place_factory<Args...> const& x )
     -> decltype( x.get_tuple() ) { return x.get_tuple(); }
   template<class... Args>
-  inline auto get_argument_tuple( in_place_factory<Args...> && x )
+  inline auto get_tuple( in_place_factory<Args...> && x )
     -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }
