@@ -41,13 +41,15 @@ namespace etude {
   
   // function template apply_in_place
   
+  // 実装用クラス
+  
   // apply_in_place<T>( x, addr ) と書けるかどうか
-  template<class T, class InPlace, class = void>
-  struct is_in_place_impl_
+  template<class InPlace, class T, class = void>
+  struct is_in_place_applyable_
     : is_in_place_factory<InPlace> {};
   
-  template<class T, class InPlace>
-  struct is_in_place_impl_< T, InPlace,
+  template<class InPlace, class T>
+  struct is_in_place_applyable_< InPlace, T,
     typename std::enable_if<
       std::is_same< T,
         typename typed_in_place_factory_get_type<InPlace>::type
@@ -55,8 +57,8 @@ namespace etude {
     >::type
   > : std::true_type {};
   
-  template<class T, class InPlace>
-  struct is_in_place : is_in_place_impl_<T, InPlace> {};
+  template<class InPlace, class T>
+  struct is_in_place_applyable : is_in_place_applyable_<InPlace, T> {};
   
   
   // dispatch
@@ -74,7 +76,7 @@ namespace etude {
   
   // インターフェイス
   template<class T, class InPlace,
-    class = typename std::enable_if<is_in_place<T, InPlace>::value>::type>
+    class = typename std::enable_if<is_in_place_applyable<InPlace, T>::value>::type>
   inline T* apply_in_place( InPlace && x, void* addr )
   {
     return apply_in_place_<T>( boost::addressof(x), std::forward<InPlace>(x), addr );

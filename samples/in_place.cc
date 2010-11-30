@@ -30,7 +30,7 @@ struct fuga
 };
 
 template<class T, class InPlace,
-  class = typename std::enable_if<etude::is_in_place<T, InPlace>::value>::type >
+  class = typename std::enable_if<etude::is_in_place_applyable<InPlace, T>::value>::type>
 std::unique_ptr<T> make_unique( InPlace && x ) {
   using namespace etude;
   // TODO: T::operator new 対策 && 例外安全
@@ -73,7 +73,7 @@ int main()
   // make_unique<int>( boost::in_place<hoge>( 4, 5 ) );
   
   std::cout << std::boolalpha;
-  std::cout << etude::is_in_place< hoge, etude::in_place_factory<> >::value << std::endl;
-  std::cout << etude::is_in_place< hoge, etude::typed_in_place_factory<hoge> >::value << std::endl;
-  std::cout << etude::is_in_place< hoge, etude::typed_in_place_factory<int> >::value << std::endl;
+  std::cout << etude::is_in_place_applyable<etude::in_place_factory<>, hoge>::value << std::endl;
+  std::cout << etude::is_in_place_applyable<etude::typed_in_place_factory<hoge>, hoge>::value << std::endl;
+  std::cout << etude::is_in_place_applyable<etude::typed_in_place_factory<int>, hoge>::value << std::endl;
 }
