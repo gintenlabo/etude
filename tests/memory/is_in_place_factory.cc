@@ -1,3 +1,11 @@
+//
+//  etude/memory/is_in_place_factory.hpp に対するテスト
+//    仕様書も兼ねる感じで詳細に、かつインクルードするヘッダは最低限。
+//
+//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//    Distributed under the Boost Software License, Version 1.0.
+//    http://www.boost.org/LICENSE_1_0.txt
+//
 #include "../../etude/memory/is_in_place_factory.hpp"
 
 // #include <boost/test/minimal.hpp>  // うごかない…。
