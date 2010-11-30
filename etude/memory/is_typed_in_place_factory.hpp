@@ -21,7 +21,7 @@ namespace etude {
 
   using boost::typed_in_place_factory_base;
   
-  // metafunction get_in_place_binding_type
+  // metafunction is_typed_in_place_factory
   
   // T が（CV修飾された） TypedInPlaceFactory またはその参照なら true を返す。
   // そうでなければ false を返す。
@@ -33,21 +33,21 @@ namespace etude {
   {};
   
   
-  // metafunction get_in_place_binding_type
+  // metafunction typed_in_place_associated
   
   // typed_in_place_factory なら、関連付けられてる型 value_type を得る
   // そうでなければ type は定義されない
   template<class T, class = void>
-  struct get_in_place_binding_type_ {};
+  struct typed_in_place_associated_ {};
   template<class InPlace>
-  struct get_in_place_binding_type_<InPlace,
+  struct typed_in_place_associated_<InPlace,
     typename std::enable_if<is_typed_in_place_factory<InPlace>::value>::type
   >{
     typedef typename InPlace::value_type type;
   };
   template<class T>
-  struct get_in_place_binding_type :
-    get_in_place_binding_type_<
+  struct typed_in_place_associated :
+    typed_in_place_associated_<
       typename std::remove_reference<T>::type
     >
   {};

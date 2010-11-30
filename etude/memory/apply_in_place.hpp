@@ -30,7 +30,7 @@ namespace etude {
   
   // 一般用
   template<class InPlace,
-    class T = typename get_in_place_binding_type<InPlace>::type
+    class T = typename typed_in_place_associated<InPlace>::type
   >
   inline T* apply_typed_in_place( InPlace && x, void* addr ) {
     std::forward<InPlace>(x).apply( addr );
@@ -55,7 +55,7 @@ namespace etude {
   struct is_in_place_applyable_< InPlace, T,
     typename std::enable_if<
       std::is_same< T,
-        typename get_in_place_binding_type<InPlace>::type
+        typename typed_in_place_associated<InPlace>::type
       >::value
     >::type
   > : std::true_type {};

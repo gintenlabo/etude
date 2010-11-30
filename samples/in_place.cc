@@ -135,7 +135,7 @@ std::unique_ptr<T> make_unique( InPlace && x ) {
 // TypedInPlace から T を推論する版
 // 第二テンプレート引数は型計算と enable_if を兼ねているので、明示的に指定しないこと。
 template<class TypedInPlace,
-  class T = typename etude::get_in_place_binding_type<TypedInPlace>::type >
+  class T = typename etude::typed_in_place_associated<TypedInPlace>::type >
 inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
   // 要は InPlace 版と同じ
   std::unique_ptr<void, deallocator> p( ::operator new( sizeof(T) ) );
