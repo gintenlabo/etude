@@ -45,6 +45,7 @@ namespace etude {
   >{
     typedef typename InPlace::value_type type;
   };
+  // 本体。 enable_if 用のダミー引数は隠すのが正義ですよね。
   template<class T>
   struct typed_in_place_associated :
     typed_in_place_associated_<
