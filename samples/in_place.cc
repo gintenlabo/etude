@@ -38,7 +38,7 @@ std::unique_ptr<T> make_unique( InPlace && x ) {
   return std::unique_ptr<T>( apply_in_place<T>( std::forward<InPlace>(x), vp ) );
 }
 template<class TypedInPlace,
-  class T = typename etude::typed_in_place_factory_get_type<TypedInPlace>::type >
+  class T = typename etude::get_in_place_binding_type<TypedInPlace>::type >
 inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
   using namespace etude;
   // 同じく T::operator new 対策 && 例外安全はサボり中

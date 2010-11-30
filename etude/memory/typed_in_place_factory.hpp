@@ -38,16 +38,16 @@ namespace etude {
   // typed_in_place_factory なら、関連付けられてる型を得る
   // そうでなければ type は定義されない
   template<class T, class = void>
-  struct typed_in_place_factory_get_type_impl_ {};
+  struct get_in_place_binding_type_impl_ {};
   template<class InPlace>
-  struct typed_in_place_factory_get_type_impl_<InPlace,
+  struct get_in_place_binding_type_impl_<InPlace,
     typename std::enable_if<is_typed_in_place_factory<InPlace>::value>::type
   >{
     typedef typename InPlace::value_type type;
   };
   template<class T>
-  struct typed_in_place_factory_get_type :
-    typed_in_place_factory_get_type_impl_<
+  struct get_in_place_binding_type :
+    get_in_place_binding_type_impl_<
       typename std::remove_reference<T>::type
     >
   {};

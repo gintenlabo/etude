@@ -29,7 +29,7 @@ namespace etude {
   
   // Boost.TypedInPlaceFactory 用
   template<class InPlace,
-    class T = typename typed_in_place_factory_get_type<InPlace>::type
+    class T = typename get_in_place_binding_type<InPlace>::type
   >
   inline T* apply_typed_in_place( InPlace && x, void* addr ) {
     std::forward<InPlace>(x).apply( addr );
@@ -52,7 +52,7 @@ namespace etude {
   struct is_in_place_applyable_< InPlace, T,
     typename std::enable_if<
       std::is_same< T,
-        typename typed_in_place_factory_get_type<InPlace>::type
+        typename get_in_place_binding_type<InPlace>::type
       >::value
     >::type
   > : std::true_type {};
