@@ -20,6 +20,8 @@
 #include "in_place_factory.hpp"
 #include "typed_in_place_factory.hpp"
 
+#include <utility>
+#include <boost/utility/addressof.hpp>
 
 namespace etude {
 
@@ -29,8 +31,8 @@ namespace etude {
   template<class InPlace,
     class T = typename typed_in_place_factory_get_type<InPlace>::type
   >
-  inline T* apply_typed_in_place( InPlace const& x, void* addr ) {
-    x.apply( addr );
+  inline T* apply_typed_in_place( InPlace && x, void* addr ) {
+    std::forward<InPlace>(x).apply( addr );
     return static_cast<T*>( addr );
   }
   
@@ -60,20 +62,14 @@ namespace etude {
   // dispatch
   // Boost.InPlaceFactory 用
   template<class T, class InPlace>
-  inline T* apply_in_place_( in_place_factory_base&, InPlace && x, void* addr ) {
-    static_cast<InPlace&&>(x).template apply<T>( addr );
+  inline T* apply_in_place_( in_place_factory_base const*, InPlace && x, void* addr ) {
+    std::forward<InPlace>(x).template apply<T>( addr );
     return static_cast<T*>( addr );
   }
   // TypedInPlaceFactory 用
-  template<class T, class InPlace/*,
-    class = typename std::enable_if<
-      std::is_same< T,
-        typename typed_in_place_factory_get_type<InPlace>::type
-      >::value
-    >::type
-  */> // チェックは要らないかな。
-  inline T* apply_in_place_( typed_in_place_factory_base&, InPlace && x, void* addr ) {
-    return apply_typed_in_place( x, addr );
+  template<class T, class InPlace>
+  inline T* apply_in_place_( typed_in_place_factory_base const*, InPlace && x, void* addr ) {
+    return apply_typed_in_place( std::forward<InPlace>(x), addr );
   }
   
   // インターフェイス
@@ -81,7 +77,7 @@ namespace etude {
     class = typename std::enable_if<is_in_place<T, InPlace>::value>::type>
   inline T* apply_in_place( InPlace && x, void* addr )
   {
-    return apply_in_place_<T>( x, x, addr );
+    return apply_in_place_<T>( boost::addressof(x), std::forward<InPlace>(x), addr );
   }
 }
 
