@@ -1,5 +1,4 @@
-#include "../etude/in_place_factory.hpp"
-#include "../etude/typed_in_place_factory.hpp"
+#include "../etude/in_place.hpp"
 
 // 一応実体化テスト
 template class etude::in_place_factory<>;
