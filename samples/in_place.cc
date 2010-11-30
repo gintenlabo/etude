@@ -85,10 +85,23 @@ void basic_usage()
 // サンプルクラス。こんな単純な物でもオリジナルの boost::in_place では無理。
 struct fuga
 {
-  fuga( std::unique_ptr<hoge> && p_ )
-    : p( std::move(p_) ) {}
+  explicit fuga( int x_ )
+    : x( x_ ) {}
   
-  std::unique_ptr<hoge> p;
+  fuga( int x_, std::unique_ptr<fuga> && next_ )
+    : next( std::move(next_) ), x(x_) {}
+  
+  std::unique_ptr<fuga> next;
+  int x;
+  
+  friend void print( std::unique_ptr<fuga> const& p ) {
+    if( !p ) {
+      std::cout << "[]\n";
+      return;
+    }
+    std::cout << boost::format("%1% -> ") % p->x;
+    print( p->next );
+  }
   
 };
 
@@ -137,28 +150,31 @@ inline std::unique_ptr<T> make_unique( TypedInPlace && x ) {
 void advanced_usage()
 {
   // まずポインタを作る
-  auto p1 = make_unique<hoge>( etude::in_place(1, 2) );
+  auto p1 = make_unique<fuga>( etude::in_place(1) );
+  print( p1 );  // 1 -> []
   
-  // move する
-  auto p2 = make_unique<fuga>( etude::in_place( std::move(p1) ) );
+  // リンクさせてみる
+  // 今度は typed で
+  auto p2 = make_unique( etude::in_place<fuga>( 2, std::move(p1) ) );
+  print( p2 );  // 2 -> 1 -> []
   // move したので p1 は空
-  BOOST_ASSERT( !p1 );
-  // 戻しとくか。
-  p1 = std::move( p2->p );
+  print( p1 );  // []
   
-  // 変数束縛された in_place から move する
+  // 変数に格納された in_place から move する例
   // 注意： rvalue-reference の場合には by_ref でも値キャプチャされる
   // 一時変数かどうかを判別することが出来ないので。
   // 一時変数がないと分かってるなら in_place を使えば参照でキャプチャされる
-  auto in_place_1 = etude::in_place_by_ref<fuga>( std::move(p1) );  // typed in-place
-  BOOST_ASSERT( !p1 );
-  p2 = make_unique( std::move(in_place_1) );  // 中身を move させる旨を書く必要あり
+  auto in_place_1 = etude::in_place_by_ref( 3, std::move(p2) );
+  print( p2 );  // []
+  // 構築。 変数に束縛されてるので move しないといけない
+  p2 = make_unique<fuga>( std::move(in_place_1) );
+  print( p2 );  // 3 -> 2 -> 1 -> []
   
-  p1 = make_unique( etude::in_place<hoge>(2, 3) );
-  auto in_place_2 = etude::in_place_by_val<fuga>( std::move(p1) );  // なんとなく by val
-  BOOST_ASSERT( !p1 );
-  // typed in-place でも、 in-place として使える例
-  p2 = make_unique<fuga>( std::move(in_place_2) );
+  // 変数に格納された typed in-place からの構築
+  auto in_place_2 = etude::in_place_by_val<fuga>( 0, std::move(p1) );
+  // typed in-place でも、 in-place として使える（型を明示して構築できる）。
+  p1 = make_unique<fuga>( std::move(in_place_2) );
+  print( p1 );  // 0 -> []
 }
 
 
