@@ -102,6 +102,35 @@ namespace etude {
   
   // helper functions
   
+  // get_tuple の自由関数版
+  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
+  template<class T, class... Args>
+  inline auto get_tuple( typed_in_place_factory<T, Args...> const& x )
+    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
+  template<class T, class... Args>
+  inline auto get_tuple( typed_in_place_factory<T, Args...> && x )
+    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
+  
+  // apply の自由関数版
+  // 参照
+  template<class T, class... Args>
+  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...>& x, void* addr ) {
+    return x.apply( addr );
+  }
+  // const 参照
+  template<class T, class... Args>
+  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> const& x, void* addr ) {
+    return x.apply( addr );
+  }
+  // 右辺値参照
+  template<class T, class... Args>
+  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> && x, void* addr ) {
+    return x.move_apply( addr );
+  }
+  
+  
+  // function template in_place
+  
   // 一時オブジェクトを rvalue-reference として束縛
   // auto を使って束縛されると危険だが、 std::unique_ptr 等に重宝する
   template<class T, class... Args>
@@ -140,69 +169,6 @@ namespace etude {
     return in_place_from_tuple<T>( std::make_tuple( std::forward<Args>(args)... ) );
   }
   
-  
-  // 戻り値と move 対応を盛り込んだヘルパ関数
-  
-  // boost 対応
-  template<class InPlace,
-    class T = typename typed_in_place_factory_get_type<InPlace>::type
-  >
-  inline T* apply_typed_in_place( InPlace const& x, void* addr ) {
-    x.apply( addr );
-    return static_cast<T*>( addr );
-  }
-  
-  // etude::in_place_factory 版
-  // const 参照
-  template<class T, class... Args>
-  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> const& x, void* addr ) {
-    return x.apply( addr );
-  }
-  // move
-  template<class T, class... Args>
-  inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> && x, void* addr ) {
-    return x.move_apply( addr );
-  }
-  
-  // apply_in_place<T>( in_place<T>(), addr ) という表現が出来ると嬉しい
-  // 型が明確な場合に InPlaceFactory と TypedInPlaceFactory の両方を取るのは単に面倒。
-  template<class T, class InPlace,
-    class = typename std::enable_if<
-      std::is_same< T,
-        typename typed_in_place_factory_get_type<InPlace>::type
-      >::value
-    >::type
-  >
-  inline T* apply_in_place( InPlace && x, void* addr ) {
-    return apply_typed_in_place( std::forward<InPlace>(x), addr );
-  }
-  
-  // 広義の in_place_factory, つまり apply_in_place<T>( x, addr ) と書けるかどうか
-  template<class T, class InPlace, class = void>
-  struct is_in_place_impl_
-    : is_in_place_factory<InPlace> {};
-  
-  template<class T, class InPlace>
-  struct is_in_place_impl_< T, InPlace,
-    typename std::enable_if<
-      std::is_same< T,
-        typename typed_in_place_factory_get_type<InPlace>::type
-      >::value
-    >::type
-  > : std::true_type {};
-  
-  template<class T, class InPlace>
-  struct is_in_place : is_in_place_impl_<T, InPlace> {};
-  
-  
-  // get_tuple の自由関数版
-  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
-  template<class T, class... Args>
-  inline auto get_tuple( typed_in_place_factory<T, Args...> const& x )
-    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
-  template<class T, class... Args>
-  inline auto get_tuple( typed_in_place_factory<T, Args...> && x )
-    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }
 

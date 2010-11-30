@@ -14,5 +14,6 @@
 
 #include "memory/in_place_factory.hpp"
 #include "memory/typed_in_place_factory.hpp"
+#include "memory/apply_in_place.hpp"
 
 #endif  // #ifndef ETUDE_INCLUDED_IN_PLACE_HPP_

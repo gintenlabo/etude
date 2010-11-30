@@ -7,8 +7,9 @@
 //    本当は move_apply は rvalue references for *this を使って対応すべきなのでしょうが、
 //    gcc 4.5.0 にはまだ実装されていないので、泣く泣く専用のメンバを用意しています。
 //    ただ、 move 時は専用の関数を使う、というのだと扱いにくいので、
-//    統一したアクセスを可能にするために、自由関数 apply_in_place を提供しています。
-//    これは boost::in_place_factory でも普通に扱えるので、専らそちらを使うといいかと。
+//    統一したアクセスを可能にするために、自由関数 apply_in_place も提供しています。
+//    これは Boost の InPlaceFactory にも使えると嬉しいので、
+//    ヘッダ apply_in_place.hpp に一般的に使える apply_in_place も用意されています。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -141,6 +142,38 @@ namespace etude {
   
   // helper functions
   
+  // get_tuple の自由関数版
+  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
+  template<class... Args>
+  inline auto get_tuple( in_place_factory<Args...> const& x )
+    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
+  template<class... Args>
+  inline auto get_tuple( in_place_factory<Args...> && x )
+    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
+  
+  // apply の自由関数版
+  // 参照
+  template<class T, class... Args>
+  inline T* apply_in_place( in_place_factory<Args...>& x, void* addr ) {
+    return x.template apply<T>( addr );
+  }
+  // const 参照
+  template<class T, class... Args>
+  inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr ) {
+    return x.template apply<T>( addr );
+  }
+  // 右辺値参照
+  template<class T, class... Args>
+  inline T* apply_in_place( in_place_factory<Args...> && x, void* addr ) {
+    return x.template move_apply<T>( addr );
+  }
+  // const& があれば & は要らないと思うかもしれないが、
+  // apply_in_place.hpp によって定義された apply_in_place が perfect forward なので、
+  // & も定義しないと、一般版の apply_in_place が呼ばれてしまう（今回は特に困らないが）。
+  
+  
+  // function template in_place
+  
   // 一時オブジェクトを rvalue-reference として束縛
   // auto を使って束縛されると危険だが、 std::unique_ptr 等に重宝する
   template<class... Args>
@@ -174,39 +207,6 @@ namespace etude {
   {
     return in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) );
   }
-  
-  
-  // 戻り値と move 対応を盛り込んだヘルパ関数
-  
-  // boost 対応
-  template<class T, class InPlace,
-    typename = typename std::enable_if<is_in_place_factory<InPlace>::value>::type>
-  inline T* apply_in_place( InPlace const& x, void* addr ) {
-    x.template apply<T>( addr );
-    return static_cast<T*>( addr );
-  }
-  
-  // etude::in_place_factory 版
-  // const 参照
-  template<class T, class... Args>
-  inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr ) {
-    return x.template apply<T>( addr );
-  }
-  // move
-  template<class T, class... Args>
-  inline T* apply_in_place( in_place_factory<Args...> && x, void* addr ) {
-    return x.template move_apply<T>( addr );
-  }
-  
-  
-  // get_tuple の自由関数版
-  // こちらのほうが名前が統一されてるので、基本的にこっちを使うべき
-  template<class... Args>
-  inline auto get_tuple( in_place_factory<Args...> const& x )
-    -> decltype( x.get_tuple() ) { return x.get_tuple(); }
-  template<class... Args>
-  inline auto get_tuple( in_place_factory<Args...> && x )
-    -> decltype( x.move_tuple() ) { return x.move_tuple(); }
 
 }
 
