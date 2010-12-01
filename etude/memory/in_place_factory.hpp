@@ -61,6 +61,7 @@ namespace etude {
     
     explicit in_place_factory() {}
     in_place_factory( std::tuple<> ) {}
+    in_place_factory& operator=( in_place_factory const& ) = delete;
     
     template<class T>
     T* apply( void* addr ) const {
@@ -92,6 +93,7 @@ namespace etude {
                                                                               \
       in_place_factory( in_place_factory const& ) = default;                  \
       in_place_factory( in_place_factory && ) = default;                      \
+      in_place_factory& operator=( in_place_factory const& ) = delete;        \
                                                                               \
       in_place_factory( tuple_type const& t )                                 \
         : x( t ) {}                                                           \

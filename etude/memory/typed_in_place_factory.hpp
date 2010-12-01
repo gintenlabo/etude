@@ -49,9 +49,9 @@ namespace etude {
     // gcc 4.5.0 では implicit move は働いてくれないらしい…。
     typed_in_place_factory( typed_in_place_factory const& ) = default;
     typed_in_place_factory( typed_in_place_factory && ) = default;
-    // typed_in_place_factory& operator=( typed_in_place_factory const& ) = default;
-    // ↓ 怒られた。どうしろと。
-    // typed_in_place_factory& operator=( typed_in_place_factory && ) = default;
+    
+    // 再代入は禁止する。 ラムダ式でもそうだし。
+    typed_in_place_factory& operator=( typed_in_place_factory const& ) = delete;
     
     // タプル、 in_place_factory からの構築
     template<class U,
