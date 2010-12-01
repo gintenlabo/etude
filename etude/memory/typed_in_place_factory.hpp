@@ -10,8 +10,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_
-#define ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_
+#ifndef ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_HPP_
+#define ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_HPP_
 
 #include <boost/utility/typed_in_place_factory.hpp>
 
@@ -148,4 +148,4 @@ namespace etude {
 
 }
 
-#endif  // #ifndef ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_
+#endif  // #ifndef ETUDE_MEMORY_INCLUDED_TYPED_IN_PLACE_FACTORY_HPP_

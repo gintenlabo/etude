@@ -9,8 +9,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_INCLUDED_NONCOPYABLE_
-#define ETUDE_INCLUDED_NONCOPYABLE_
+#ifndef ETUDE_INCLUDED_NONCOPYABLE_HPP_
+#define ETUDE_INCLUDED_NONCOPYABLE_HPP_
 
 
 namespace etude {
@@ -31,4 +31,4 @@ namespace etude {
  using namespace noncopyable_;
 }
 
-#endif  // #ifndef ETUDE_INCLUDED_NONCOPYABLE_
+#endif  // #ifndef ETUDE_INCLUDED_NONCOPYABLE_HPP_
