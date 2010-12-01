@@ -13,14 +13,14 @@
 #include <boost/utility/in_place_factory.hpp>
 #include <boost/utility/typed_in_place_factory.hpp>
 
-#include <set>
+#include "test_utilities.hpp"
 #include <boost/noncopyable.hpp>
 
 // user-defined in-place factory
 struct my_in_place_factory
   : boost::in_place_factory_base
 {
-  // apply_in_place において完璧な転送が行われているかチェック
+  // apply_in_place において完全な転送が行われているかチェック
   template<class T>
   void apply( void* p ) {
     // if non-const, pass 2 args
@@ -41,7 +41,7 @@ struct my_typed_in_place_factory
 {
   typedef T value_type;
   
-  // apply_in_place において完璧な転送が行われているかチェック
+  // apply_in_place において完全な転送が行われているかチェック
   void apply( void* p ) {
     // if non-const, pass 2 args
     ::new(p) T( 1, 2 );
@@ -54,56 +54,23 @@ struct my_typed_in_place_factory
 };
 
 struct tested
-  : private boost::noncopyable
+  : lifetime_check<tested>, private boost::noncopyable
 {
   template<class... Args>
   tested( Args&&... )
-    : argc_( sizeof...(Args) )
-  {
-    bool const succeeded = get_object_list().insert(this).second;
-    BOOST_ASSERT( succeeded );
-  }
-  ~tested() {
-    std::size_t erased = get_object_list().erase(this);
-    BOOST_ASSERT( erased == 1 );
-  }
+    : argc_( sizeof...(Args) ) {}
   
-  bool is_initialized() const {
-    return get_object_list().find(this) != get_object_list().end();
-  }
   int passed_arguments() const {
     return argc_;
   }
   
-  static bool count_existing_instances() {
-    return get_object_list().size();
-  }
-  
  private:
-  typedef std::set<tested const*> object_list_t;
-  
-  static object_list_t& get_object_list() {
-    static object_list_t object_list;
-    return object_list;
-  }
-  
   int const argc_;
   
 };
 
 #include <type_traits>
-typedef std::aligned_storage<sizeof(tested), alignof(tested)>::type tested_storage;
-
-template<class T>
-struct pseudo_destructor_call
-{
-  void operator()( T* p ) const {
-    p->~T();
-  }
-  void operator()( T& x ) const {
-    x.~T();
-  }
-};
+typedef storage_of<tested>::type tested_storage;
 
 #include <memory>
 typedef std::unique_ptr<tested, pseudo_destructor_call<tested>> tested_ptr;
@@ -119,14 +86,14 @@ bool check_if_in_place_applyable( InPlace && x, int argc ) {
   using etude::apply_in_place;
   
   tested_storage buf;
-  BOOST_ASSERT( !reinterpret_cast<tested*>(&buf)->is_initialized() );
+  BOOST_ASSERT( !tested::is_initialized(&buf) );
   
   tested_ptr p( apply_in_place<tested>( std::forward<InPlace>(x), &buf ) );
-  BOOST_ASSERT( p->is_initialized() );
+  BOOST_ASSERT( tested::is_initialized( p.get() ) );
   BOOST_ASSERT( p->passed_arguments() == argc );
   
   p.reset();
-  BOOST_ASSERT( !reinterpret_cast<tested*>(&buf)->is_initialized() );
+  BOOST_ASSERT( !tested::is_initialized(&buf) );
   
   return true;
 }
@@ -228,14 +195,14 @@ bool check_if_typed_in_place_applyable( TypedInPlace && x, int argc ) {
   using etude::apply_typed_in_place;
   
   tested_storage buf;
-  BOOST_ASSERT( !reinterpret_cast<tested*>(&buf)->is_initialized() );
+  BOOST_ASSERT( !tested::is_initialized(&buf) );
   
   tested_ptr p( apply_typed_in_place( std::forward<TypedInPlace>(x), &buf ) );
-  BOOST_ASSERT( p->is_initialized() );
+  BOOST_ASSERT( tested::is_initialized( p.get() ) );
   BOOST_ASSERT( p->passed_arguments() == argc );
   
   p.reset();
-  BOOST_ASSERT( !reinterpret_cast<tested*>(&buf)->is_initialized() );
+  BOOST_ASSERT( !tested::is_initialized(&buf) );
   
   return true;
 }
