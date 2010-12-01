@@ -59,7 +59,10 @@ void basic_usage()
   
   // 注意！ 変数に格納して使い回す場合は in_place は使っちゃダメ
   // auto in_place_0 = etude::in_place( 5, 6 ); // 一時変数も参照キャプチャするので危険
-  // 代わりに in_place_by_val/in_place_by_ref を使う
+  // また、仮に in_place で得られたファクトリを変数（あるいは関数の引数）に束縛した場合、
+  // その変数をコピーすることは出来ない（ rvalue-reference なのでコピーできたら困る）。
+
+  // 変数に束縛したい／コピーしたい場合は、 in_place_by_val/in_place_by_ref を使う
   auto in_place_1 = etude::in_place_by_val( z, 8 );
   auto in_place_2 = etude::in_place_by_ref( z, 10 );
   // 違いは簡単で、変数を値としてキャプチャするか、参照としてキャプチャするか
