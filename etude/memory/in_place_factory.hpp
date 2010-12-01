@@ -90,6 +90,9 @@ namespace etude {
       explicit in_place_factory( BOOST_PP_ENUM_BINARY_PARAMS( n, A, && a ) )  \
         : x( BOOST_PP_ENUM( n, ETUDE_GEN_FORWARD_, _ ) ) {}                   \
                                                                               \
+      in_place_factory( in_place_factory const& ) = default;                  \
+      in_place_factory( in_place_factory && ) = default;                      \
+                                                                              \
       in_place_factory( tuple_type const& t )                                 \
         : x( t ) {}                                                           \
       in_place_factory( tuple_type && t )                                     \

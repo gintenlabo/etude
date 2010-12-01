@@ -46,6 +46,10 @@ namespace etude {
     explicit typed_in_place_factory( Args&& ...args )
       : impl_( std::forward<Args>(args)... ) {}
     
+    // gcc 4.5.0 では implicit move は働いてくれないらしい…。
+    typed_in_place_factory( typed_in_place_factory const& ) = default;
+    typed_in_place_factory( typed_in_place_factory && ) = default;
+    
     // タプル、 in_place_factory からの構築
     template<class U,
       class = typename std::enable_if<std::is_convertible<U, impl_t>::value>::type >
