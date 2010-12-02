@@ -56,6 +56,11 @@ release = '0.0.0'
 # for a list of supported languages.
 #language = None
 
+# ドキュメント内でハイライトするデフォルトの言語を設定します。デフォルト値は 'python' です。
+# 値はPygmentsのlexer名として有効な名前でなければなりません。
+# 詳しくは code-examples を参照してください。
+highlight_language = 'cpp'
+
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
 #today = ''
