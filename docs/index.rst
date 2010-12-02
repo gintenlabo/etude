@@ -9,6 +9,6 @@ C++0x によって書かれた汎用小物ライブラリです。
 .. toctree::
    :maxdepth: 2
    
-   libraries
+   libs
    license
 
