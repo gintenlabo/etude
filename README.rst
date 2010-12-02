@@ -25,7 +25,7 @@ gcc の独自拡張は使わないので、ゆくゆくは C++0x に対応した
 具体的な対応状況は http://gcc.gnu.org/gcc-4.5/cxx0x_status.html を参考にしてください。
 
 あと `Boost C++ Libraries <http://boost.org/>`_ は必須です。
-可能なかぎり新しいものでよろしくお願いします（参考までに、今現在の最新版は 1.45.0 です）。
+可能なかぎり新しいものでよろしくお願いします（参考までに、2010年12月現在の最新版は 1.45.0 です）。
 
 
 ライセンス
@@ -36,10 +36,10 @@ gcc の独自拡張は使わないので、ゆくゆくは C++0x に対応した
 
 Boost Software License
   http://www.boost.org/LICENSE_1_0.txt
-参考和訳
-  http://hamigaki.sourceforge.jp/doc/html/license.html
 
 といっても、特に目新しいことをしてるわけではないですし、基本的に自由にしてもらえればと。
+
+詳しくは docs/html/license.html を参照してください。
 
 
 何かあったら
@@ -53,3 +53,8 @@ email
   gintensubaru あっと gmail.com
 
 辺りまでコンタクトしてみてください。
+
+
+--------------------------------------------
+
+Copyright (C) 2010  Takaya Saito (SubaruG)
