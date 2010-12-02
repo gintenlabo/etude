@@ -20,14 +20,14 @@ namespace etude {
   {
     noncopyable() = default;
     
-    noncopyable( noncopyable const& ) = delete;
+    noncopyable( noncopyable const& )    = delete;
     void operator=( noncopyable const& ) = delete;
-    noncopyable( noncopyable&& ) = delete;
-    void operator=( noncopyable&& ) = delete;
+    noncopyable( noncopyable&& )         = delete;
+    void operator=( noncopyable&& )      = delete;
     
   };
  
- }  // ADL 回避
+ }
  using namespace noncopyable_;
 }
 
