@@ -2,4 +2,10 @@
 ライブラリ一覧
 ===============
 
-under construction...
+.. toctree::
+   :hidden:
+   
+   noncopyable
+
+:doc:`noncopyable`
+  boost::noncopyable の改良版
