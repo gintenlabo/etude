@@ -136,4 +136,84 @@ under construction...
 詳細データ
 -----------
 
-under construction...
+
+<etude/in_place.hpp>
+~~~~~~~~~~~~~~~~~~~~
+
+::
+
+  #include "memory/is_in_place_factory.hpp"
+  #include "memory/is_typed_in_place_factory.hpp"
+  
+  #include "memory/in_place_factory.hpp"
+  #include "memory/typed_in_place_factory.hpp"
+  
+  #include "memory/apply_in_place.hpp"
+
+各種ヘッダをインクルードするだけのヘッダです。
+
+
+<etude/memory/is_in_place_factory.hpp>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+  #include <boost/utility/in_place_factory.hpp>
+
+  namespace etude {
+  
+    using boost::in_place_factory_base;
+    
+    template<class T> struct is_in_place_factory;
+    
+  }
+
+``template<class T> struct is_in_place_factory;``
+  T が（CV修飾された） InPlaceFactory （ ``boost::in_place_factory_base`` から派生したクラス）
+  の場合、あるいは InPlaceFactory への参照である場合には
+  ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承したメタ関数です。
+  
+  .. hint::
+    
+    特別な理由がなければ、このメタ関数を直接使うのではなく、
+    
+    代わりに ``<etude/memory/apply_in_place.hpp>`` で定義されたメタ関数
+    ``etude::is_in_place_applyable`` を使う方がよいでしょう。
+
+
+<etude/memory/is_typed_in_place_factory.hpp>
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
+
+  #include <boost/utility/typed_in_place_factory.hpp>
+
+  namespace etude {
+  
+    using boost::typed_in_place_factory_base;
+    
+    template<class T> struct is_typed_in_place_factory;
+    template<class T> struct typed_in_place_associated;
+  }
+
+``template<class T> struct is_typed_in_place_factory;``
+  T が（CV修飾された） TypedInPlaceFactory （ ``boost::is_typed_in_place_factory``
+  から派生したクラス）の場合、あるいは TypedInPlaceFactory への参照である場合には
+  ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承したメタ関数です。
+
+``template<class T> struct typed_in_place_associated;``
+  T が（CV修飾された） TypedInPlaceFactory 、あるいはその参照の場合には、
+  ``typename typed_in_place_associated<T>::type`` は
+  ``typename TypedInPlaceFactory::value_type`` に定義されます。
+  
+  そうでなければ typed_in_place_associated<T>::type は定義されません。
+  
+  .. hint::
+    
+    このメタ関数は、デフォルト関数テンプレート引数を用いて ::
+    
+      template<class TypedInPlace,
+        class T = typename etude::typed_in_place_associated<TypedInPlace>::type>
+      result function( TypedInPlace && x, ～ );
+    
+    のように使われることを想定しています。
