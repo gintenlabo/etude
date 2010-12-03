@@ -2,12 +2,13 @@
 Noncopyable
 ============
 
-
-必要なヘッダ
-  <etude/noncopyable.hpp>
-
 使い道
   コピーできないクラスであることを明示する
+
+必要ヘッダ
+  ::
+    
+    #include <etude/noncopyable.hpp>
 
 
 概要
