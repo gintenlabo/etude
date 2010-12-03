@@ -1,0 +1,241 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>In-Place Factories &mdash; Etude C++ Libraries: Documentation</title>
+    <link rel="stylesheet" href="_static/default.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries: Documentation" href="index.html" />
+    <link rel="up" title="ライブラリ一覧" href="libs.html" />
+    <link rel="next" title="ライセンス" href="license.html" />
+    <link rel="prev" title="Noncopyable" href="noncopyable.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="license.html" title="ライセンス"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="noncopyable.html" title="Noncopyable"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" accesskey="U">ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="in-place-factories">
+<h1>In-Place Factories<a class="headerlink" href="#in-place-factories" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>使い道</dt>
+<dd>コンストラクタの引数を転送し、メモリ領域を直接初期化する</dd>
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="c1">// 全ての機能を使う場合。以下の全てのヘッダがインクルードされる</span>
+<span class="cp">#include &lt;etude/in_place.hpp&gt;</span>
+
+<span class="c1">// etude::in_place のみ使いたい場合</span>
+<span class="cp">#include &lt;etude/memory/in_place_factory.hpp&gt;        </span><span class="c1">// 型指定なし版</span>
+<span class="cp">#include &lt;etude/memory/typed_in_place_factory.hpp&gt;  </span><span class="c1">// 型指定あり版</span>
+
+<span class="c1">// in-place factory の適用ヘルパ関数</span>
+<span class="cp">#include &lt;etude/memory/apply_in_place.hpp&gt;</span>
+
+<span class="c1">// 問い合わせ用の小物メタ関数</span>
+<span class="cp">#include &lt;etude/memory/is_in_place_factory.hpp&gt;</span>
+<span class="cp">#include &lt;etude/memory/is_typed_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/utility/in_place_factories.html">Boost.InPlaceFactories</a> の
+C++0x 版です。rvalue references と variadic templates に対応しています。</p>
+<p>InPlaceFactories は、それ単独では価値を見出しにくいライブラリですが、
+例えば <a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/optional/doc/html/">Boost.Optional</a>
+といったライブラリと組み合わせることで、非常に便利に使うことが出来ます。</p>
+<p>InPlaceFactories は、あるメモリ領域に、 copy や move に依らず、
+直接的にオブジェクトを構築することを可能にします：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;boost/scoped_ptr.hpp&gt;</span>
+<span class="cp">#include &lt;boost/optional.hpp&gt;</span>
+<span class="cp">#include &lt;boost/utility/in_place_factory.hpp&gt;</span>
+
+<span class="c1">// このクラスは boost::scoped_ptr を持っているのでコピー出来ない</span>
+<span class="k">struct</span> <span class="n">hoge</span>
+<span class="p">{</span>
+  <span class="n">hoge</span><span class="p">(</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">s</span> <span class="p">);</span>
+  <span class="o">~</span><span class="n">hoge</span><span class="p">();</span>
+
+  <span class="kt">void</span> <span class="n">foo</span><span class="p">();</span>
+
+ <span class="k">private</span><span class="o">:</span>
+  <span class="k">class</span> <span class="nc">Impl_</span><span class="p">;</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">scoped_ptr</span><span class="o">&lt;</span><span class="n">Impl_</span><span class="o">&gt;</span> <span class="n">pImpl_</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="n">some_function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">hoge</span><span class="o">&gt;</span> <span class="n">h</span><span class="p">;</span>
+  <span class="c1">// でも Boost.Optional に格納できる！</span>
+  <span class="n">h</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;hoge&quot;</span> <span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>使い方は、オブジェクトの引数を <tt class="docutils literal"><span class="pre">in_place</span></tt> という関数で束ねた上で、
+InPlaceFactories をサポートしているクラスに渡すだけです。</p>
+<p>そのようにして InPlaceFactories を使った場合の分かりやすい恩恵は、上記のように、
+コピー出来ないオブジェクトを扱う際の制限が減る、というものですが、
+それだけに留まりません。</p>
+<p>InPlaceFactories を使うことにより、「構築して copy/move する」と
+二段階で初期化していたオブジェクトを、
+たった一回、直接的に初期化するのみで構築することが出来るようになるのです。</p>
+<p>実際には C++ には RVO という機能があるので、 InPlaceFactories を使わずとも、
+コンパイラによって二段階ではなく一段階の初期化に最適化されうるのですが、
+その最適化が働くかどうかはコンパイラ依存です。</p>
+<p>InPlaceFactories を使えば、原理的には、
+コンパイラに依らず、 copy/move を介さない一度の呼び出しで、
+あらゆるオブジェクトを初期化出来るようになります。</p>
+<p>実際には InPlaceFactories に対応したライブラリはごく一部なので
+そう簡単には行きませんが、少なくとも「何となく便利そうだ」ということは
+分かってもらえたんじゃないでしょうか。</p>
+<p>で、そんな便利な Boost.InPlaceFactories ですが、現状ではいくらか問題があります。</p>
+<ul class="simple">
+<li>デフォルトで引数パックを値キャプチャするので、効率がいささか悪い</li>
+<li>Variadic Templates を使っていないので、型が分かりにくい</li>
+<li>実装側の問題だが、 apply する時に move してくれない</li>
+<li>同じく実装側の問題だが、 InPlaceFactory と TypedInPlaceFactory の二種類に対応しなければならない</li>
+</ul>
+<p>これらの問題に対処したのが、 Etude.InPlaceFactories です。</p>
+<p>Etude.InPlaceFactories は、基本的には Boost.InPlaceFactories と全く同じように扱うことが出来ます。</p>
+<p>これは、今まで Boost.InPlaceFactories を使っていた場面を、そのまま Etude.InPlaceFactories
+によって置き換えることができる、ということです：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// 再掲。 hoge の定義は上を参照</span>
+<span class="kt">void</span> <span class="n">some_function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">hoge</span><span class="o">&gt;</span> <span class="n">h</span><span class="p">;</span>
+  <span class="c1">// Boost.Optional を置き換えずに etude::in_place を使える</span>
+  <span class="n">h</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;hoge&quot;</span> <span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>それに加えて Etude.InPlaceFactories では、 rvalue references を扱うことが出来ます：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// etude なら OK, boost だと NG</span>
+<span class="n">XXX</span> <span class="n">xxx</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">foo</span><span class="o">&gt;</span><span class="p">(</span> <span class="k">new</span> <span class="n">foo</span><span class="p">()</span> <span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>その為には実装側で rvalue references に対応する必要がありますが、
+その実装を助けるための各種のヘルパ関数、ヘルパメタ関数も
+Etude.InPlaceFactories には用意されています。</p>
+<p>また、地味ですが、 Etude.InPlaceFactories では、 <tt class="docutils literal"><span class="pre">in_place</span></tt> 関数の結果を保持するクラスの名前が、
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;Args...&gt;</span></tt> および <tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> と
+明確に定義されている為、いざという時に便利です。</p>
+<p>詳しい使い方、および Boost との差異については、以下で述べます。</p>
+</div>
+<div class="section" id="id2">
+<h2>使い方（利用側）<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>under construction...</p>
+</div>
+<div class="section" id="id3">
+<h2>使い方（実装側）<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>under construction...</p>
+</div>
+<div class="section" id="id4">
+<h2>詳細データ<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<p>under construction...</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">In-Place Factories</a><ul>
+<li><a class="reference internal" href="#id1">概要</a></li>
+<li><a class="reference internal" href="#id2">使い方（利用側）</a></li>
+<li><a class="reference internal" href="#id3">使い方（実装側）</a></li>
+<li><a class="reference internal" href="#id4">詳細データ</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="noncopyable.html"
+                        title="previous chapter">Noncopyable</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="license.html"
+                        title="next chapter">ライセンス</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/in-place.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="license.html" title="ライセンス"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="noncopyable.html" title="Noncopyable"
+             >previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" >ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010, Takaya Saito (SubaruG).
+      Last updated on 12/03, 2010.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>
