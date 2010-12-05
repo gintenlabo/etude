@@ -21,7 +21,7 @@
 #include "is_typed_in_place_factory.hpp"
 
 #include <utility>
-#include <boost/utility/addressof.hpp>
+#include <type_traits>
 
 namespace etude {
 
@@ -29,11 +29,11 @@ namespace etude {
   // TypedInPlaceFactory の apply の自由関数版
   
   // 一般用
-  template<class InPlace,
-    class T = typename typed_in_place_associated<InPlace>::type
+  template<class TypedInPlace,
+    class T = typename std::remove_reference<TypedInPlace>::type::value_type
   >
-  inline T* apply_typed_in_place( InPlace && x, void* addr ) {
-    std::forward<InPlace>(x).apply( addr );
+  inline T* apply_typed_in_place( TypedInPlace && x, void* addr ) {
+    std::forward<TypedInPlace>(x).apply( addr );
     return static_cast<T*>( addr );
   }
   
@@ -66,22 +66,26 @@ namespace etude {
   // 基底クラスによる dispatch
   // Boost.InPlaceFactory 用
   template<class T, class InPlace>
-  inline T* apply_in_place_( in_place_factory_base const*, InPlace && x, void* addr ) {
+  inline T* apply_in_place_( InPlace && x, void* addr, ... ) {
     std::forward<InPlace>(x).template apply<T>( addr );
     return static_cast<T*>( addr );
   }
-  // TypedInPlaceFactory 用。直接呼ばれることを想定していないので型チェックは無し
-  template<class T, class InPlace>
-  inline T* apply_in_place_( typed_in_place_factory_base const*, InPlace && x, void* addr ) {
-    return apply_typed_in_place( std::forward<InPlace>(x), addr );
+  // TypedInPlaceFactory 用
+  template<class T, class TypedInPlace,
+    class = typename std::enable_if<
+      std::is_same< T, 
+        typename std::remove_reference<TypedInPlace>::type::value_type
+      >::value
+    >::type>
+  inline T* apply_in_place_( TypedInPlace && x, void* addr, void* ) {
+    return apply_typed_in_place( std::forward<TypedInPlace>(x), addr );
   }
   
   // apply_in_place 本体
-  template<class T, class InPlace,
-    class = typename std::enable_if<is_in_place_applyable<InPlace, T>::value>::type>
+  template<class T, class InPlace>
   inline T* apply_in_place( InPlace && x, void* addr )
   {
-    return apply_in_place_<T>( boost::addressof(x), std::forward<InPlace>(x), addr );
+    return apply_in_place_<T>( std::forward<InPlace>(x), addr, 0 );
   }
 }
 
