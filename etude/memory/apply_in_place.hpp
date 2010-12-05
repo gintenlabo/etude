@@ -63,8 +63,8 @@ namespace etude {
   template<class InPlace, class T>
   struct is_in_place_applyable : is_in_place_applyable_<InPlace, T> {};
   
-  // 基底クラスによる dispatch
-  // Boost.InPlaceFactory 用
+  // InPlaceFactory と TypedInPlaceFactory で処理を分ける
+  // InPlaceFactory 用
   template<class T, class InPlace>
   inline T* apply_in_place_( InPlace && x, void* addr, ... ) {
     std::forward<InPlace>(x).template apply<T>( addr );
