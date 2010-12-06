@@ -1,5 +1,5 @@
 # git を管理するにあたって無視すべきファイル
 
 # ビルドされたドキュメントは無視する
-docs/_build
-docs/html
+docs/_build/
+docs/html/
