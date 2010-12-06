@@ -2,3 +2,4 @@
 
 # ビルドされたドキュメントは無視する
 docs/_build
+docs/html
