@@ -164,21 +164,22 @@ under construction...
   
     using boost::in_place_factory_base;
     
-    template<class T> struct is_in_place_factory;
+    template<class T> class is_in_place_factory;
     
   }
 
-``template<class T> struct is_in_place_factory;``
-  T が（CV修飾された） InPlaceFactory （ ``boost::in_place_factory_base`` から派生したクラス）
-  の場合、あるいは InPlaceFactory への参照である場合には
-  ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承したメタ関数です。
+.. class:: etude::is_in_place_factory<T>
+  
+  このクラスは、 T が（CV修飾された） InPlaceFactory （ :class:`boost::in_place_factory_base`
+  から派生したクラス）の場合、あるいは InPlaceFactory への参照である場合には
+  :class:`std::true_type` を継承し、そうでなければ :class:`std::false_type` を継承します。
   
   .. hint::
     
     特別な理由がなければ、このメタ関数を直接使うのではなく、
     
-    代わりに ``<etude/memory/apply_in_place.hpp>`` で定義されたメタ関数
-    ``etude::is_in_place_applyable`` を使う方がよいでしょう。
+    代わりに :file:`<etude/memory/apply_in_place.hpp>` で定義されたメタ関数
+    :class:`etude::is_in_place_applyable` を使う方がよいでしょう。
 
 
 <etude/memory/in_place_factory.hpp>
@@ -222,8 +223,9 @@ under construction...
     
   }
 
-``template<class... Args> class in_place_factory;``
-  ``etude::in_place`` の結果を保持するためのクラス。
+.. class:: etude::in_place_factory<Args>
+
+  :func:`etude::in_place` の結果を保持するためのクラス。
   
   このクラスは InPlaceFactory の要件を満たします。
   
@@ -268,35 +270,38 @@ under construction...
     };
 
   
-  ``typedef std::tuple<Args...> tuple_type;``
+  .. type:: etude::in_place_factory::tuple_type
+    
     内部に保持する引数パックの型です。
     
-    ``in_place_factory`` は、内部にこの型のメンバを一つだけ保持します。
+    :class:`in_place_factory` は、内部にこの型のメンバを一つだけ保持します。
   
-  ``explicit in_place_factory( Args&& ...args );``
-    与えられた引数を保持する ``in_place_factory`` を構築します。
+  .. function:: explicit etude::in_place_factory( Args&& args )
   
-  ``in_place_factory( tuple_type const& );`` ``in_place_factory( tuple_type && );``
-    ``std::tuple<Args...>`` に格納された引数リストから ``in_place_factory`` を構築します。
+    与えられた引数を保持する :class:`in_place_factory\<Args\>` を構築します。
+  
+  .. function:: etude::in_place_factory( tuple_type const& ), etude::in_place_factory( tuple_type && )
+  
+    :type:`tuple_type` に格納された引数リストから :class:`in_place_factory\<Args\>` を構築します。
     
     .. note::
       
       このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。
       
       言語仕様上、ユーザ定義の型変換は一度しか行われないため、
-      このコンストラクタに渡すタプルの型が ``std::tuple<Args...>`` と厳密に一致しない場合、
+      このコンストラクタに渡すタプルの型が :type:`std::tuple\<Args...\>` と厳密に一致しない場合、
       たとえタプルの中身が変換可能であっても、コンパイルエラーとなります。
       
       具体的な例を挙げると、 ::
       
         etude::in_place_factory<double> x = std::make_tuple(1);
       
-      は、 ``std::make_tuple(1)`` の結果である ``std::tuple<int>`` と、
-      ``etude::in_place_factory<double>`` のコンストラクタが要求する ``std::tuple<double>``
+      は、 ``std::make_tuple(1)`` の結果である :type:`std::tuple\<int\>` と、
+      :type:`etude::in_place_factory\<double\>` のコンストラクタが要求する :type:`std::tuple<double>`
       の型が厳密に一致しないため、 ill-formed です。
       
-      型の厳密に一致しないタプルから ``in_place_factory`` を構築したい場合は、
-      ``in_place_from_tuple`` を用いて、一度 該当する型の ``in_place_factory`` に変換してください。
+      型の厳密に一致しないタプルから :class:`in_place_factory\<Args\>` を構築したい場合は、
+      :func:`in_place_from_tuple` を用いて、一度 該当する型の :class:`in_place_factory\<Args\>` に変換してください。
   
   ``template<class... Types> in_place_factory( in_place_factory<Types...> const& );`` ``template<class... Types> in_place_factory( in_place_factory<Types...> && );``
     異なる型の引数を保持する ``in_place_factory`` からの型変換を提供します。
