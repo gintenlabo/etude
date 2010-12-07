@@ -18,6 +18,39 @@
 #include "../etude/noncopyable.hpp"
 #include <boost/checked_delete.hpp>
 
+// 型チェックをこっちにまとめる
+void type_check()
+{
+  // 普通につくるよん
+  IS_SAME_TYPE( std::unique_ptr<int>(), etude::scoped( new int() ) );
+  // デリータの種類を明示的に指定するよん
+  IS_SAME_TYPE( std::unique_ptr<int>(),
+    etude::scoped<std::default_delete<int>>( new int() ) );
+  
+  // デリータを明示的に渡すよん
+  IS_SAME_TYPE( std::unique_ptr<int>(),
+    etude::scoped( new int(), std::default_delete<int>() ) );
+  {
+    // 名前付きでも大丈夫なのん？
+    typedef std::default_delete<int> deleter;
+    deleter d;
+    IS_SAME_TYPE( ( std::unique_ptr<int, deleter>() ), etude::scoped( new int(), d ) );
+    
+    // 参照渡しには ref を使えばいいのん？
+    IS_SAME_TYPE( ( std::unique_ptr<int, deleter&>( 0, d ) ),
+      etude::scoped( new int(), std::ref(d) ) );
+    
+    // 特に意味ないけど cref も使えるのん？
+    IS_SAME_TYPE( ( std::unique_ptr<int, deleter const&>( 0, d ) ),
+      etude::scoped( new int(), std::cref(d) ) );
+  }
+  
+  // 関数渡しても大丈夫なのん？
+  IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
+    etude::scoped( new int(), boost::checked_delete<int> ) );
+  
+}
+
 struct my_deleter
   : etude::noncopyable  // なんとなく noncopyable
 {
@@ -41,31 +74,12 @@ struct my_deleter
 
 int main()
 {
+  // 基本的なチェック
+  type_check();
+  
   my_deleter del;
   
-  // 型チェック
-  IS_SAME_TYPE( std::unique_ptr<int>(), etude::scoped( new int() ) );
-  // デリータを渡しても大丈夫なのん？
-  IS_SAME_TYPE( std::unique_ptr<int>(),
-    etude::scoped( new int(), std::default_delete<int>() ) );
-  {
-    // 名前付きでも大丈夫なのん？
-    std::default_delete<int> d;
-    IS_SAME_TYPE( std::unique_ptr<int>(), etude::scoped( new int(), d ) );
-  }
-  // 関数渡しても大丈夫なのん？
-  IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
-    etude::scoped( new int(), boost::checked_delete<int> ) );
-  
-  // デリータを指定して構築するよん
-  IS_SAME_TYPE( std::unique_ptr<int>(),
-    etude::scoped<std::default_delete<int>>( new int() ) );
-  
-  // 俺々デリータを参照渡しするよ！
-  IS_SAME_TYPE( ( std::unique_ptr<int, my_deleter&>( 0, del ) ),
-    etude::scoped( new int(), std::ref(del) ) );
-  
-  // ちゃんと作れてるん？
+  // 俺々デリータを参照渡しして作るよん
   auto p = etude::scoped( new int(), std::ref(del) );
   
   BOOST_ASSERT( p );
