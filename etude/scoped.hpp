@@ -17,11 +17,19 @@
 
 namespace etude {
   
-  // simple wrapper function for std::unique_ptr
+  // simple wrapper functions for std::unique_ptr
+  
+  // ポインタとデリータから作る
   template< class T, class D = std::default_delete<T>,
     class D_ = typename decay_and_strip<D>::type >
   inline std::unique_ptr<T, D_> scoped( T* p, D d = D() ) {
     return std::unique_ptr<T, D_>( p, static_cast<D&&>(d) );
+  }
+  
+  // デリータの種類を指定して作る
+  template< class D, class T >
+  inline std::unique_ptr<T, D> scoped( T* p ) {
+    return std::unique_ptr<T, D>(p);
   }
 
 } // namespace etude

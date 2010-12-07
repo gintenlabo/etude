@@ -57,6 +57,10 @@ int main()
   IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
     etude::scoped( new int(), boost::checked_delete<int> ) );
   
+  // デリータを指定して構築するよん
+  IS_SAME_TYPE( std::unique_ptr<int>(),
+    etude::scoped<std::default_delete<int>>( new int() ) );
+  
   // 俺々デリータを参照渡しするよ！
   IS_SAME_TYPE( ( std::unique_ptr<int, my_deleter&>( 0, del ) ),
     etude::scoped( new int(), std::ref(del) ) );
