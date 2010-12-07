@@ -17,6 +17,10 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
+//  このヘッダは http://www.rhinocerus.net/forum/language-c-moderated/
+//    439657-c-0x-tuple-unpacking-arguments-function-call.html#post2038703
+//  を参考にしています。
+//
 #ifndef ETUDE_INCLUDED_INDICES_HPP_
 #define ETUDE_INCLUDED_INDICES_HPP_
 
