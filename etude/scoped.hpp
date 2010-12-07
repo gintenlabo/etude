@@ -24,10 +24,10 @@ namespace etude {
   // simple wrapper function for std::unique_ptr
   template< class T, class D = std::default_delete<T>,
     class D_ = typename decay_and_strip<D>::type >
-  inline std::unique_ptr<T, D_> scoped( T* p, D&& d = D() ) {
+  inline std::unique_ptr<T, D_> scoped( T* p, D d = D() ) {
     return std::unique_ptr<T, D_>( p, static_cast<D&&>(d) );
   }
-
+  
 } // namespace etude
 
 #endif  // #ifndef ETUDE_INCLUDED_SCOPED_HPP_

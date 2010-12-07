@@ -16,6 +16,7 @@
   STATIC_ASSERT(( std::is_same<decltype(expr1), decltype(expr2)>::value ))
 
 #include "../etude/noncopyable.hpp"
+#include <boost/checked_delete.hpp>
 
 struct my_deleter
   : etude::noncopyable  // なんとなく noncopyable
@@ -26,7 +27,7 @@ struct my_deleter
   // 削除しつつ、こっそり削除したポインタの数を数えるよ！
   template<class T>
   void operator()( T* p ) {
-    delete p;
+    boost::checked_delete( p );
     ++count_;
   }
   
@@ -52,6 +53,9 @@ int main()
     std::default_delete<int> d;
     IS_SAME_TYPE( std::unique_ptr<int>(), etude::scoped( new int(), d ) );
   }
+  // 関数渡しても大丈夫なのん？
+  IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
+    etude::scoped( new int(), boost::checked_delete<int> ) );
   
   // 俺々デリータを参照渡しするよ！
   IS_SAME_TYPE( ( std::unique_ptr<int, my_deleter&>( 0, del ) ),
