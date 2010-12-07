@@ -17,6 +17,14 @@
 
 #include "../etude/noncopyable.hpp"
 #include <boost/checked_delete.hpp>
+#include <boost/optional.hpp>
+
+// 継承チェック
+struct base {
+  virtual ~base(){}
+};
+struct derived
+  : base {};
 
 // 型チェックをこっちにまとめる
 void type_check()
@@ -48,6 +56,39 @@ void type_check()
   // 関数渡しても大丈夫なのん？
   IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
     etude::scoped( new int(), boost::checked_delete<int> ) );
+  
+  
+  // "pointer" のあるデリータでテストするよー。
+  // まず pointer が通常のポインタの場合だよー。
+  struct deleter1 {
+    typedef base* pointer;
+    void operator()( pointer p ) const {
+      delete p;
+    }
+  };
+  
+  // その場合は普通と同じだよー。
+  IS_SAME_TYPE( ( std::unique_ptr<derived, deleter1>() ),
+    etude::scoped<deleter1>( new derived() ) );
+  IS_SAME_TYPE( ( std::unique_ptr<derived, deleter1>() ),
+    etude::scoped( new derived(), deleter1() ) );
+  
+  // D::pointer が T* 以外の場合は std::unique_ptr<void, D> になるよー。
+  // たとえば boost::optional<int> とかねー。
+  struct deleter2 {
+    typedef boost::optional<int> pointer;
+    void operator()( pointer const& ) const {
+      // 特に何もしない。
+      // 本来は何らかの資源を所有してるだろうから、それを解放する。
+    }
+  } d2;
+  // テストするよー。
+  IS_SAME_TYPE( ( std::unique_ptr<void, deleter2>() ),
+    etude::scoped<deleter2>( 1 ) ); // いい感じに型変換してくれるよん
+  IS_SAME_TYPE( ( std::unique_ptr<void, deleter2>() ),
+    etude::scoped( 2, deleter2() ) );
+  IS_SAME_TYPE( ( std::unique_ptr<void, deleter2&>( 0, std::ref(d2) ) ),
+    etude::scoped( 2, std::ref(d2) ) );
   
 }
 

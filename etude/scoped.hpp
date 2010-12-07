@@ -13,6 +13,7 @@
 #define ETUDE_INCLUDED_SCOPED_HPP_
 
 #include <memory>
+#include <type_traits>
 #include "types/decay_and_strip.hpp"
 
 namespace etude {
@@ -30,6 +31,34 @@ namespace etude {
   template< class D, class T >
   inline std::unique_ptr<T, D> scoped( T* p ) {
     return std::unique_ptr<T, D>(p);
+  }
+  
+  
+  // D に pointer があり、かつそれがポインタではない場合はこちらが使われる
+  
+  // デリータの種類を指定して作る
+  template< class D, class P,
+    class = typename std::enable_if<
+      !std::is_pointer<
+        typename std::remove_reference<D>::type::pointer
+      >::value
+    >::type
+  >
+  inline std::unique_ptr<void, D> scoped( P && p ) {
+    return std::unique_ptr<void, D>( static_cast<P&&>(p) );
+  }
+  
+  // デリータとポインタから作る
+  template< class P, class D,
+    class D_ = typename decay_and_strip<D>::type,
+    class = typename std::enable_if<
+      !std::is_pointer<
+        typename std::remove_reference<D_>::type::pointer
+      >::value
+    >::type
+  >
+  inline std::unique_ptr<void, D_> scoped( P && p, D && d ) {
+    return std::unique_ptr<void, D_>( static_cast<P&&>(p), static_cast<D&&>(d) );
   }
 
 } // namespace etude
