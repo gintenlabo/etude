@@ -60,6 +60,7 @@ release = '0.0.0'
 # 値はPygmentsのlexer名として有効な名前でなければなりません。
 # 詳しくは code-examples を参照してください。
 highlight_language = 'cpp'
+primary_domain = 'cpp'
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:
