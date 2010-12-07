@@ -17,13 +17,15 @@
 #define ETUDE_INCLUDED_SCOPED_HPP_
 
 #include <memory>
+#include "types/decay_and_strip.hpp"
 
 namespace etude {
   
   // simple wrapper function for std::unique_ptr
-  template< class T, class D = std::default_delete<T> >
-  inline std::unique_ptr<T, D> scoped( T* p, D d = D() ) {
-    return std::unique_ptr<T, D>( p, static_cast<D&&>(d) );
+  template< class T, class D = std::default_delete<T>,
+    class D_ = typename decay_and_strip<D>::type >
+  inline std::unique_ptr<T, D_> scoped( T* p, D&& d = D() ) {
+    return std::unique_ptr<T, D_>( p, static_cast<D&&>(d) );
   }
 
 } // namespace etude
