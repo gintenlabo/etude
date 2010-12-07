@@ -23,7 +23,7 @@ namespace etude {
   // simple wrapper function for std::unique_ptr
   template< class T, class D = std::default_delete<T> >
   inline std::unique_ptr<T, D> scoped( T* p, D d = D() ) {
-    return std::unique_ptr<T, D>( p, std::forward<D>(d) );
+    return std::unique_ptr<T, D>( p, static_cast<D&&>(d) );
   }
 
 } // namespace etude
