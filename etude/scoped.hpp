@@ -9,10 +9,6 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-//  このヘッダは http://www.rhinocerus.net/forum/language-c-moderated/
-//    439657-c-0x-tuple-unpacking-arguments-function-call.html#post2038703
-//  を参考にしています。
-//
 #ifndef ETUDE_INCLUDED_SCOPED_HPP_
 #define ETUDE_INCLUDED_SCOPED_HPP_
 
@@ -27,7 +23,7 @@ namespace etude {
   inline std::unique_ptr<T, D_> scoped( T* p, D d = D() ) {
     return std::unique_ptr<T, D_>( p, static_cast<D&&>(d) );
   }
-  
+
 } // namespace etude
 
 #endif  // #ifndef ETUDE_INCLUDED_SCOPED_HPP_
