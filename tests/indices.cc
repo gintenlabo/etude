@@ -34,6 +34,8 @@ int main()
   check_traits( etude::indices<0, 1, 2>() );
   // 順に並んでなくても良い
   check_traits( etude::indices<2, 0, 1, 0, 1, 2, 0, 7>() );
+  // make_indices<N>() は indices<0..N-1> に暗黙変換できる
+  check_traits( etude::make_indices<10>() );
   
   // make indices
   STATIC_ASSERT((

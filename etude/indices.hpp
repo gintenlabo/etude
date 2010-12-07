@@ -57,7 +57,7 @@ namespace etude {
   // 本体
   template<std::size_t N>
   struct make_indices
-    : make_indices_<N> {};
+    : make_indices_<N>::type {};
 
 } // namespace etude
 
