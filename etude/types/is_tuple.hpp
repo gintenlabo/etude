@@ -20,29 +20,19 @@
 namespace etude {
 
   // for implementation
-  class is_tuple_
-  {
-    template<class T, class = typename std::enable_if<(
-        std::tuple_size<T>::value >= 0
-      )>::type
-    >
-    static std::true_type test(int);
-    
-    template<class T>
-    static std::false_type test(...);
-    
-   public:
-    template<class T>
-    struct apply {
-      typedef decltype( test<T>(0) ) type;
-    };
-    
-  };
+  template<class T, class = void>
+  struct is_tuple_
+    : std::false_type {};
+  
+  template<class T>
+  struct is_tuple_< T,
+    typename std::enable_if<( std::tuple_size<T>::value >= 0 )>::type
+  > : std::true_type {};
   
   // 本体
   template<class T>
   struct is_tuple
-    : is_tuple_::template apply<T>::type {};
+    : is_tuple_<T> {};
 
 } // namespace etude
 
