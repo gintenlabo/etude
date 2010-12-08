@@ -22,6 +22,8 @@ void check_traits( etude::indices<Indices...> )
   STATIC_ASSERT(( std::is_empty<indices_type>::value ));
   STATIC_ASSERT(( std::is_trivial<indices_type>::value ));
   
+  // type
+  STATIC_ASSERT(( std::is_same<typename indices_type::type, indices_type>::value ));
   // size
   STATIC_ASSERT(( indices_type::size == sizeof...(Indices) ));
 }
