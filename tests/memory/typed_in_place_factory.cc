@@ -129,4 +129,29 @@ int main()
     etude::typed_in_place_factory<hoge, double, float> in_place_5 = etude::in_place( 1, 1 );
     etude::typed_in_place_factory<hoge, std::unique_ptr<int>, unsigned int, double> in_place_6 = etude::in_place( std::unique_ptr<int>(), 1, 1 );
   }
+  
+  // 型変換が出来ないことを確かめる
+  // 関連付けられた型が違う場合
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::typed_in_place_factory<int>, etude::typed_in_place_factory<double>
+  >::value ));
+  // 引数の数が違う場合
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::typed_in_place_factory<hoge>, etude::typed_in_place_factory<hoge, int, int>
+  >::value ));
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::typed_in_place_factory<hoge, int, int>, etude::typed_in_place_factory<hoge>
+  >::value ));
+  // typed_in_place_factory -> in_place_factory への変換は無理
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::typed_in_place_factory<hoge, int, int>, etude::in_place_factory<int, int>
+  >::value ));
+  // バラバラの型
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::typed_in_place_factory<hoge, int, int>, etude::typed_in_place_factory<hoge, char*, int>
+  >::value ));
+  // in_place_factory からも無理？
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::in_place_factory<int, int>, etude::typed_in_place_factory<hoge, char*, int>
+  >::value ));
 }
