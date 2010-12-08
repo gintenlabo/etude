@@ -26,7 +26,7 @@
 #include <type_traits>
 
 #include "is_in_place_factory.hpp"
-#include "../indices.hpp"
+#include "../types/indices.hpp"
 
 namespace etude {
 

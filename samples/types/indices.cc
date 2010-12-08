@@ -10,8 +10,8 @@
 //  参考： http://www.rhinocerus.net/forum/language-c-moderated/
 //    439657-c-0x-tuple-unpacking-arguments-function-call.html#post2038703
 //
-#include "../etude/indices.hpp"
-#include "../etude/scoped.hpp"
+#include "../../etude/types/indices.hpp"
+#include "../../etude/scoped.hpp"
 
 #include <memory>
 #include <tuple>

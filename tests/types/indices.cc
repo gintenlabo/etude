@@ -6,7 +6,7 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../etude/indices.hpp"
+#include "../../etude/types/indices.hpp"
 
 #include <type_traits>
 

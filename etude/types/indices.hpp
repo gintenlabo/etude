@@ -21,8 +21,8 @@
 //    439657-c-0x-tuple-unpacking-arguments-function-call.html#post2038703
 //  を参考にしています。
 //
-#ifndef ETUDE_INCLUDED_INDICES_HPP_
-#define ETUDE_INCLUDED_INDICES_HPP_
+#ifndef ETUDE_TYPES_INCLUDED_INDICES_HPP_
+#define ETUDE_TYPES_INCLUDED_INDICES_HPP_
 
 #include <cstddef>  // for std::size_t
 
@@ -65,4 +65,4 @@ namespace etude {
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_INCLUDED_INDICES_HPP_
+#endif  // #ifndef ETUDE_TYPES_INCLUDED_INDICES_HPP_
