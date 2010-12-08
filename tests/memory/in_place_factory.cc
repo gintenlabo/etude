@@ -123,4 +123,31 @@ int main()
     etude::in_place_factory<double, float> in_place_3 = in_place_1;
     etude::in_place_factory<std::unique_ptr<int>, unsigned int, double> in_place_4 = std::move(in_place_2);
   }
+  
+  // 型変換が「できない」チェック
+  
+  // 引数の数が違う
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::in_place_factory<>, etude::in_place_factory<int>
+  >::value ));
+  // 同じく
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::in_place_factory<int, int>, etude::in_place_factory<int>
+  >::value ));
+  // 関係ない二つの型
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::in_place_factory<int>, etude::in_place_factory<double*>
+  >::value ));
+  // &&（これはコピーするので出来て当然）。
+  BOOST_ASSERT(( std::is_convertible<
+    etude::in_place_factory<int&&>, etude::in_place_factory<int>
+  >::value ));
+  // 明らかにおかしいんだけど、これ失敗する。
+  // 原因は Types const&... と書くべき場所で Types... と書いてるせい。
+  /*
+  BOOST_ASSERT(( !std::is_convertible<
+    etude::in_place_factory<std::unique_ptr<int>&&>&,
+    etude::in_place_factory<std::unique_ptr<int>>
+  >::value ));
+  */
 }
