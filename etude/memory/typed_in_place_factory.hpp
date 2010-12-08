@@ -21,6 +21,8 @@
 #include <utility>
 #include <new>
 #include <type_traits>
+#include "../types/type.hpp"
+#include "../types/is_convertible.hpp"
 
 namespace etude {
 
@@ -34,9 +36,6 @@ namespace etude {
   {
     typedef in_place_factory<Args...> impl_t;
     impl_t impl_;
-    
-    template<class U, class... As>
-    friend class typed_in_place_factory;
     
    public:
     typedef T value_type;
@@ -61,12 +60,23 @@ namespace etude {
     
     // 他の typed_in_place_factory からの構築
     // 構築するオブジェクトの型は同じじゃないと意味論的におかしい
-    template<class... As>
-    typed_in_place_factory( typed_in_place_factory<T, As...> const& x )
-      : impl_( x.impl_ ) {}
-    template<class... As>
-    typed_in_place_factory( typed_in_place_factory<T, As...> && x )
-      : impl_( std::move(x.impl_) ) {}
+    // copy
+    // in_place_factory と同じく、 SFINAE のはずがエラーになるので Types... に。
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types...>, types<Args...>>::value
+      >::type
+    >
+    typed_in_place_factory( typed_in_place_factory<T, Types...> const& x )
+      : impl_( x.get_tuple() ) {}
+    // move
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    typed_in_place_factory( typed_in_place_factory<T, Types...> && x )
+      : impl_( x.move_tuple() ) {}
     
     // オブジェクト構築
     T* apply( void* addr ) const {

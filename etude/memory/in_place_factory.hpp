@@ -27,6 +27,8 @@
 
 #include "is_in_place_factory.hpp"
 #include "../types/indices.hpp"
+#include "../types/type.hpp"
+#include "../types/is_convertible.hpp"
 
 namespace etude {
 
@@ -57,10 +59,22 @@ namespace etude {
       : x( std::move(t) ) {}
     
     // 型変換
-    template<class... Types>
+    // きちんと変換できるもんだけ変換する
+    // copy
+    // （Types const&...）だと SFINAE のはずがエラーになるので Types... に。
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types...>, types<Args...>>::value
+      >::type
+    >
     in_place_factory( in_place_factory<Types...> const& src )
       : x( src.get_tuple() ) {}
-    template<class...Types>
+    // move
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
     in_place_factory( in_place_factory<Types...> && src )
       : x( src.move_tuple() ) {}
     
