@@ -9,9 +9,6 @@
 #include "../../etude/memory/pseudo_destructor_call.hpp"
 
 #include <type_traits>
-#include <utility>
-#include <memory>
-#include <boost/assert.hpp>
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
@@ -40,22 +37,25 @@ struct hoge
   // empty
 };
 
+#include <utility>
+#include <memory>
+#include <boost/assert.hpp>
+
 int main()
 {
   check<int>(); // 組み込み型
   check<char*>(); // ポインタ
   check<hoge>(); // ユーザ定義型
   
-  typedef storage_of<hoge>::type hoge_storage;
-  
-  hoge_storage buf;
-  typedef std::unique_ptr< hoge, etude::pseudo_destructor_call<hoge> > pointer;
+  // 一通り動作のチェック
+  // オブジェクトを構築するための領域
+  storage_of<hoge>::type buf;
   
   // 構築されてないことを確認
   BOOST_ASSERT( !hoge::is_initialized(&buf) );
   
   // 構築
-  pointer p( ::new(&buf) hoge() );
+  std::unique_ptr< hoge, etude::pseudo_destructor_call<hoge> > p( ::new(&buf) hoge() );
   // 構築されたことを確認
   BOOST_ASSERT( hoge::is_initialized(&buf) );
   
