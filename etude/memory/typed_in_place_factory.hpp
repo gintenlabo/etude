@@ -42,8 +42,13 @@ namespace etude {
     typedef typename impl_t::tuple_type tuple_type;
     
     // 構築
-    explicit typed_in_place_factory( Args&& ...args )
-      : impl_( std::forward<Args>(args)... ) {}
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    explicit typed_in_place_factory( Types&& ...args )
+      : impl_( std::forward<Types>(args)... ) {}
     
     // gcc 4.5.0 では implicit move は働いてくれないらしい…。
     typed_in_place_factory( typed_in_place_factory const& ) = default;

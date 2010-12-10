@@ -44,8 +44,13 @@ namespace etude {
     typedef std::tuple<Args...> tuple_type;
     
     // 普通に構築
-    explicit in_place_factory( Args&& ...args )
-      : x( std::forward<Args>(args)... ) {}
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    explicit in_place_factory( Types&& ...args )
+      : x( std::forward<Types>(args)... ) {}
     
     // gcc 4.5.0 では implicit move は実装されていない
     in_place_factory( in_place_factory const& ) = default;
