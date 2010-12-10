@@ -27,6 +27,18 @@ void check()
     >::value
   ));
   
+  // これは storage_of でもよい
+  STATIC_ASSERT((
+    std::is_same<
+      typename etude::storage_of<T>::type,
+      typename storage_type::type
+    >::value
+  ));
+  // あと storage_of は純粋なメタ関数
+  STATIC_ASSERT(( std::is_empty<etude::storage_of<T>>::value ));
+  STATIC_ASSERT(( std::is_trivial<etude::storage_of<T>>::value ));
+  
+  
   // etude::storage<T> 自体の性質
   
   // size と align が一致
