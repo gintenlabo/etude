@@ -16,9 +16,7 @@
 
 // T 型を格納できるストレージ
 #include "../../etude/memory/storage.hpp"
-template<class T>
-struct storage_of
-  : etude::storage<T> {};
+using etude::storage_of;
 
 // デストラクタ呼び出しファンクタ
 #include "../../etude/memory/pseudo_destructor_call.hpp"

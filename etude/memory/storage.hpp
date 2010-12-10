@@ -18,44 +18,40 @@
 
 namespace etude {
 
+  // std::aligned_storage<sizeof(T), alignof(T)> に対する alias
+  // 基本的には storage の方を使えばいいが、純粋なメタ関数も必要かも？
+  template<class T>
+  struct storage_of {
+    typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type type;
+  };
+
+  // ストレージ部分の実装
   template<class T, bool isEmpty = false>
-  struct storage_
+  class storage_
     : private noncopyable
   {
-    // internal storage type
-    typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type storage_type;
-    
-    // get address
-    void* address() { return &buf_; }
-    void const* address() const { return &buf_; }
-    
-   private:
-    storage_type buf_;
-    
+    typename storage_of<T>::type buf_;
   };
   // empty class に対する最適化
+  // 何も格納させない
   template<class T>
-  struct storage_<T, true>
+  class storage_<T, true>
     : private noncopyable
   {
     static_assert( std::is_empty<T>::value, "implementation error" );
-    // storage type (実際には格納しない)
-    typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type storage_type;
+  };
+  
+  // 本体
+  template<class T>
+  struct storage
+    : private storage_<T, std::is_empty<T>::value>
+  {
+    // storage type
+    typedef typename storage_of<T>::type type;
+    
     // get address
     void* address() { return this; }
     void const* address() const { return this; }
-  };
-  
-  // storage impl
-  template<class T>
-  class storage
-    : private storage_<T, std::is_empty<T>::value>
-  {
-    typedef storage_<T, std::is_empty<T>::value> base;
-    
-   public:
-    typedef typename base::storage_type type;
-    using base::address;
   
   };
   
