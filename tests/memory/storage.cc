@@ -9,6 +9,7 @@
 #include "../../etude/memory/storage.hpp"
 
 #include <type_traits>
+#include <boost/assert.hpp>
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
@@ -48,6 +49,27 @@ void check()
   STATIC_ASSERT(( !std::is_copy_assignable<storage_type>::value ));
   STATIC_ASSERT(( !std::is_move_assignable<storage_type>::value ));
   */
+  
+  // address のテスト
+  storage_type storage;
+  storage_type const const_storage = {};
+  
+  // 型は void*, void const*
+  STATIC_ASSERT((
+    std::is_same<
+      decltype( storage.address() ), void*
+    >::value
+  ));
+  STATIC_ASSERT((
+    std::is_same<
+      decltype( const_storage.address() ), void const*
+    >::value
+  ));
+  
+  // 戻り値は storage 自体のアドレスに等しい
+  BOOST_ASSERT( static_cast<void*>(&storage) == storage.address() );
+  BOOST_ASSERT( static_cast<void const*>(&const_storage) == const_storage.address() );
+
 }
 
 // テスト用クラス
