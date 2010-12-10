@@ -20,16 +20,8 @@ struct storage_of
   : std::aligned_storage<sizeof(T), alignof(T)> {};
 
 // デストラクタ呼び出しファンクタ
-template<class T>
-struct pseudo_destructor_call
-{
-  void operator()( T* p ) const {
-    p->~T();
-  }
-  void operator()( T& x ) const {
-    x.~T();
-  }
-};
+#include "../../etude/memory/pseudo_destructor_call.hpp"
+using etude::pseudo_destructor_call;
 
 // 寿命チェック用オブジェクト
 template<class Tag>
