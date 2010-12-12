@@ -21,7 +21,7 @@ namespace etude {
   // 単純な実装、 template aliases が使えればなお良いのですが
   template<class T>
   struct tuple_indices
-    : make_indices<etude::tuple_size<T>::value> {};
+    : make_indices<etude::tuple_size<T>::value>::type {};
 
 } // namespace etude
 
