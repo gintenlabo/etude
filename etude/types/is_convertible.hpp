@@ -21,7 +21,10 @@ namespace etude {
   struct is_convertible
     : std::is_convertible<From, To> {};
   
+  
   // etude::types の場合のみ特別扱い
+  
+  // 双方が types の場合は、対応する型が convertible か
   template<class T1, class... Ts, class U1, class... Us>
   struct is_convertible< etude::types<T1, Ts...>, etude::types<U1, Us...> >
     : std::integral_constant< bool,
@@ -30,6 +33,20 @@ namespace etude {
       >
   {};
   
+  template<class... Args>
+  struct is_convertible<etude::types<Args...>, etude::types<>>
+    : std::integral_constant<bool, ( sizeof...(Args) == 0 )> {};
+  template<class... Args>
+  struct is_convertible<etude::types<>, etude::types<Args...>>
+    : std::integral_constant<bool, ( sizeof...(Args) == 0 )> {};
+  template<>
+  struct is_convertible<etude::types<>, etude::types<>>
+    : std::true_type {};
+  
+  // From が types で To が普通の型の場合は、 is_constructible に転送
+  template<class To, class... Args>
+  struct is_convertible< etude::types<Args...>, To >
+    : std::is_constructible<To, Args...> {};
 
 } // namespace etude
 
