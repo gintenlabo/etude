@@ -69,7 +69,7 @@ namespace etude {
   };
   
   // 本体
-  template<class T>
+  template<class T, class Tag = void>
   class value_wrapper
     : private value_wrapper_<T>
   {
@@ -117,17 +117,17 @@ namespace etude {
   };
   
   // 自由関数版 get
-  template<class T>
-  inline T& get( value_wrapper<T>& x ) {
+  template<class T, class Tag>
+  inline T& get( value_wrapper<T, Tag>& x ) {
     return x.get();
   }
-  template<class T>
-  inline T const& get( value_wrapper<T> const& x ) {
+  template<class T, class Tag>
+  inline T const& get( value_wrapper<T, Tag> const& x ) {
     return x.get();
   }
   // move 版
-  template<class T>
-  inline T&& get( value_wrapper<T> && x ) {
+  template<class T, class Tag>
+  inline T&& get( value_wrapper<T, Tag> && x ) {
     return std::forward<T>( x.get() );
   }
  
