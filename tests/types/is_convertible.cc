@@ -29,15 +29,15 @@ struct checked_is_convertible
   // std::is_convertible => etude::is_convertible
   // 逆は成り立たない
   // かつ std::is_convertible != etude::is_convertible ならば
-  // From, To の両方が etude::types である
+  // 少なくとも From は etude::types である
   STATIC_ASSERT((
     !( std_conv != etude_conv ) || (
-      etude_conv == true && (
-        is_etude_types<From>::value && is_etude_types<To>::value
-      )
+      etude_conv == true && is_etude_types<From>::value
     )
   ));
 };
+
+#include <string>
 
 int main()
 {
@@ -80,5 +80,18 @@ int main()
     !checked_is_convertible<
       etude::types<>, etude::types<int&, void, char*>>::value
   ));
-;
+
+  // 型変換
+  STATIC_ASSERT(( 
+    checked_is_convertible<etude::types<>, int>::value
+  ));
+  STATIC_ASSERT(( 
+    checked_is_convertible<etude::types<int const&>, int>::value
+  ));
+  STATIC_ASSERT(( 
+    checked_is_convertible<etude::types<int, char>, std::string>::value
+  ));
+  STATIC_ASSERT(( 
+    !checked_is_convertible<etude::types<double, void*, int>, std::string>::value
+  ));
 }
