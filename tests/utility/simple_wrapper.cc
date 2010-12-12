@@ -18,8 +18,8 @@ void check()
 {
   typedef etude::simple_wrapper<T> wrapper;
   
-  STATIC_ASSERT((  sizeof(T) ==  sizeof(wrapper) ));
-  STATIC_ASSERT(( alignof(T) == alignof(wrapper) ));
+  STATIC_ASSERT((  sizeof(T) ==  sizeof(wrapper) || std::is_reference<T>::value ));
+  STATIC_ASSERT(( alignof(T) == alignof(wrapper) || std::is_reference<T>::value ));
   STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<wrapper>::value ));
   // STATIC_ASSERT(( std::is_trivially_copyable<T>::value == std::is_trivially_copyable<wrapper>::value )); // ない
   STATIC_ASSERT(( std::is_standard_layout<T>::value
@@ -51,11 +51,11 @@ void check()
 template<class T>
 void test()
 {
-  check<int>();
-  check<int const>();
-  check<int &>();
-  check<int const&>();
-  check<int &&>();
+  check<T>();
+  check<T const>();
+  check<T &>();
+  check<T const&>();
+  check<T &&>();
 }
 
 // 変換可能性
