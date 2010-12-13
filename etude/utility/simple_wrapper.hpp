@@ -24,7 +24,12 @@ namespace etude {
     // ここでは enable_if はしない
     template<class... Args>
     explicit simple_wrapper_( Args&&... args )
-      : x{ std::forward<Args>(args)... } {}
+      : x( std::forward<Args>(args)... ) {}
+    
+    // デフォルトコンストラクタは上記のコンストラクタに含まれるはずだが、
+    // 何故かは知らないが組み込み型の場合に x を初期化してくれないので、明示的に書く。
+    simple_wrapper_()
+      : x() {}
     
     // コピー／ムーブ
     // gcc4.5.0 には implicit move がないので
@@ -49,7 +54,12 @@ namespace etude {
     // ここでは enable_if はしない
     template<class... Args>
     explicit simple_wrapper_( Args&&... args )
-      : T{ std::forward<Args>(args)... } {}
+      : T( std::forward<Args>(args)... ) {}
+    
+    // 組み込み型は empty ではないが、こちらでも一応明示的に書く。
+    // なお {} による初期化リストはエラーになる場合があったので廃止。
+    simple_wrapper_()
+      : T() {}
     
     // コピー／ムーブ
     // gcc4.5.0 には implicit move が（ｒｙ
