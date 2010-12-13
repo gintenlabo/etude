@@ -45,10 +45,13 @@ namespace etude {
     
    public:
     // construct
-    explicit function_sequence( F0 const& f0 )
-      : base( f0 ) {}
-    explicit function_sequence( F0 && f0 )
-      : base( std::forward<F0>(f0) ) {}
+    template<class F0_,
+      class = typename std::enable_if<
+        std::is_convertible<F0_, F0>::value
+      >::type
+    >
+    explicit function_sequence( F0_ && f0 )
+      : base( std::forward<F0_>(f0) ) {}
     
     function_sequence( function_sequence const& ) = default;
     function_sequence( function_sequence && )     = default;
