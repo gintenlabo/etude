@@ -10,6 +10,7 @@
 #include "../../etude/functional/sequence.hpp"
 
 #include <iostream>
+#include <functional>
 
 int main()
 {
@@ -46,4 +47,27 @@ int main()
   std::cout << std::boolalpha;
   std::cout << std::is_empty<decltype(f1)>::value << std::endl; // empty
   std::cout << std::is_empty<decltype(f2)>::value << std::endl; // empty
+  
+  struct accumulator
+  {
+    int sum;
+    accumulator()
+      : sum(0) {}
+    
+    int operator()( int x ) {
+      return sum += x;
+    }
+    
+  };
+  accumulator acc;
+  
+  // std::ref を使えば参照も扱えるよん。
+  auto f3 = etude::sequence( std::ref(acc),
+    [&]( int ){
+      std::cout << acc.sum << std::endl;
+    }
+  );
+  
+  f3( 3 );  // 3
+  f3( 4 );  // 7
 }
