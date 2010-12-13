@@ -127,11 +127,32 @@ int main()
   STATIC_ASSERT(( sizeof(x) == sizeof(int) ));
   BOOST_ASSERT(( x.first() == 0 ));
   
-  etude::compressed_pair<nontrivial_class, nontrivial_class>
-    y( etude::piecewise_construct, std::make_tuple( 0 ), std::make_tuple( 1, 2 ) );
+  typedef etude::compressed_pair<nontrivial_class, nontrivial_class> y_type;
+  y_type y( etude::piecewise_construct, std::make_tuple( 0 ), std::make_tuple( 1, 2 ) );
   
   STATIC_ASSERT(( sizeof(y) == sizeof(nontrivial_class) * 2 ));
   BOOST_ASSERT(( y.first().which_ctor_has_called == nontrivial_class::from_int ));
   BOOST_ASSERT(( y.second().which_ctor_has_called == nontrivial_class::from_int_and_double ));
   
+  // 型変換チェック
+  STATIC_ASSERT((
+    std::is_constructible<
+      y_type, char, nontrivial_class const&
+    >::value
+  ));
+  STATIC_ASSERT((
+    !std::is_constructible<
+      y_type, int*, nontrivial_class &&
+    >::value
+  ));
+  STATIC_ASSERT((
+    std::is_constructible<
+      y_type, etude::piecewise_construct_t, std::tuple<int&>, std::tuple<int, int>
+    >::value
+  ));
+  STATIC_ASSERT((
+    !std::is_constructible<
+      y_type, etude::piecewise_construct_t, std::tuple<int const*>, std::tuple<int, int>
+    >::value
+  ));
 }
