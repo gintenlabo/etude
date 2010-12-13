@@ -2,8 +2,7 @@
 //  value_wrapper:
 //    タプルを unpack しながら構築できるラッパークラス
 // 
-//    boost::noncopyable を = delete; を使って書きなおした版です。
-//    オリジナルの boost::noncopyable と違い、可能なかぎり trivial になっています。
+//    単独では特に意味はありませんが、メンバとして使うときに便利です。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
