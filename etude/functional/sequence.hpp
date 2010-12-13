@@ -16,32 +16,55 @@
 #include <type_traits>
 #include <utility>
 #include <boost/preprocessor/empty.hpp>
-#include "../types/is_convertible.hpp"
 #include "../types/decay_and_strip.hpp"
+#include "../types/is_convertible.hpp"
+#include "../utility/simple_wrapper.hpp"
+#include "../utility/compressed_pair.hpp"
 
 namespace etude {
   
   template<class... Fs>
-  struct function_sequence
+  class function_sequence;
+  
+  template<>
+  struct function_sequence<>
   {
-    template<class... Fs_,
-      class = typename std::enable_if<
-        etude::is_convertible<types<Fs_&&...>, types<Fs...>>::value
-      >::type
-    >
-    explicit function_sequence( Fs_&& ...fs_ )
-      : fs( std::forward<Fs_>(fs_)... ) {}
+    typedef void result_type;
+    
+    template<class... Args>
+    void operator()( Args&&... ) const {}
+    
+  };
+  
+  template<class F0>
+  class function_sequence<F0>
+    : private etude::simple_wrapper<F0>
+  {
+    typedef etude::simple_wrapper<F0> base;
+    using base::get;
+    
+   public:
+    // construct
+    explicit function_sequence( F0 const& f0 )
+      : base( f0 ) {}
+    explicit function_sequence( F0 && f0 )
+      : base( std::forward<F0>(f0) ) {}
     
     function_sequence( function_sequence const& ) = default;
-    function_sequence( function_sequence && ) = default;
+    function_sequence( function_sequence && )     = default;
     
     typedef void result_type;
     
-    #define ETUDE_SEQUENCE_GEN_( cv )                     \
-      template<class... Args>                             \
-      void operator()( Args&& ...args ) cv {              \
-        return apply_<0>( std::forward<Args>(args)... );  \
-      }                                                   \
+    #define ETUDE_SEQUENCE_GEN_( cv )                         \
+      template<class... Args,                                 \
+        class = decltype(                                     \
+          std::declval<F0 cv&>()( std::declval<Args&&>()... ) \
+        )                                                     \
+      >                                                       \
+      void operator()( Args&&... args ) cv                    \
+      {                                                       \
+        get()( std::forward<Args>(args)... );                 \
+      }                                                       \
       /* ETUDE_SEQUENCE_GEN_( cv ) */
       
       ETUDE_SEQUENCE_GEN_( BOOST_PP_EMPTY() )
@@ -49,32 +72,52 @@ namespace etude {
       
     #undef ETUDE_SEQUENCE_GEN_
     
-   private:
-    std::tuple<Fs...> fs;
+  };
+  
+  template<class F0, class... Fs>
+  class function_sequence<F0, Fs...>
+    : private etude::compressed_pair< F0, function_sequence<Fs...> >
+  {
+    typedef function_sequence<Fs...> tail;
+    typedef etude::compressed_pair< F0, tail > base;
+    using base::first; using base::second;
     
-    // I .. N-1 まで連続して関数適用する
-    #define ETUDE_SEQUENCE_GEN_( cv )                                 \
-      template<std::size_t I, class... Args,                          \
-        class = typename std::enable_if<( I < sizeof...(Fs) )>::type  \
-      >                                                               \
-      void apply_( Args&& ...args ) cv {                              \
-        std::get<I>(fs)( static_cast<Args const&>(args)... );         \
-        return apply_<I+1>( std::forward<Args>(args)... );            \
-      }                                                               \
-      /* ETUDE_SEQUENCE_GEN_( cv ) */
-      
-      ETUDE_SEQUENCE_GEN_( BOOST_PP_EMPTY() )
-      ETUDE_SEQUENCE_GEN_( const )
-      
-    #undef ETUDE_SEQUENCE_GEN_
-    
-    // 停止用
-    template<std::size_t I, class... Args,
-      class = typename std::enable_if<( I == sizeof...(Fs) )>::type
+   public:
+    // construct
+    template< class F0_, class... Fs_,
+      class = typename std::enable_if<
+        etude::is_convertible<etude::types<F0_, Fs_...>, etude::types<F0, Fs...>>::value
+      >::type
     >
-    void apply_( Args const&... ) const { // && だと「オーバーロードできない」エラー。
-      // なにもしない
-    }
+    explicit function_sequence( F0_ && f0, Fs_&&... fs )
+      : base( piecewise_construct, std::tuple<F0_&&>( std::forward<F0_>(f0) ),
+              std::tuple<Fs_&&...>( std::forward<Fs_>(fs)... ) ) {}
+    
+    function_sequence( function_sequence const& ) = default;
+    function_sequence( function_sequence && )     = default;
+    
+    typedef void result_type;
+    
+    #define ETUDE_SEQUENCE_GEN_( cv )                               \
+      template<class... Args,                                       \
+        class = decltype (                                          \
+          std::declval<F0 cv&>()( std::declval<Args const&>()... )  \
+        ),                                                          \
+        class = decltype (                                          \
+          std::declval<tail cv&>()( std::declval<Args&&>()... )     \
+        )                                                           \
+      >                                                             \
+      void operator()( Args&&... args ) cv                          \
+      {                                                             \
+        first()( std::forward<Args const&>(args)... );              \
+        return second()( std::forward<Args>(args)... );             \
+      }                                                             \
+      /* ETUDE_SEQUENCE_GEN_( cv ) */
+      
+      ETUDE_SEQUENCE_GEN_( BOOST_PP_EMPTY() )
+      ETUDE_SEQUENCE_GEN_( const )
+      
+    #undef ETUDE_SEQUENCE_GEN_
     
   };
   

@@ -40,5 +40,10 @@ int main()
   };
   
   auto f2 = etude::sequence( Dog(), Cat(), Chicken() );
+  // f2();  // no match for call というエラーに。複雑なエラーメッセージを出さない
   f2(2);
+  
+  std::cout << std::boolalpha;
+  std::cout << std::is_empty<decltype(f1)>::value << std::endl; // empty
+  std::cout << std::is_empty<decltype(f2)>::value << std::endl; // empty
 }
