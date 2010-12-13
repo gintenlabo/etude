@@ -14,6 +14,7 @@
 #define ETUDE_UTILITY_INCLUDED_COMPRESSED_PAIR_HPP_
 
 #include "value_wrapper.hpp"
+#include "piecewise_construct.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -21,16 +22,8 @@
 namespace etude {
  namespace compressed_pair_ { // ADL 回避
  
-  struct piecewise_construct_t {};
-  
-  namespace {
-    piecewise_construct_t const piecewise_construct = {};
-  }
-  
   template<class T1, class T2>
-  struct compressed_pair;
-  
-  // 実装
+  class compressed_pair;
   
   // 実装で毎回 ctor 書くの面倒なのでプリプロセッサ使う。
   #define ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_                            \
