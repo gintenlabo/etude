@@ -60,7 +60,9 @@ namespace etude {
           std::get<Indices>(t)
         )...
       )
-   {}
+    {
+      (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
+    }
     
     // gcc4.5.0 では implicit move が実装されていないので
     value_wrapper_( value_wrapper_ const& ) = default;
