@@ -31,6 +31,25 @@ namespace etude {
   
   // テンプレート版
   
+  // 戻り値を得るメタ関数
+  template<class T = void>
+  struct raw_storage_pointer
+  {
+    typedef std::unique_ptr< void, etude::default_deallocate<T> > type;
+  };
+  
+  template<class T, std::size_t N>
+  struct raw_storage_pointer<T[N]>
+  {
+    typedef std::unique_ptr< void, etude::default_deallocate<T[]> > type;
+  };
+  
+  template<>
+  struct raw_storage_pointer<void>
+  {
+    typedef raw_storage_ptr type;
+  };
+  
   // 単独オブジェクト版
   // T::operator new があるなら
   template<class T,
@@ -59,10 +78,16 @@ namespace etude {
     return ::operator new[]( size );
   }
   
+  // 固定配列は配列に dispatch する
+  template<class T, std::size_t N>
+  inline void* operator_new_( std::size_t size, etude::type<T[N]>, ... ) {
+    return operator_new_( size, etude::type<T[]>(), 0 );
+  }
+  
   
   // 本体
   template<class T,
-    class Pointer = std::unique_ptr< void, etude::default_deallocate<T> >
+    class Pointer = typename raw_storage_pointer<T>::type
   >
   inline Pointer operator_new( std::size_t size = sizeof(T) ) {
     return Pointer( etude::operator_new_( size, etude::type<T>(), 0 ) );

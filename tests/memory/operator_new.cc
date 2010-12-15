@@ -71,23 +71,61 @@ int main()
   // 普通の型に対するテンプレート版のメモリ確保
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<int>();  // サイズは省略できる（便利！）
+    
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<int>::type
+      >::value
+    ));
   }
   // 普通の配列の場合
   for( int i = 0; i < n; ++i ) {
     // auto p = etude::operator_new<int[]>();  // これは無理
     auto p = etude::operator_new<int[]>( 5 * sizeof(int) );  // バイト単位でサイズを指定
+    
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<int[]>::type
+      >::value
+    ));
   }
   
   // operator new, operator delete がある型について
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<hoge>( sizeof(hoge) );  // サイズは指定することもできる
     BOOST_ASSERT( hoge::count_instances() == 1 );
+    
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<hoge>::type
+      >::value
+    ));
   }
   BOOST_ASSERT( hoge::count_instances() == 0 );
   // 配列の場合
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<hoge[]>( 5 * sizeof(hoge) );
     BOOST_ASSERT( hoge::count_arrays() == 1 );
+    
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<hoge[]>::type
+      >::value
+    ));
   }
   BOOST_ASSERT( hoge::count_arrays() == 0 );
+  
+  
+  // 固定長配列の場合
+  for( int i = 0; i < n; ++i ) {
+    auto p = etude::operator_new<hoge[5]>();  // この場合は要素数は省略できる。
+    BOOST_ASSERT( hoge::count_arrays() == 1 );
+    
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<hoge[5]>::type
+      >::value
+    ));
+    STATIC_ASSERT(( std::is_same<
+        decltype(p), etude::raw_storage_pointer<hoge[]>::type
+      >::value
+    ));
+  }
+  BOOST_ASSERT( hoge::count_arrays() == 0 );
+  
 }

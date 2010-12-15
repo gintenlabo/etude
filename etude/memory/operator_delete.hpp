@@ -54,6 +54,12 @@ namespace etude {
     ::operator delete [] (p);
   }
   
+  // 固定配列は ill-formed
+  template<class T, std::size_t N>
+  inline void operator_delete_( void* p, etude::type<T[N]>, ... ) {
+    static_assert( N < 0, "etude::operator_delete<T[N]> is ill-formed." );
+  }
+  
   
   // 本体
   template<class T>
