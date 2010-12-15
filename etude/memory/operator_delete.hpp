@@ -36,7 +36,7 @@ namespace etude {
   // 本体
   template<class T>
   inline void operator_delete( void* p ) {
-    return operator_delete_<T>( p, 0 );
+    return etude::operator_delete_<T>( p, 0 );
   }
   
   
@@ -59,7 +59,7 @@ namespace etude {
   // 本体
   template<class T>
   inline void operator_array_delete( void* p ) {
-    return operator_array_delete_<T>( p, 0 );
+    return etude::operator_array_delete_<T>( p, 0 );
   }
   
 } // namespace etude
