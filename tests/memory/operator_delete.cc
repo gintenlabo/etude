@@ -27,7 +27,7 @@ void test()
     for( int i = n; i --> 0; ) {
       (p+i)->~T();
     }
-    etude::operator_array_delete<T>(p);
+    etude::operator_delete<T[]>(p);
   }
   
   // unique_ptr を使った例
@@ -132,7 +132,8 @@ int main()
       // メモリ確保
       buffer* const buf = new buffer;
       // 破棄して解放
-      buf->~buffer(); etude::operator_delete<buffer>(buf);
+      buf->~buffer();
+      etude::operator_delete<buffer>(buf);
     }
     // 配列の場合
     {
@@ -140,7 +141,7 @@ int main()
       char* const buf = new char[blocksize];
       // trivially-destructible なのでデストラクタは呼ばなくていい
       // 解放
-      etude::operator_delete<char[]>( buf );
+      etude::operator_delete<char[]>(buf);
     }
   }
 }
