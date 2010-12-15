@@ -6,23 +6,41 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 #include "../../etude/memory/operator_delete.hpp"
+#include "../../etude/memory/default_deallocate.hpp"
 
 #include <boost/assert.hpp>
+#include <memory>
 
 template<class T>
 void test()
 {
-  T* p = new T();
-  p->~T();
-  etude::operator_delete<T>(p);
+  {
+    T* p = new T();
+    p->~T();
+    etude::operator_delete<T>(p);
+  }
   
   int const n = 10;
   
-  p = new T[n];
-  for( int i = n; i --> 0; ) {
-    (p+i)->~T();
+  {
+    T* p = new T[n];
+    for( int i = n; i --> 0; ) {
+      (p+i)->~T();
+    }
+    etude::operator_array_delete<T>(p);
   }
-  etude::operator_array_delete<T>(p);
+  
+  // unique_ptr を使った例
+  {
+    std::unique_ptr<T, etude::default_deallocate<T>> p( new T() );
+    p->~T();
+  }
+  {
+    std::unique_ptr<T[], etude::default_deallocate<T[]>> p( new T[n] );
+    for( int i = n; i --> 0; ) {
+      p[i].~T();
+    }
+  }
 }
 
 template<class T>
