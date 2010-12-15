@@ -109,7 +109,7 @@ int main()
   
   // operator delete がある型について
   test<hoge>();
-  
+  // operator delete は呼ばれてるね。
   BOOST_ASSERT( hoge::count_instances() == 0 );
   BOOST_ASSERT( hoge::count_arrays() == 0 );
   
@@ -119,4 +119,28 @@ int main()
   BOOST_ASSERT( hoge::count_instances() == 1 );
   BOOST_ASSERT( hoge::count_arrays() == 1 );
   
+  // 念には念を入れ、メモリリークチェック
+  int const blocksize = 128 * 1024; // 128kiB のメモリブロックを、
+  int const n = 1024 * 1024;  // 1 Mi 回数確保する（つまり累計 128 GiBだけ確保する）
+  
+  for( int i = 0; i < n; ++i ) {
+    // single object の場合
+    {
+      struct buffer {
+        char buf[blocksize];
+      };
+      // メモリ確保
+      buffer* const buf = new buffer;
+      // 破棄して解放
+      buf->~buffer(); etude::operator_delete<buffer>(buf);
+    }
+    // 配列の場合
+    {
+      // メモリ確保
+      char* const buf = new char[blocksize];
+      // trivially-destructible なのでデストラクタは呼ばなくていい
+      // 解放
+      etude::operator_delete<char[]>( buf );
+    }
+  }
 }
