@@ -21,6 +21,9 @@
 #include <utility>
 #include <new>
 #include <type_traits>
+#include "../types/type.hpp"
+#include "../types/is_convertible.hpp"
+#include "../types/decay_and_strip.hpp"
 
 namespace etude {
 
@@ -35,16 +38,18 @@ namespace etude {
     typedef in_place_factory<Args...> impl_t;
     impl_t impl_;
     
-    template<class U, class... As>
-    friend class typed_in_place_factory;
-    
    public:
     typedef T value_type;
     typedef typename impl_t::tuple_type tuple_type;
     
     // 構築
-    explicit typed_in_place_factory( Args&& ...args )
-      : impl_( std::forward<Args>(args)... ) {}
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    explicit typed_in_place_factory( Types&& ...args )
+      : impl_( std::forward<Types>(args)... ) {}
     
     // gcc 4.5.0 では implicit move は働いてくれないらしい…。
     typed_in_place_factory( typed_in_place_factory const& ) = default;
@@ -61,12 +66,23 @@ namespace etude {
     
     // 他の typed_in_place_factory からの構築
     // 構築するオブジェクトの型は同じじゃないと意味論的におかしい
-    template<class... As>
-    typed_in_place_factory( typed_in_place_factory<T, As...> const& x )
-      : impl_( x.impl_ ) {}
-    template<class... As>
-    typed_in_place_factory( typed_in_place_factory<T, As...> && x )
-      : impl_( std::move(x.impl_) ) {}
+    // copy
+    // in_place_factory と同じく、 SFINAE のはずがエラーになるので Types... に。
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types...>, types<Args...>>::value
+      >::type
+    >
+    typed_in_place_factory( typed_in_place_factory<T, Types...> const& x )
+      : impl_( x.get_tuple() ) {}
+    // move
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    typed_in_place_factory( typed_in_place_factory<T, Types...> && x )
+      : impl_( x.move_tuple() ) {}
     
     // オブジェクト構築
     T* apply( void* addr ) const {
@@ -127,6 +143,15 @@ namespace etude {
   inline typed_in_place_factory<T, Args...> in_place_by_ref( Args&& ...args ) {
     return typed_in_place_factory<T, Args...>( std::forward<Args>(args)... );
   }
+  // すべて値で束縛する安全版。関数の戻り値としても使える。
+  // 参照を束縛したい場合は std::ref を使う。
+  template<class T, class... Args>
+  inline typed_in_place_factory<T, typename decay_and_strip<Args>::type...>
+    in_place_by_val( Args&& ...args )
+  {
+    return typed_in_place_factory<T, typename decay_and_strip<Args>::type...>
+            ( std::forward<Args>(args)... );
+  }
   
   // タプルを in_place_factory に変換する版。
   // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
@@ -142,16 +167,6 @@ namespace etude {
   {
     return std::move(t);
   }
-  
-  // すべて値で束縛する安全版。関数の戻り値としても使える。
-  // 参照を束縛したい場合は std::ref を使う。
-  template<class T, class... Args>
-  inline auto in_place_by_val( Args&& ...args )
-    -> decltype( in_place_from_tuple<T>( std::make_tuple( std::forward<Args>(args)... ) ) )
-  {
-    return in_place_from_tuple<T>( std::make_tuple( std::forward<Args>(args)... ) );
-  }
-  
 
 }
 

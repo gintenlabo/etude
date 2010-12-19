@@ -77,7 +77,7 @@ namespace etude {
         typename std::remove_reference<TypedInPlace>::type::value_type
       >::value
     >::type>
-  inline T* apply_in_place_( TypedInPlace && x, void* addr, void* ) {
+  inline T* apply_in_place_( TypedInPlace && x, void* addr, int ) {
     return apply_typed_in_place( std::forward<TypedInPlace>(x), addr );
   }
   

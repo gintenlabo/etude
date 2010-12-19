@@ -25,21 +25,11 @@
 #include <new>
 #include <type_traits>
 
-// preprocessor 周り
-#include <boost/preprocessor/arithmetic/inc.hpp>
-#include <boost/preprocessor/cat.hpp>
-#include <boost/preprocessor/repetition/enum.hpp>
-#include <boost/preprocessor/repetition/enum_params.hpp>
-#include <boost/preprocessor/repetition/enum_binary_params.hpp>
-#include <boost/preprocessor/repetition/repeat_from_to.hpp>
-#include <boost/preprocessor/tuple/elem.hpp>
-
-// 設定
-#ifndef ETUDE_MAX_ARITY
-  #define ETUDE_MAX_ARITY 10
-#endif
-
 #include "is_in_place_factory.hpp"
+#include "../types/indices.hpp"
+#include "../types/type.hpp"
+#include "../types/is_convertible.hpp"
+#include "../types/decay_and_strip.hpp"
 
 namespace etude {
 
@@ -48,100 +38,81 @@ namespace etude {
   // Variadic Templates を使って書かれた InPlaceFactory
   // rvalue-reference にも対応している
   template<class... Args>
-  struct in_place_factory;
-  
-  template<>
-  struct in_place_factory<>
-    : in_place_factory_base, private std::tuple<>
+  struct in_place_factory
+    : boost::in_place_factory_base
   {
-    template<class...Args>
-    friend class in_place_factory;
+    // 引数パックとして使われる tuple
+    typedef std::tuple<Args...> tuple_type;
     
-    typedef std::tuple<> tuple_type;
+    // 普通に構築
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    explicit in_place_factory( Types&& ...args )
+      : x( std::forward<Types>(args)... ) {}
     
-    explicit in_place_factory() {}
-    in_place_factory( std::tuple<> ) {}
+    // gcc 4.5.0 では implicit move は実装されていない
+    in_place_factory( in_place_factory const& ) = default;
+    in_place_factory( in_place_factory && ) = default;
     in_place_factory& operator=( in_place_factory const& ) = delete;
     
+    // tuple からの構築
+    in_place_factory( tuple_type const& t )
+      : x( t ) {}
+    in_place_factory( tuple_type && t )
+      : x( std::move(t) ) {}
+    
+    // 型変換
+    // きちんと変換できるもんだけ変換する
+    // copy
+    // （Types const&...）だと SFINAE のはずがエラーになるので Types... に。
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types...>, types<Args...>>::value
+      >::type
+    >
+    in_place_factory( in_place_factory<Types...> const& src )
+      : x( src.get_tuple() ) {}
+    // move
+    template<class... Types,
+      class = typename std::enable_if<
+        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+      >::type
+    >
+    in_place_factory( in_place_factory<Types...> && src )
+      : x( src.move_tuple() ) {}
+    
+    // 中身の tuple を得る
+    tuple_type const& get_tuple() const { return x; }
+    tuple_type&& move_tuple() { return std::move(x); }
+    
+    
+    // 適用
     template<class T>
     T* apply( void* addr ) const {
-      return ::new(addr) T();
+      return apply_<T>( addr, make_indices<sizeof...(Args)>() );
     }
+    // move して適用
     template<class T>
     T* move_apply( void* addr ) {
-      return ::new(addr) T();
+      return move_apply_<T>( addr, make_indices<sizeof...(Args)>() );
     }
     
-    tuple_type const& get_tuple() const {
-      return *this;
-    }
-    tuple_type&& move_tuple() {
-      return static_cast<tuple_type&&>(*this);
-    }
+   private:
+    tuple_type x;
     
+    // 実装用
+    template<class T, std::size_t... Indices>
+    T* apply_( void* addr, indices<Indices...> ) const {
+      return ::new(addr) T( std::get<Indices>(x)... );
+    }
+    template<class T, std::size_t... Indices>
+    T* move_apply_( void* addr, indices<Indices...> ) {
+      return ::new(addr) T( std::forward<Args>( std::get<Indices>(x) )... );
+    }
   };
-  
-  #define ETUDE_GEN_IN_PLACE_( z, n, d )                                      \
-    template<BOOST_PP_ENUM_PARAMS(n, class A)>                                \
-    struct in_place_factory<BOOST_PP_ENUM_PARAMS(n, A)>                       \
-      : in_place_factory_base                                                 \
-    {                                                                         \
-      typedef std::tuple<BOOST_PP_ENUM_PARAMS(n, A)> tuple_type;              \
-                                                                              \
-      explicit in_place_factory( BOOST_PP_ENUM_BINARY_PARAMS( n, A, && a ) )  \
-        : x( BOOST_PP_ENUM( n, ETUDE_GEN_FORWARD_, _ ) ) {}                   \
-                                                                              \
-      in_place_factory( in_place_factory const& ) = default;                  \
-      in_place_factory( in_place_factory && ) = default;                      \
-      in_place_factory& operator=( in_place_factory const& ) = delete;        \
-                                                                              \
-      in_place_factory( tuple_type const& t )                                 \
-        : x( t ) {}                                                           \
-      in_place_factory( tuple_type && t )                                     \
-        : x( std::move(t) ) {}                                                \
-      template<class...Args>                                                  \
-      in_place_factory( in_place_factory<Args...> const& src )                \
-        : x( src.x ) {}                                                       \
-      template<class...Args>                                                  \
-      in_place_factory( in_place_factory<Args...> && src )                    \
-        : x( std::move(src.x) ) {}                                            \
-                                                                              \
-      template<class T>                                                       \
-      T* apply( void* addr ) const {                                          \
-        return ::new (addr) T( BOOST_PP_ENUM( n, ETUDE_GEN_GET_X_, _ ) );     \
-      }                                                                       \
-      template<class T>                                                       \
-      T* move_apply( void* addr ) {                                           \
-        return ::new (addr) T( BOOST_PP_ENUM( n, ETUDE_GEN_MOVE_X_, _ ) );    \
-      }                                                                       \
-                                                                              \
-      tuple_type const& get_tuple() const { return x; }                       \
-      tuple_type&& move_tuple() { return std::move(x); }                      \
-                                                                              \
-     private:                                                                 \
-      tuple_type x;                                                           \
-                                                                              \
-      template<class...Args>                                                  \
-      friend class in_place_factory;                                          \
-    };                                                                        \
-  /* ETUDE_GEN_IN_PLACE_ */
-  
-  #define ETUDE_GEN_FORWARD_( z, n, d )   \
-    std::forward<BOOST_PP_CAT( A, n )>( BOOST_PP_CAT( a, n ) )
-  
-  #define ETUDE_GEN_GET_X_( z, n, d )     \
-    std::get<n>(x)
-    
-  #define ETUDE_GEN_MOVE_X_( z, n, d )    \
-    std::forward<BOOST_PP_CAT( A, n )>( std::get<n>(x) )
-  
-  // コード生成
-  BOOST_PP_REPEAT_FROM_TO( 1, BOOST_PP_INC(ETUDE_MAX_ARITY), ETUDE_GEN_IN_PLACE_, _ )
-  
-  #undef ETUDE_GEN_IN_PLACE_
-  #undef ETUDE_GEN_FORWARD_
-  #undef ETUDE_GEN_GET_X_
-  #undef ETUDE_GEN_MOVE_X_
   
   
   // helper functions
@@ -191,6 +162,15 @@ namespace etude {
   inline in_place_factory<Args...> in_place_by_ref( Args&& ...args ) {
     return in_place_factory<Args...>( std::forward<Args>(args)... );
   }
+  // すべて値で束縛する安全版。関数の戻り値としても使える。
+  // 参照を束縛したい場合は std::ref を使う。
+  template<class... Args>
+  inline in_place_factory<typename decay_and_strip<Args>::type...>
+    in_place_by_val( Args&& ...args )
+  {
+    return in_place_factory<typename decay_and_strip<Args>::type...>
+            ( std::forward<Args>(args)... );
+  }
   
   // タプルを in_place_factory に変換する版。
   // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
@@ -201,15 +181,6 @@ namespace etude {
   template<class... Args>
   inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && t ) {
     return std::move(t);
-  }
-  
-  // すべて値で束縛する安全版。関数の戻り値としても使える。
-  // 参照を束縛したい場合は std::ref を使う。
-  template<class... Args>
-  inline auto in_place_by_val( Args&& ...args )
-    -> decltype( in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) ) )
-  {
-    return in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) );
   }
 
 }
