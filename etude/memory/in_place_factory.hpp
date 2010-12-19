@@ -29,6 +29,7 @@
 #include "../types/indices.hpp"
 #include "../types/type.hpp"
 #include "../types/is_convertible.hpp"
+#include "../types/decay_and_strip.hpp"
 
 namespace etude {
 
@@ -161,6 +162,15 @@ namespace etude {
   inline in_place_factory<Args...> in_place_by_ref( Args&& ...args ) {
     return in_place_factory<Args...>( std::forward<Args>(args)... );
   }
+  // すべて値で束縛する安全版。関数の戻り値としても使える。
+  // 参照を束縛したい場合は std::ref を使う。
+  template<class... Args>
+  inline in_place_factory<typename decay_and_strip<Args>::type...>
+    in_place_by_val( Args&& ...args )
+  {
+    return in_place_factory<typename decay_and_strip<Args>::type...>
+            ( std::forward<Args>(args)... );
+  }
   
   // タプルを in_place_factory に変換する版。
   // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
@@ -171,15 +181,6 @@ namespace etude {
   template<class... Args>
   inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && t ) {
     return std::move(t);
-  }
-  
-  // すべて値で束縛する安全版。関数の戻り値としても使える。
-  // 参照を束縛したい場合は std::ref を使う。
-  template<class... Args>
-  inline auto in_place_by_val( Args&& ...args )
-    -> decltype( in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) ) )
-  {
-    return in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) );
   }
 
 }
