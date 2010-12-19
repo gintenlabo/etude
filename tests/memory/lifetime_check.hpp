@@ -23,7 +23,7 @@ struct lifetime_check
     return get_object_list_().find(p) != get_object_list_().end();
   }
   
-  static bool count_existing_instances() {
+  static bool count_existing_instance() {
     return get_object_list_().size();
   }
   

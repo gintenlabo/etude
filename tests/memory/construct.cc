@@ -44,7 +44,7 @@ struct hoge
     instances_() -= 1;
   }
   
-  static int count_allocated_instances() {
+  static int count_allocated_instance() {
     return instances_();
   }
   
@@ -61,8 +61,8 @@ struct hoge
 template<class F, class Check>
 void check( F f, Check check_after_f )
 {
-  int const existing_instances = hoge::count_existing_instances();
-  int const allocated_instances = hoge::count_allocated_instances();
+  int const existing_instances = hoge::count_existing_instance();
+  int const allocated_instances = hoge::count_allocated_instance();
   
   try {
     auto p0 = f();
@@ -71,8 +71,8 @@ void check( F f, Check check_after_f )
   catch( bad_construct& ) {
   }
   
-  BOOST_ASSERT( hoge::count_existing_instances() == existing_instances );
-  BOOST_ASSERT( hoge::count_allocated_instances() == allocated_instances );
+  BOOST_ASSERT( hoge::count_existing_instance() == existing_instances );
+  BOOST_ASSERT( hoge::count_allocated_instance() == allocated_instances );
 }
 
 
@@ -88,7 +88,7 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス
@@ -108,7 +108,7 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス( in place )
@@ -128,7 +128,7 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス( typed in place )
@@ -149,8 +149,8 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_allocated_instances() == 1 );
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_allocated_instance() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス
@@ -171,8 +171,8 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_allocated_instances() == 0 ); // ::operator new で確保したので
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_allocated_instance() == 0 ); // ::operator new で確保したので
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス( in place )
@@ -193,8 +193,8 @@ int main()
     },
     []( hoge* p ){
       BOOST_ASSERT( p != 0 );
-      BOOST_ASSERT( hoge::count_allocated_instances() == 1 );
-      BOOST_ASSERT( hoge::count_existing_instances() == 1 );
+      BOOST_ASSERT( hoge::count_allocated_instance() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
     }
   );
   // 例外パス( typed in place )

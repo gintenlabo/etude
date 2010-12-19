@@ -35,10 +35,10 @@ struct hoge
     arrays_() -= 1;
   }
   
-  static int count_instances() {
+  static int count_instance() {
     return instances_();
   }
-  static int count_arrays() {
+  static int count_array() {
     return arrays_();
   }
   
@@ -91,31 +91,31 @@ int main()
   // operator new, operator delete がある型について
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<hoge>( sizeof(hoge) );  // サイズは指定することもできる
-    BOOST_ASSERT( hoge::count_instances() == 1 );
+    BOOST_ASSERT( hoge::count_instance() == 1 );
     
     STATIC_ASSERT(( std::is_same<
         decltype(p), etude::raw_storage_pointer<hoge>::type
       >::value
     ));
   }
-  BOOST_ASSERT( hoge::count_instances() == 0 );
+  BOOST_ASSERT( hoge::count_instance() == 0 );
   // 配列の場合
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<hoge[]>( 5 * sizeof(hoge) );
-    BOOST_ASSERT( hoge::count_arrays() == 1 );
+    BOOST_ASSERT( hoge::count_array() == 1 );
     
     STATIC_ASSERT(( std::is_same<
         decltype(p), etude::raw_storage_pointer<hoge[]>::type
       >::value
     ));
   }
-  BOOST_ASSERT( hoge::count_arrays() == 0 );
+  BOOST_ASSERT( hoge::count_array() == 0 );
   
   
   // 固定長配列の場合
   for( int i = 0; i < n; ++i ) {
     auto p = etude::operator_new<hoge[5]>();  // この場合は要素数は省略できる。
-    BOOST_ASSERT( hoge::count_arrays() == 1 );
+    BOOST_ASSERT( hoge::count_array() == 1 );
     
     STATIC_ASSERT(( std::is_same<
         decltype(p), etude::raw_storage_pointer<hoge[5]>::type
@@ -126,6 +126,6 @@ int main()
       >::value
     ));
   }
-  BOOST_ASSERT( hoge::count_arrays() == 0 );
+  BOOST_ASSERT( hoge::count_array() == 0 );
   
 }

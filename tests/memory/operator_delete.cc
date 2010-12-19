@@ -81,7 +81,7 @@ struct hoge
     arrays_() -= 1;
   }
   
-  static int count_instances() {
+  static int count_instance() {
     return instances_();
   }
   static int count_arrays() {
@@ -110,13 +110,13 @@ int main()
   // operator delete がある型について
   test<hoge>();
   // operator delete は呼ばれてるね。
-  BOOST_ASSERT( hoge::count_instances() == 0 );
+  BOOST_ASSERT( hoge::count_instance() == 0 );
   BOOST_ASSERT( hoge::count_arrays() == 0 );
   
   // 一応、 operator_delete じゃなければダメな理由を。
   bad_test<hoge>();
   // ::operator delete の場合、確かに T::operator delete は呼ばれない。
-  BOOST_ASSERT( hoge::count_instances() == 1 );
+  BOOST_ASSERT( hoge::count_instance() == 1 );
   BOOST_ASSERT( hoge::count_arrays() == 1 );
   
   // 念には念を入れ、メモリリークチェック
