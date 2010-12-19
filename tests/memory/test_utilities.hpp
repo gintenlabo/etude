@@ -21,6 +21,10 @@ using etude::storage_of;
 #include "../../etude/memory/pseudo_destructor_call.hpp"
 using etude::pseudo_destructor_call;
 
+// オブジェクトの寿命チェック用クラス
 #include "lifetime_check.hpp"
+
+// オブジェクトの寿命をチェックするメモリバッファ
+#include "checked_storage.hpp"
 
 #endif  // #ifndef ETUDE_TEST_MEMORY_INCLUDED_TEST_UTILITIES_HPP_
