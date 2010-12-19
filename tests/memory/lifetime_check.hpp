@@ -17,13 +17,10 @@ template<class Derived>
 struct lifetime_check
 {
   static bool is_initialized( void const* p ) {
-    if( p == 0 ) {
-      return false;
-    }
     return get_object_list_().find(p) != get_object_list_().end();
   }
   
-  static bool count_existing_instance() {
+  static std::size_t count_existing_instance() {
     return get_object_list_().size();
   }
   
@@ -47,6 +44,7 @@ struct lifetime_check
   }
   
   static void register_instance_( void const* p ){
+    BOOST_ASSERT( p != 0 );
     bool const succeeded = get_object_list_().insert(p).second;
     BOOST_ASSERT( succeeded );
   }
