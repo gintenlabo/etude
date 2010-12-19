@@ -82,7 +82,49 @@ void test_lifetime_check()
   BOOST_ASSERT( tested::count_existing_instance() == 0 );
 }
 
+// checked_storage に対するチェック
+void test_checked_storage()
+{
+  typedef checked_storage<int> storage_type;
+  
+  BOOST_ASSERT( storage_type::count_allocated_instance() == 0 );
+  {
+    storage_type buf;
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 1 );
+    BOOST_ASSERT( storage_type::is_allocated( buf.address() ) );
+    
+    storage_type buf2;
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 2 );
+    BOOST_ASSERT( storage_type::is_allocated( buf.address() ) );
+    BOOST_ASSERT( storage_type::is_allocated( buf2.address() ) );
+  }
+  
+  BOOST_ASSERT( storage_type::count_allocated_instance() == 0 );
+  {
+    auto buf = storage_type::allocate();
+    void* const vp = buf.get();
+    
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 1 );
+    BOOST_ASSERT( storage_type::is_allocated( vp ) );
+    
+    buf.reset();
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 0 );
+    BOOST_ASSERT( !storage_type::is_allocated( vp ) );
+    
+    // construct のチェック
+    auto p = etude::construct<int>( checked_allocate<int>() );
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 1 );
+    BOOST_ASSERT( storage_type::is_allocated( p.get() ) );
+    
+    p.reset();
+    BOOST_ASSERT( storage_type::count_allocated_instance() == 0 );
+  }
+  
+  BOOST_ASSERT( storage_type::count_allocated_instance() == 0 );
+}
+
 int main()
 {
   test_lifetime_check();
+  test_checked_storage();
 }
