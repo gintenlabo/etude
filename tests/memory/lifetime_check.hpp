@@ -17,7 +17,17 @@ template<class Derived>
 struct lifetime_check
 {
   static bool is_initialized( void const* p ) {
-    return get_object_list_().find(p) != get_object_list_().end();
+    auto& ls = get_object_list_();
+    auto iter = ls.upper_bound(p);
+    
+    if( iter == ls.begin() ) {
+      return false;
+    }
+    --iter;
+    
+    auto const found = static_cast<char const*>(*iter);
+    BOOST_ASSERT( found <= p );
+    return p < found + sizeof(Derived);
   }
   
   static std::size_t count_existing_instance() {
