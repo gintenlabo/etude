@@ -97,6 +97,9 @@ namespace etude {
   {
     dispose_and_deallocate_() = default;
     explicit dispose_and_deallocate_( default_deallocate<T> ) {}
+    
+    default_deallocate<T> get_deallocator() const { return default_deallocate<T>(); }
+    
   };
   
   // 通常版
