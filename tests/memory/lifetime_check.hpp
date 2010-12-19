@@ -30,7 +30,7 @@ struct lifetime_check
     return p < found + sizeof(Derived);
   }
   
-  static std::size_t count_existing_instance() {
+  static int count_existing_instance() {
     return get_object_list_().size();
   }
   
