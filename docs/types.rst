@@ -52,14 +52,14 @@ Type Traits
       
       template<std::size_t N>
       struct make_indices
-        : indices<0, ..., N-1> {};
+        : indices< 0, ..., N-1 > {};
       
     }
 
 ``etude::indices<Indices...>`` は、 ``std::size_t`` のリストを型に落としこむ為のクラスです。
 通常、このクラスはライブラリの実装を補助する目的で使われ、表に現れることはありません。
 
-``etude::make_indices<N>`` は ``etude::indices<0..N-1>`` を継承したクラスで、\
+``etude::make_indices<N>`` は ``etude::indices< 0, ..., N-1 >`` を継承したクラスで、\
 主に ``std::tuple`` を unpack する場合などに、インデックスを生成する目的で使います。
 
 .. hint::
@@ -91,7 +91,7 @@ Type Traits
 通常、このクラスはライブラリの実装を補助する目的で使われ、表に現れることはありません。
 
 このクラスの典型的な使われ方としては、複数の型を一つに束ねて
-``etude::is_convertible`` などのメタ関数に渡す、などが挙げられます。
+``etude::is_convertible`` といったメタ関数に渡す、などが挙げられます。
 
 
 ``is_convertible``
