@@ -94,3 +94,41 @@ Type Traits
 ``etude::is_convertible`` などのメタ関数に渡す、などが挙げられます。
 
 
+``is_convertible``
+------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/types/is_convertible.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class From, class To>
+      struct is_convertible
+        : std::integral_constant<bool, see-below> {};
+      
+    }
+
+``etude::is_convertible< From, To >`` は、以下のように定義されるメタ関数です：
+
+- ``From`` と ``To`` がそれぞれ ``etude::types<FromTypes...>`` と ``etude::types<ToTypes...>`` である場合
+
+  - ``etude::is_convertible< etude::types<FromTypes...>, etude::types<ToTypes...> >`` は、
+    ``FromTypes...`` と ``ToTypes...`` の要素数が共に N で、かつ 0 から N-1 までの全ての整数
+    i に対し ``etude::is_convertible< Fi, Ti >::value`` が ``true`` である場合には
+    ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承します。
+    ただし ``Fi`` と ``Ti`` は、 ``FromTypes...`` と ``ToTypes...`` のそれぞれ i 番目の要素です。
+
+- 上記以外で、 ``From`` が ``etude::types<FromTypes...>`` である場合
+
+  - ``etude::is_convertible< etude::types<FromTypes...>, To >`` は、
+    ``std::is_constructible< To, FromTypes... >`` を継承します。
+
+- それ以外の場合
+
+  - ``etude::is_convertible< From, To >`` は、 ``std::is_convertible< From, To >`` を継承します。
+
