@@ -14,7 +14,7 @@
 #define ETUDE_MEMORY_INCLUDED_OPERATOR_NEW_HPP_
 
 #include "default_deallocate.hpp"
-#include "../types/type.hpp"
+#include "../types/types.hpp"
 #include <memory>
 
 namespace etude {

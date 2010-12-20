@@ -11,7 +11,7 @@
 #ifndef ETUDE_TYPES_INCLUDED_IS_CONVERTIBLE_HPP_
 #define ETUDE_TYPES_INCLUDED_IS_CONVERTIBLE_HPP_
 
-#include "type.hpp"
+#include "types.hpp"
 #include <type_traits>
 
 namespace etude {
