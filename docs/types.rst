@@ -5,6 +5,10 @@ Type Traits
 使い道
   様々な型特性メタ関数群
 
+.. contents::
+   :depth: 2
+   :local:
+
 
 ``decay_and_strip``
 -------------------
