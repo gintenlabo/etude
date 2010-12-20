@@ -1,3 +1,5 @@
+.. index:: License
+
 ライセンス
 ===========
 
@@ -30,6 +32,9 @@ Etude C++ Libraries は、 `Boost Software License <http://www.boost.org/users/l
   --- http://www.boost.org/LICENSE_1_0.txt
 
 -----
+
+.. index::
+  single: License; 和訳
 
 以下は、その参考和訳です。
 

@@ -1,3 +1,4 @@
+.. index:: noncopyable
 
 Noncopyable
 ============
@@ -53,6 +54,9 @@ public 継承でも「コピーを禁止する」意図からすれば問題は�
 多重継承時に共通の基底クラスになる可能性や、
 またリスコフの置換原則を考えても、 private 継承にしたほうが無難です。
 
+
+.. index::
+  single: noncopyable; noncopyable
 
 詳細データ
 -----------
