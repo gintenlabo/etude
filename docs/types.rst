@@ -164,7 +164,24 @@ Type Traits
 ``tuple_size``
 --------------
 
-under construction...
+必要ヘッダ
+  ::
+    
+    #include <etude/types/tuple_size.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class T>
+      struct tuple_size
+        : std::tuple_size<typename std::decay<T>::type> {};
+      
+    }
+
+``etude::tuple_size<T>`` は、 ``T`` にメタ関数 ``std::decay`` を適用することで
+CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` を計算するメタ関数です。
 
 
 ``tuple_element``
