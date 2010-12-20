@@ -119,6 +119,11 @@ html_theme_options = {
   'footertextcolor':'#112233',
 }
 
+# The style sheet to use for HTML pages.
+# A file of that name must exist either in SphinxÅf static/ path,
+# or in one of the custom paths given in html_static_path.
+html_style = 'etude.css'
+
 # Add any paths that contain custom themes here, relative to this directory.
 #html_theme_path = []
 
