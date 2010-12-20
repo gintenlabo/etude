@@ -57,7 +57,10 @@ public 継承でも「コピーを禁止する」意図からすれば問題は�
 詳細データ
 -----------
 
-<etude/noncopyable.hpp> ::
+``<etude/noncopyable.hpp>``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+::
 
   namespace etude {
    namespace noncopyable_ { // ADL 回避
@@ -67,9 +70,9 @@ public 継承でも「コピーを禁止する」意図からすれば問題は�
       noncopyable() = default;
       
       noncopyable( noncopyable const& )    = delete;
+      noncopyable( noncopyable && )        = delete;
       void operator=( noncopyable const& ) = delete;
-      noncopyable( noncopyable&& )         = delete;
-      void operator=( noncopyable&& )      = delete;
+      void operator=( noncopyable && )     = delete;
       
     };
    
@@ -83,8 +86,8 @@ etude::noncopyable は、以下の条件を満たす単純な空のクラスで�
 - non-move-constructible
 - non-copy-assignable
 - non-move-assignable
-- trivially default-constructible
-- trivially destructible
+- trivially-default-constructible
+- trivially-destructible
 
 通常このクラスは、 private 継承することによりコピー禁止を明示する目的で使われます。
 
