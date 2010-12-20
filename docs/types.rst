@@ -187,7 +187,44 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
 ``tuple_element``
 -----------------
 
-under construction...
+必要ヘッダ
+  ::
+    
+    #include <etude/types/tuple_element.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<std::size_t I, class T>
+      struct tuple_element
+      {
+        typedef see-below type;
+      };
+      
+    }
+
+``etude::tuple_element< I, T >`` は、以下のように定義されたメタ関数です：
+
+- ``T`` が ``const`` または ``volatile`` によって修飾されている場合
+
+  - ``etude::tuple_element< I, U cv >::type`` は
+    ``etude::tuple_element< I, U >::type cv`` に定義されます。
+
+- ``T`` が ``U&`` の場合
+
+  - ``etude::tuple_element< I, U& >::type`` は
+    ``etude::tuple_element< I, U >::type &`` に定義されます。
+
+- ``T`` が ``U&&`` の場合
+
+  - ``etude::tuple_element< I, U&& >::type`` は
+    ``etude::tuple_element< I, U >::type &&`` に定義されます。
+
+- それ以外の場合
+
+  - ``etude::tuple_element< I, T >`` は ``std::tuple_element< I, T >`` を継承します。
 
 
 ``tuple_indices``
