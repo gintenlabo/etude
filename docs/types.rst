@@ -230,11 +230,51 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
 ``tuple_indices``
 -----------------
 
-under construction...
+必要ヘッダ
+  ::
+    
+    #include <etude/types/tuple_indices.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class T>
+      struct tuple_indices
+        : make_indices<etude::tuple_size<T>::value>::type {};
+      
+    }
+
+``etude::tuple_indices<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
+その全ての要素のインデックスを順に保持した ``etude::indices<Indices...>`` を継承します。
 
 
 ``tuple_types``
 ---------------
 
-under construction...
+必要ヘッダ
+  ::
+    
+    #include <etude/types/tuple_types.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class T>
+      struct tuple_types
+        : etude::types<see-below...> {};
+      
+    }
+
+``etude::tuple_types<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
+その全ての要素の型
+``etude::tuple_element< 0, T >::type, ... , etude::tuple_element< N-1, T >::type``
+を順に保持した ``etude::types`` を継承します。 N は ``etude::tuple_size<T>::value`` です。
+
+.. hint::
+
+  ``T`` が CV 修飾されている場合や参照の場合には、中身の型も同様に修飾されます。
 
