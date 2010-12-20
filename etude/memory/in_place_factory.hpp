@@ -27,7 +27,7 @@
 
 #include "is_in_place_factory.hpp"
 #include "../types/indices.hpp"
-#include "../types/type.hpp"
+#include "../types/types.hpp"
 #include "../types/is_convertible.hpp"
 #include "../types/decay_and_strip.hpp"
 

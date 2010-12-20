@@ -6,7 +6,7 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/types/type.hpp"
+#include "../../etude/types/types.hpp"
 
 #include <type_traits>
 

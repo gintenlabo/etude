@@ -1,6 +1,6 @@
 //
-//  type:
-//    型ないし型パックに対する単純な type envelope (＋α)
+//  types:
+//    複数の型に対する単純な type envelope (＋α)
 // 
 //    様々な局面で型の代わりとして使うタグです。
 //    タプルのアンパックに使う indices と違って、それだけだと効果は薄いですが、
@@ -10,8 +10,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_TYPES_INCLUDED_TYPE_HPP_
-#define ETUDE_TYPES_INCLUDED_TYPE_HPP_
+#ifndef ETUDE_TYPES_INCLUDED_TYPES_HPP_
+#define ETUDE_TYPES_INCLUDED_TYPES_HPP_
 
 #include <cstddef>  // for std::size_t
 
@@ -31,4 +31,4 @@ namespace etude {
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_TYPES_INCLUDED_TYPE_HPP_
+#endif  // #ifndef ETUDE_TYPES_INCLUDED_TYPES_HPP_

@@ -16,7 +16,7 @@
 #define ETUDE_MEMORY_INCLUDED_OPERATOR_DELETE_HPP_
 
 #include <new>
-#include "../types/type.hpp"
+#include "../types/types.hpp"
 
 namespace etude {
 
