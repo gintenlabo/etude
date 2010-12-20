@@ -29,6 +29,8 @@ Type Traits
 ``etude::decay_and_strip<T>::type`` は、 ``std::decay<T>::type`` を ``U`` としたとき、
 ``U`` が ``std::reference_wrapper<X>`` ならば ``X&`` に、そうでなければ ``U`` に定義されます。
 
+この型変換は ``std::make_tuple`` において行われる型変換と同じものです。
+
 
 ``indices``
 -----------
@@ -66,7 +68,7 @@ Type Traits
 
 
 ``types``
------------
+---------
 
 必要ヘッダ
   ::
