@@ -10,6 +10,8 @@ Type Traits
    :local:
 
 
+.. _decay_and_strip:
+
 ``decay_and_strip``
 -------------------
 
@@ -35,6 +37,8 @@ Type Traits
 
 この型変換は ``std::make_tuple`` において行われる型変換と同じものです。
 
+
+.. _indices:
 
 ``indices``
 -----------
@@ -71,6 +75,8 @@ Type Traits
   詳しい使い方は :file:`samples/types/indices.cc` を参照してください。
 
 
+.. _types:
+
 ``types``
 ---------
 
@@ -95,8 +101,10 @@ Type Traits
 通常、このクラスはライブラリの実装を補助する目的で使われ、表に現れることはありません。
 
 このクラスの典型的な使われ方としては、複数の型を一つに束ねて
-``etude::is_convertible`` といったメタ関数に渡す、などが挙げられます。
+``etude::is_convertible``\ :ref:`¶<is_convertible>` といったメタ関数に渡す、などが挙げられます。
 
+
+.. _is_convertible:
 
 ``is_convertible``
 ------------------
@@ -119,7 +127,8 @@ Type Traits
 
 ``etude::is_convertible< From, To >`` は、以下のように定義されるメタ関数です：
 
-- ``From`` と ``To`` がそれぞれ ``etude::types<FromTypes...>`` と ``etude::types<ToTypes...>`` である場合
+- ``From`` と ``To`` がそれぞれ ``etude::types<FromTypes...>``\ :ref:`¶<types>` と
+  ``etude::types<ToTypes...>`` である場合
 
   - ``etude::is_convertible< etude::types<FromTypes...>, etude::types<ToTypes...> >`` は、
     ``FromTypes...`` と ``ToTypes...`` の要素数が共に N で、かつ 0 から N-1 までの全ての整数
@@ -136,6 +145,8 @@ Type Traits
 
   - ``etude::is_convertible< From, To >`` は、 ``std::is_convertible< From, To >`` を継承します。
 
+
+.. _is_tuple:
 
 ``is_tuple``
 ------------
@@ -161,6 +172,8 @@ Type Traits
 ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承するメタ関数です。
 
 
+.. _tuple_size:
+
 ``tuple_size``
 --------------
 
@@ -183,6 +196,8 @@ Type Traits
 ``etude::tuple_size<T>`` は、 ``T`` にメタ関数 ``std::decay`` を適用することで
 CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` を計算するメタ関数です。
 
+
+.. _tuple_element:
 
 ``tuple_element``
 -----------------
@@ -227,6 +242,8 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
   - ``etude::tuple_element< I, T >`` は ``std::tuple_element< I, T >`` を継承します。
 
 
+.. _tuple_indices:
+
 ``tuple_indices``
 -----------------
 
@@ -247,8 +264,11 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
     }
 
 ``etude::tuple_indices<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
-その全ての要素のインデックスを順に保持した ``etude::indices<Indices...>`` を継承します。
+その全ての要素のインデックスを順に保持した ``etude::indices<Indices...>``\ :ref:`¶<indices>`
+を継承します。
 
+
+.. _tuple_types:
 
 ``tuple_types``
 ---------------
@@ -271,8 +291,10 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
 
 ``etude::tuple_types<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
 その全ての要素の型
-``etude::tuple_element< 0, T >::type, ... , etude::tuple_element< N-1, T >::type``
-を順に保持した ``etude::types`` を継承します。 N は ``etude::tuple_size<T>::value`` です。
+``etude::tuple_element< 0, T >::type, ... , etude::tuple_element< N-1, T >::type``\
+:ref:`¶<tuple_element>`
+を順に保持した ``etude::types``\ :ref:`¶<types>` を継承します。
+N は ``etude::tuple_size<T>::value``\ :ref:`¶<tuple_size>` です。
 
 .. hint::
 
