@@ -140,7 +140,25 @@ Type Traits
 ``is_tuple``
 ------------
 
-under construction...
+必要ヘッダ
+  ::
+    
+    #include <etude/types/is_tuple.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class T>
+      struct is_tuple
+        : std::integral_constant<bool, see-below> {};
+      
+    }
+
+``etude::is_tuple<T>`` は、 ``T`` がタプル型なら
+（具体的には定数 ``std::tuple_size<T>::value`` が存在し 0 以上なら）
+``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承するメタ関数です。
 
 
 ``tuple_size``
