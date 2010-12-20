@@ -136,3 +136,33 @@ Type Traits
 
   - ``etude::is_convertible< From, To >`` は、 ``std::is_convertible< From, To >`` を継承します。
 
+
+``is_tuple``
+------------
+
+under construction...
+
+
+``tuple_size``
+--------------
+
+under construction...
+
+
+``tuple_element``
+-----------------
+
+under construction...
+
+
+``tuple_indices``
+-----------------
+
+under construction...
+
+
+``tuple_types``
+---------------
+
+under construction...
+
