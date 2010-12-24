@@ -232,8 +232,6 @@ under construction...
         tuple_type const& get_tuple() const;
         tuple_type && move_tuple();
         
-       private:
-        tuple_type x; // exposition only
       };
       
       // in_place_factory non-member functions
@@ -243,7 +241,7 @@ under construction...
       inline std::tuple<Args>&& get_tuple( in_place_factory<Args...> && x );
       
       template<class T, class... Args>
-      inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );
+      inline T* apply_in_place( in_place_factory<Args...> & x, void* addr );
       template<class T, class... Args>
       inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
       template<class T, class... Args>
@@ -280,9 +278,7 @@ under construction...
 
     typedef std::tuple<Args...> tuple_type;
 
-  内部に保持する引数パックの型です。
-    
-  ``in_place_factory<Args...>`` は、内部にこの型のメンバを一つだけ保持します。
+  ``in_place_factory<Args...>`` が内部に保持する引数パックの型です。
 
 
 .. _in_place_factory ctors:
@@ -469,7 +465,7 @@ under construction...
   ::
   
     template<class T, class... Args>
-    inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );
+    inline T* apply_in_place( in_place_factory<Args...> & x, void* addr );
     
     template<class T, class... Args>
     inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
