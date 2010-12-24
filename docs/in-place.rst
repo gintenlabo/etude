@@ -1,6 +1,9 @@
+.. index::
+  single: In-Place Factories
 
+==================
 In-Place Factories
-===================
+==================
 
 使い道
   コンストラクタの引数を転送し、メモリ領域を直接初期化する
@@ -24,7 +27,7 @@ In-Place Factories
 
 
 概要
------
+====
 
 `Boost.InPlaceFactories <http://www.boost.org/doc/libs/1_45_0/libs/utility/in_place_factories.html>`_ の 
 C++0x 版です。rvalue references と variadic templates に対応しています。
@@ -122,425 +125,504 @@ Etude.InPlaceFactories には用意されています。
 
 
 使い方（利用側）
-----------------
+================
 
 under construction...
 
 
 使い方（実装側）
-----------------
+================
 
 under construction...
 
 
 詳細データ
------------
+==========
 
+.. index::
+  single: In-Place Factories; is_in_place_factory
 
-<etude/in_place.hpp>
-~~~~~~~~~~~~~~~~~~~~
+.. _is_in_place_factory:
 
-::
+``is_in_place_factory``
+-----------------------
 
-  #include "memory/is_in_place_factory.hpp"
-  #include "memory/is_typed_in_place_factory.hpp"
-  
-  #include "memory/in_place_factory.hpp"
-  #include "memory/typed_in_place_factory.hpp"
-  
-  #include "memory/apply_in_place.hpp"
-
-各種ヘッダをインクルードするだけのヘッダです。
-
-
-<etude/memory/is_in_place_factory.hpp>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-
-  #include <boost/utility/in_place_factory.hpp>
-
-  namespace etude {
-  
-    using boost::in_place_factory_base;
+必要ヘッダ
+  ::
     
-    template<class T> class is_in_place_factory;
-    
-  }
+    #include <etude/memory/is_in_place_factory.hpp>
 
-.. class:: etude::is_in_place_factory<T>
-  
-  このクラスは、 T が（CV修飾された） InPlaceFactory （ :class:`boost::in_place_factory_base`
-  から派生したクラス）の場合、あるいは InPlaceFactory への参照である場合には
-  :class:`std::true_type` を継承し、そうでなければ :class:`std::false_type` を継承します。
-  
-  .. hint::
-    
-    特別な理由がなければ、このメタ関数を直接使うのではなく、
-    
-    代わりに :file:`<etude/memory/apply_in_place.hpp>` で定義されたメタ関数
-    :class:`etude::is_in_place_applyable` を使う方がよいでしょう。
-
-
-<etude/memory/in_place_factory.hpp>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-
-  #include "is_in_place_factory.hpp"
-  #include <tuple>
-
-  namespace etude {
-    
-    // class template in_place_factory
-    template<class... Args>
-    class in_place_factory;
-    
-    // in_place_factory non-member functions
-    template<class... Args>
-    inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );
-    template<class... Args>
-    inline std::tuple<Args>&& get_tuple( in_place_factory<Args...> && x );
-    
-    template<class T, class... Args>
-    inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );
-    template<class T, class... Args>
-    inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
-    template<class T, class... Args>
-    inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );
-    
-    // function template in_place
-    template<class... Args>
-    inline in_place_factory<Args&&...> in_place( Args&& ...args );
-    template<class... Args>
-    inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );
-    template<class... Args>
-    inline in_place_factory<VArgs...> in_place_by_val( Args&& ...args );
-    template<class... Args>
-    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );
-    template<class... Args>
-    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
-    
-  }
-
-.. class:: etude::in_place_factory<Args>
-
-  :func:`etude::in_place` の結果を保持するためのクラス。
-  
-  このクラスは InPlaceFactory の要件を満たします。
-  
+定義
   ::
   
-    template<class... Args>
-    struct in_place_factory
-      : boost::in_place_factory_base
-    {
-      typedef std::tuple<Args...> tuple_type;
-      
-      // construct, copy
-      explicit in_place_factory( Args&& ...args );
-      
-      in_place_factory( tuple_type const& t );
-      in_place_factory( tuple_type && t );
-      
-      template<class...Types>
-      in_place_factory( in_place_factory<Types...> const& src );
-      template<class...Types>
-      in_place_factory( in_place_factory<Types...> && src );
-      
-      // gcc 4.5.0 does not support implicit move
-      in_place_factory( in_place_factory const& ) = default;
-      in_place_factory( in_place_factory && ) = default;
-      
-      // no assign operator defined
-      in_place_factory& operator=( in_place_factory const& ) = delete;
-      
-      // application
+    #include <boost/utility/in_place_factory.hpp>
+  
+    namespace etude {
+    
+      using boost::in_place_factory_base;
+    
       template<class T>
-      T* apply( void* addr ) const;
-      template<class T>
-      T* move_apply( void* addr );
+      struct is_in_place_factory
+        : etude::integral_constant<bool, see-below> {};
       
-      // get arguments as tuple
-      tuple_type const& get_tuple() const;
-      tuple_type && move_tuple();
-      
-     private:
-      tuple_type x; // exposition only
-    };
+    }
 
+``etude::is_in_place_factory<T>`` は、 T が（CV修飾された） InPlaceFactory
+（ ``boost::in_place_factory_base`` から派生したクラス）または InPlaceFactory への参照の場合には
+``std::true_type`` を、そうでない場合には ``std::false_type`` を継承するメタ関数です。
   
-  .. type:: etude::in_place_factory::tuple_type
-    
-    内部に保持する引数パックの型です。
-    
-    :class:`in_place_factory` は、内部にこの型のメンバを一つだけ保持します。
+.. hint::
   
-  .. function:: explicit etude::in_place_factory( Args&& args )
-  
-    与えられた引数を保持する :class:`in_place_factory\<Args\>` を構築します。
-  
-  .. function:: etude::in_place_factory( tuple_type const& ), etude::in_place_factory( tuple_type && )
-  
-    :type:`tuple_type` に格納された引数リストから :class:`in_place_factory\<Args\>` を構築します。
-    
-    .. note::
-      
-      このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。
-      
-      言語仕様上、ユーザ定義の型変換は一度しか行われないため、
-      このコンストラクタに渡すタプルの型が :type:`std::tuple\<Args...\>` と厳密に一致しない場合、
-      たとえタプルの中身が変換可能であっても、コンパイルエラーとなります。
-      
-      具体的な例を挙げると、 ::
-      
-        etude::in_place_factory<double> x = std::make_tuple(1);
-      
-      は、 ``std::make_tuple(1)`` の結果である :type:`std::tuple\<int\>` と、
-      :type:`etude::in_place_factory\<double\>` のコンストラクタが要求する :type:`std::tuple<double>`
-      の型が厳密に一致しないため、 ill-formed です。
-      
-      型の厳密に一致しないタプルから :class:`in_place_factory\<Args\>` を構築したい場合は、
-      :func:`in_place_from_tuple` を用いて、一度 該当する型の :class:`in_place_factory\<Args\>` に変換してください。
-  
-  ``template<class... Types> in_place_factory( in_place_factory<Types...> const& );`` ``template<class... Types> in_place_factory( in_place_factory<Types...> && );``
-    異なる型の引数を保持する ``in_place_factory`` からの型変換を提供します。
-    
-    std::tuple<Args...> が std::tuple<Types...> から構築可能でなければいけません。
-    
-    .. hint::
-    
-      主に ::
-      
-        etude::in_place_factory<double> x = etude::in_place( 0 );
-      
-      のように使います。
-  
-  ``template<class T> T* apply( void* addr ) const;``
-    コンストラクタで渡された引数を用いて、指定されたメモリ領域に T 型のオブジェクトを構築し、
-    構築されたオブジェクトへのポインタを返します。
-    
-    この関数は、以下のコードと同等です： ::
-    
-      ::new (addr) T( args... )
-      
-    ただし args... はコンストラクタで指定された引数で、 const 参照として渡されます。
-    
-    .. warning::
-      
-      この関数はアライメントや例外安全などに問題のある、本質的に安全でない関数であり、
-      安易な呼び出しは未定義動作を容易に引き起こします。
-      
-      上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。
-  
-  ``template<class T> T* move_apply( void* addr );``
-    コンストラクタで渡された引数を用いて、指定されたメモリ領域に T 型のオブジェクトを構築し、
-    構築されたオブジェクトへのポインタを返します。
-    
-    その際、この関数は、格納している引数を move します。
-    
-    この関数は、以下のコードと同等です： ::
-    
-      ::new (addr) T( std::forward<Args>(args)... )
-      
-    ただし args... はコンストラクタで指定された引数で、右辺値参照として渡されます。
-    
-    .. note::
-    
-      この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。
-      
-      これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
-      undefined behavior を引き起こす可能性がある、ということです。
-    
-    .. warning::
-      
-      この関数はアライメントや例外安全などに問題のある、本質的に安全でない関数であり、
-      安易な呼び出しは未定義動作を容易に引き起こします。
-      
-      上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。
+  特別な理由がなければ、このメタ関数を直接使うのではなく、
+  より一般的に使える ``etude::is_in_place_applyable<InPlace, T>`` を使う方がよいでしょう。
 
-  ``tuple_type const& get_tuple() const;``
-    コンストラクタで渡された引数を格納したタプルへの const 参照を得ます。
+
+.. index::
+  single: In-Place Factories; in_place_factory
+
+``in_place_factory``
+--------------------
+
+必要ヘッダ
+  ::
     
+    #include <etude/memory/in_place_factory.hpp>
+
+定義
+  ::
+
+    #include "is_in_place_factory.hpp"
+    #include <tuple>
   
-  ``tuple_type const& move_tuple() const;``
-    コンストラクタで渡された引数を格納したタプルを move します。
-    
-    .. note::
-    
-      この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。
+    namespace etude {
       
-      これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
-      undefined behavior を引き起こす可能性がある、ということです。
+      // class template in_place_factory
+      template<class... Args>
+      struct in_place_factory
+        : boost::in_place_factory_base
+      {
+        typedef std::tuple<Args...> tuple_type;
+        
+        // construct, copy
+        template<class... Types>
+        explicit in_place_factory( Types&& ...args );
+        
+        in_place_factory( tuple_type const& t );
+        in_place_factory( tuple_type && t );
+        
+        template<class...Types>
+        in_place_factory( in_place_factory<Types...> const& src );
+        template<class...Types>
+        in_place_factory( in_place_factory<Types...> && src );
+        
+        // gcc 4.5.0 does not support implicit move
+        in_place_factory( in_place_factory const& ) = default;
+        in_place_factory( in_place_factory && ) = default;
+        
+        // no assign operator defined
+        in_place_factory& operator=( in_place_factory const& ) = delete;
+        
+        // application
+        template<class T>
+        T* apply( void* addr ) const;
+        template<class T>
+        T* move_apply( void* addr );
+        
+        // get arguments as tuple
+        tuple_type const& get_tuple() const;
+        tuple_type && move_tuple();
+        
+       private:
+        tuple_type x; // exposition only
+      };
+      
+      // in_place_factory non-member functions
+      template<class... Args>
+      inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );
+      template<class... Args>
+      inline std::tuple<Args>&& get_tuple( in_place_factory<Args...> && x );
+      
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );
+      
+      
+      // function template in_place
+      template<class... Args>
+      inline in_place_factory<Args&&...> in_place( Args&& ...args );
+      template<class... Args>
+      inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );
+      template<class... Args>
+      inline in_place_factory<see-below...> in_place_by_val( Args&& ...args );
+      template<class... Args>
+      inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );
+      template<class... Args>
+      inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
+      
+    }
+
+コンストラクタを呼び出す為の引数を pack したクラスです。
+
+このクラスは Boost.InPlaceFactory の上位互換として使えます。
+
+
+``in_place_factory`` constructors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+  
+``typedef std::tuple<Args...> tuple_type``
+  内部に保持する引数パックの型です。
+    
+  ``in_place_factory<Args...>`` は、内部にこの型のメンバを一つだけ保持します。
+  
+``template<class... Types> explicit in_place_factory( Types&&... args );``
+  与えられた引数を保持する ``in_place_factory<Args...>`` を構築します。
+  
+  ``Types...`` から ``Args...`` が変換可能である（
+  ``etude::is_convertible<etude::types<Types...>, etude::types<Args...>>::value``\
+  :ref:`¶<is_convertible>` が ``true`` である）必要があります。
+  
+``in_place_factory( tuple_type const& x );``
+  ``in_place_factory( tuple_type const& x );``
+  
+  渡されたタプルに格納された引数リストから ``in_place_factory<Args...>`` を構築します。
+  
+  .. note::
+    
+    このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。
+    
+    言語仕様上、ユーザ定義の型変換は一度しか行われないため、
+    このコンストラクタに渡すタプルの型が ``std::tuple<Args...>`` と厳密に一致しない場合、
+    たとえタプルの中身が変換可能であっても、コンパイルエラーとなります。
+    
+    具体的な例を挙げると、 ::
+    
+      etude::in_place_factory<double> x = std::make_tuple(1);
+    
+    は、 ``std::make_tuple(1)`` の結果である ``std::tuple<int>`` と、
+    ``etude::in_place_factory<double>`` のコンストラクタが要求する ``std::tuple<double>``
+    の型が厳密に一致しないため、 ill-formed です。
+    
+    型の厳密に一致しないタプルから ``in_place_factory<Args...>`` を構築したい場合には、
+    ``in_place_from_tuple`` を用いて型変換を行うようにしてください。
+  
+``template<class... Types> in_place_factory( in_place_factory<Types> const& src );``
+  ``template<class... Types> in_place_factory( in_place_factory<Types> && src );``
+    
+  異なる型の引数を保持する ``in_place_factory`` からの型変換を提供します。
+  
+  ``Types...`` から ``Args...`` が変換可能である（
+  ``etude::is_convertible<etude::types<Types...>, etude::types<Args...>>::value``\
+  :ref:`¶<is_convertible>` が ``true`` である）必要があります。
+  
+  .. hint::
+  
+    主に ::
+    
+      etude::in_place_factory<double> x = etude::in_place( 0 );
+    
+    のように使います。
+
+``in_place_factory`` applications
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. warning::
+  
+  これらの関数はアライメントや例外安全などに問題のある、本質的に安全でない関数であり、
+  安易な呼び出しは未定義動作を容易に引き起こします。
+  
+  上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。
+
+
+``template<class T> T* apply( void* addr ) const;``
+  コンストラクタで渡された引数を用いて、指定されたメモリ領域に ``T`` 型のオブジェクトを構築し、
+  構築されたオブジェクトへのポインタを返します。
+  
+  この関数は、以下のコードと同等です： ::
+  
+    ::new (addr) T( args... )
+    
+  ただし ``args...`` はコンストラクタで渡された引数です。
+  
+
+``template<class T> T* move_apply( void* addr );``
+  コンストラクタで渡された引数を用いて、指定されたメモリ領域に ``T`` 型のオブジェクトを構築し、
+  構築されたオブジェクトへのポインタを返します。
+  
+  その際、この関数は、格納している引数を move します。
+  
+  この関数は、以下のコードと同等です： ::
+  
+    ::new (addr) T( std::forward<Args>(args)... )
+    
+  ただし ``args...`` はコンストラクタで渡された引数です。
+  
+  .. note::
+  
+    この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。
+    
+    これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+    undefined behavior を引き起こす可能性がある、ということです。
+
+``in_place_factory`` observers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``tuple_type const& get_tuple() const;``
+  コンストラクタで渡された引数を格納したタプルへの const 参照を得ます。
+  
+
+``tuple_type const& move_tuple() const;``
+  コンストラクタで渡された引数を格納したタプルを move します。
+  
+  .. note::
+  
+    この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。
+    
+    これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+    undefined behavior を引き起こす可能性がある、ということです。
+
 
 ``in_place_factory`` non-member functions
-  ``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );``
-    ::
-    
-      x.get_tuple()
-    
-    と同じです。
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );``
+  ::
   
-  ``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> && x );``
-    ::
-    
-      x.move_tuple()
-    
-    と同じです。
+    x.get_tuple()
   
-  ``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );`` ``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );``
-    ::
-    
-      x.template apply<T>( addr )
-    
-    と同じです。
-    
-  ``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );``
-    ::
-    
-      x.template move_apply<T>( addr )
-    
-    と同じです。
+  と同じです。
+
+``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> && x );``
+  ::
   
-  .. hint::
-    
-    これらの関数は、対象オブジェクトが lvalue か rvalue かによって呼び出す関数を切り替える、
-    といった面倒な手間をなくすために提供されています。
-    
+    x.move_tuple()
+  
+  と同じです。
+
+.. index::
+  single: In-Place Factories; apply_in_place
+
+``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );`` ``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );``
+  ::
+  
+    x.template apply<T>( addr )
+  
+  と同じです。
+  
+``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );``
+  ::
+  
+    x.template move_apply<T>( addr )
+  
+  と同じです。
+
+.. hint::
+  
+  これらの関数は、対象オブジェクトが lvalue か rvalue かによって呼び出す関数を切り替える、
+  といった面倒な手間をなくすために提供されています。
+  
 function template ``in_place``
-  ``template<class... Args> inline in_place_factory<Args&&...> in_place( Args&& ...args );``
-    与えられた引数への右辺値参照を束縛した ``in_place_factory`` を構築します。
-    
-    この関数は与えられた引数を「そのままに」束縛します。
-    
-    これはつまり、 ::
-    
-      etude::apply_in_place<T>( etude::in_place( args... ), addr )
-    
-    と、 ::
-    
-      ::new(addr) T( args... )
-    
-    が、コンパイラの最適化に依らず、意味論的に同じ動作をする、ということです。
-    
-    この動作は、速度と意味論の双方において、通常は極めて望ましいものですが、
-    右辺値参照を扱っているため、幾つかの場合において問題が発生します。
-    
-    まず、この関数呼び出しの結果をローカル変数に格納することはできません： ::
-    
-      auto x = etude::in_place( hoge() ); // ダメ。
-      // x の参照する一時オブジェクトはここで破棄される
-    
-    次に、この関数呼び出しの結果を関数の引数として使う場合、
-    その引数をコピーすることは出来ません。 ::
-    
-      template<class InPlace>
-      void f( InPlace && x ) {
-        auto y = x; // x をコピー
-        // ...
-      }
-      
-      f( etude::in_place(1, 2) ); // コピー出来ないのでコンパイルエラー
-    
-    これらの問題を避けてより安全に使いたい場合は、 ``in_place_by_val`` を使ってください。
-    
-    .. note::
-    
-      引数を与えず単に ``etude::in_place()`` と使う場合には、
-      変数への束縛もコピーも、安全に行うことが出来ます。
-      
-      その場合は、わざわざ ``etude::in_place_by_val()`` と書く必要はありません。
-      
-  ``template<class... Args> inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );``
-    与えられた引数を束縛した ``in_place_factory`` を構築します。
-    
-    この関数は ``in_place`` とは違い、一時オブジェクトを値として束縛するので、
-    変数に格納しても安全に使うことができますし、コピーも通常のクラスと同じように行えます。
-    
-    一方で、一時オブジェクト以外のオブジェクト（lvalue）は参照として束縛されるので、
-    関数の戻り値として、この関数の結果を使うことは出来ません。
-    
-    また、参照として束縛されるため、参照先のオブジェクトが変更された場合、
-    意図しない結果になることもあります： ::
-    
-      int i = 0;
-      auto x = etude::in_place_by_ref(i);
-      i = 42; // x の「中身」は 42 になる
-    
-    この問題を避けてより安全に使いたい場合は、 ``in_place_by_val`` を使ってください。
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.. note::
 
-  ``template<class... Args> inline in_place_factory<VArgs...> in_place_by_val( Args&& ...args );``
-    与えられた引数を値として束縛した ``in_place_factory`` を構築します。
-    
-    この関数は、以下の関数呼び出しと等価です： ::
-    
-      etude::in_place_from_tuple( std::make_tuple( std::forward<Args>(args)... ) )
-    
-    与えられた引数は全て値として（配列や関数の場合はポインタとして）束縛され、
-    参照として束縛させたい場合は ``std::ref`` や ``std::cref`` を使って渡します。
-    
-    この関数は本質的に安全ですが、一方で原則的に全ての引数を値によりキャプチャするため、
-    コンパイラにより、特にコピーコストの高いオブジェクトに関しては、非効率的になる場合があります。
-    
-    .. note::
-    
-      ``in_place``, ``in_place_by_ref``, ``in_place_by_val`` の関数群は、現状
-      あまり良い名前とは言えないため、
-      より相応しい名前が見つかった場合には変更する可能性があります。
+  これらの関数群は、現状あまり良い名前とは言えないため、
+  より相応しい名前が見つかった場合には変更するかもしれません。
 
-  ``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );`` ``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );``
-    引数をパックしたタプルから ``in_place_factory`` を構築します。
-    
-    .. hint::
-    
-      この関数は、コンストラクタ呼び出しに関し、擬似的なタプルの unpack として機能します。
-      
-      つまり、 ::
-      
-        etude::apply_in_place<T>( etude::in_place_from_tuple(t), addr );
-      
-      は、あたかも ::
-      
-        ::new(addr) T( unpack(t) );
-      
-      のように動作します。
+.. index::
+  single: In-Place Factories; in_place
 
+.. _in_place:
 
-<etude/memory/is_typed_in_place_factory.hpp>
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-::
-
-  #include <boost/utility/typed_in_place_factory.hpp>
-
-  namespace etude {
+``template<class... Args> inline in_place_factory<Args&&...> in_place( Args&& ...args );``
+  与えられた引数への右辺値参照を束縛した ``in_place_factory<Args...>`` を構築します。
   
-    using boost::typed_in_place_factory_base;
-    
-    template<class T> struct is_typed_in_place_factory;
-    template<class T> struct typed_in_place_associated;
-  }
-
-``template<class T> struct is_typed_in_place_factory;``
-  T が（CV修飾された） TypedInPlaceFactory （ ``boost::is_typed_in_place_factory``
-  から派生したクラス）の場合、あるいは TypedInPlaceFactory への参照である場合には
-  ``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承したメタ関数です。
-
-``template<class T> struct typed_in_place_associated;``
-  T が（CV修飾された） TypedInPlaceFactory 、あるいはその参照の場合には、
-  ``typename typed_in_place_associated<T>::type`` は
-  ``typename TypedInPlaceFactory::value_type`` に定義されます。
+  この関数は与えられた引数を「そのままに」束縛します。
   
-  そうでなければ typed_in_place_associated<T>::type は定義されません。
+  これはつまり、 ::
+  
+    etude::apply_in_place<T>( etude::in_place( args... ), addr )
+  
+  と、 ::
+  
+    ::new(addr) T( args... )
+  
+  が、コンパイラの最適化に依らず、意味論的に同じ動作をする、ということです。
+  
+  この動作は、通常、速度と意味論の双方において望ましいものですが、
+  右辺値参照を扱っているため、幾つかの場合において問題が発生します。
+  
+  まず、この関数呼び出しの結果をローカル変数に格納することはできません： ::
+  
+    auto x = etude::in_place( hoge() ); // ダメ。
+    // x の参照する一時オブジェクトはここで破棄される
+  
+  次に、この関数呼び出しの結果を関数の引数として使う場合、
+  その引数をコピーすることは出来ません。 ::
+  
+    template<class InPlace>
+    void f( InPlace && x ) {
+      auto y = x; // x をコピー
+      // ...
+    }
+    
+    f( etude::in_place(1, 2) ); // コピー出来ないのでコンパイルエラー
+  
+  これらの問題を避けてより安全に使いたい場合は、 ``in_place_by_val``\ :ref:`¶<in_place_by_val>`
+  を使ってください。
+  
+  .. note::
+  
+    引数を与えず単に ``etude::in_place()`` と使う場合には、
+    変数への束縛もコピーも、安全に行うことが出来ます。
+    
+    その場合に わざわざ ``etude::in_place_by_val()`` と書く必要はありません。
+
+.. index::
+  single: In-Place Factories; in_place_by_ref
+
+.. _in_place_by_ref:
+
+``template<class... Args> inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );``
+  与えられた引数を束縛した ``in_place_factory<Args...>`` を構築します。
+  
+  この関数は ``in_place``\ :ref:`¶<in_place>` とは違い、一時オブジェクトを値として束縛するので、
+  変数に格納しても安全に使うことができますし、コピーも通常のクラスと同じように行えます。
+  
+  一方で、一時オブジェクト以外のオブジェクト（lvalue）は参照として束縛されるので、
+  関数の戻り値として、この関数の結果を使うことは出来ません。
+  
+  また、参照として束縛されるため、参照先のオブジェクトが変更された場合、
+  意図しない結果になることもあります： ::
+  
+    int i = 0;
+    auto x = etude::in_place_by_ref(i);
+    i = 42; // x の「中身」は 42 になる
+  
+  この問題を避けてより安全に使いたい場合は、 ``in_place_by_val``\ :ref:`¶<in_place_by_val>`
+  を使ってください。
+
+.. index::
+  single: In-Place Factories; in_place_by_val
+
+.. _in_place_by_val:
+
+``template<class... Args> inline in_place_factory<see-below...> in_place_by_val( Args&&... args );``
+  与えられた引数を値として束縛した ``in_place_factory<Args...>`` を構築します。
+  
+  この関数の戻り値は
+  ``etude::in_place_factory< typename etude::decay_and_strip<Args>::type... >``\
+  :ref:`¶<decay_and_strip>` で与えられます。
+  
+  これは ``std::make_tuple`` で行われる型変換と同一です。
+  つまり与えられた引数は基本的に値として（配列や関数の場合はポインタとして）束縛され、
+  参照として束縛させたい場合には ``std::ref`` や ``std::cref`` を使う、ということです。
+  
+  この関数は本質的に安全ですが、一方で原則的に全ての引数を値によりキャプチャするため、
+  コンパイラにより、特にコピーコストの高いオブジェクトに関しては、非効率的になる場合があります。
+
+.. index::
+  single: In-Place Factories; in_place_from_tuple
+
+.. _in_place_from_tuple:
+
+``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );``
+  ``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );``
+  
+  引数をパックしたタプルから ``in_place_factory`` を構築します。
   
   .. hint::
+  
+    この関数は、コンストラクタ呼び出しに関し、擬似的なタプルの unpack として機能します。
     
-    このメタ関数は、デフォルト関数テンプレート引数を用いて ::
+    つまり、 ::
     
-      template<class TypedInPlace,
-        class T = typename etude::typed_in_place_associated<TypedInPlace>::type>
-      result function( TypedInPlace && x, ～ );
+      etude::apply_in_place<T>( etude::in_place_from_tuple(t), addr );
     
-    のように使われることを想定しています。
+    は、あたかも ::
+    
+      ::new(addr) T( unpack(t) );
+    
+    のように動作します。
 
+
+.. index::
+  single: In-Place Factories; is_typed_in_place_factory
+
+.. _is_typed_in_place_factory:
+
+``is_typed_in_place_factory``
+-----------------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/memory/is_typed_in_place_factory.hpp>
+
+定義
+  ::
+  
+    #include <boost/utility/typed_in_place_factory.hpp>
+  
+    namespace etude {
+    
+      using boost::typed_in_place_factory_base;
+    
+      template<class T>
+      struct is_typed_in_place_factory
+        : etude::integral_constant<bool, see-below> {};
+      
+    }
+
+``etude::is_typed_in_place_factory<T>`` は、 ``T`` が（CV修飾された） TypedInPlaceFactory
+（ ``boost::typed_in_place_factory_base`` から派生したクラス）または
+TypedInPlaceFactory への参照の場合には ``std::true_type`` を、そうでない場合には
+``std::false_type`` を継承するメタ関数です。
+
+.. hint::
+  
+  特別な理由がなければ、このメタ関数を直接使うのではなく、
+  ``etude::typed_in_place_associated<TypedInPlace>``\ :ref:`¶<typed_in_place_associated>`
+  を使って、関連付けられた型も同時に取得した方が楽です。
+
+
+.. index::
+  single: In-Place Factories; typed_in_place_associated
+
+.. _typed_in_place_associated:
+
+``typed_in_place_associated``
+-----------------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/memory/is_typed_in_place_factory.hpp>
+
+定義
+  ::
+  
+    namespace etude {
+    
+      template<class T>
+      struct typed_in_place_associated;
+      
+    }
+
+``T`` が（CV修飾された） TypedInPlaceFactory または TypedInPlaceFactory への参照の場合、
+``typename etude::typed_in_place_associated<T>::type`` は
+``typename std::remove_reference<T>::type::value_type`` に定義されます。
+
+そうでなければ ``typed_in_place_associated<T>::type`` は定義されません。
+
+.. hint::
+  
+  このメタ関数は、例えば関数テンプレートのデフォルトテンプレート引数を用いて ::
+  
+    template<class TypedInPlace,
+      class T = typename etude::typed_in_place_associated<TypedInPlace>::type>
+    T* some_function( TypedInPlace && x );
+  
+  のように使うとよいでしょう。
 
