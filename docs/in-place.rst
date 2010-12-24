@@ -167,7 +167,7 @@ under construction...
       
     }
 
-``etude::is_in_place_factory<T>`` は、 T が（CV修飾された） InPlaceFactory
+``etude::is_in_place_factory<T>`` は、 ``T`` が（CV修飾された） InPlaceFactory
 （ ``boost::in_place_factory_base`` から派生したクラス）または InPlaceFactory への参照の場合には
 ``std::true_type`` を、そうでない場合には ``std::false_type`` を継承するメタ関数です。
   
@@ -269,26 +269,48 @@ under construction...
 このクラスは Boost.InPlaceFactory の上位互換として使えます。
 
 
-``in_place_factory`` constructors
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  
-``typedef std::tuple<Args...> tuple_type``
+.. _in_place_factory types:
+
+``in_place_factory`` types
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. compound::
+
+  :: 
+
+    typedef std::tuple<Args...> tuple_type;
+
   内部に保持する引数パックの型です。
     
   ``in_place_factory<Args...>`` は、内部にこの型のメンバを一つだけ保持します。
+
+
+.. _in_place_factory ctors:
+
+``in_place_factory`` constructors
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. compound::
+
+  ::
   
-``template<class... Types> explicit in_place_factory( Types&&... args );``
+    template<class... Types> explicit in_place_factory( Types&&... args );
+  
   与えられた引数を保持する ``in_place_factory<Args...>`` を構築します。
-  
+    
   ``Types...`` から ``Args...`` が変換可能である（
   ``etude::is_convertible<etude::types<Types...>, etude::types<Args...>>::value``\
   :ref:`¶<is_convertible>` が ``true`` である）必要があります。
+
+.. compound::
+
+  ::
   
-``in_place_factory( tuple_type const& x );``
-  ``in_place_factory( tuple_type const& x );``
-  
+    in_place_factory( tuple_type const& x );
+    in_place_factory( tuple_type && x );
+
   渡されたタプルに格納された引数リストから ``in_place_factory<Args...>`` を構築します。
-  
+
   .. note::
     
     このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。
@@ -307,9 +329,13 @@ under construction...
     
     型の厳密に一致しないタプルから ``in_place_factory<Args...>`` を構築したい場合には、
     ``in_place_from_tuple`` を用いて型変換を行うようにしてください。
+
+.. compound::
+
+  :: 
   
-``template<class... Types> in_place_factory( in_place_factory<Types> const& src );``
-  ``template<class... Types> in_place_factory( in_place_factory<Types> && src );``
+    template<class... Types> in_place_factory( in_place_factory<Types...> const& src );
+    template<class... Types> in_place_factory( in_place_factory<Types...> && src );
     
   異なる型の引数を保持する ``in_place_factory`` からの型変換を提供します。
   
@@ -325,6 +351,7 @@ under construction...
     
     のように使います。
 
+
 ``in_place_factory`` applications
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -336,7 +363,14 @@ under construction...
   上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。
 
 
-``template<class T> T* apply( void* addr ) const;``
+.. _in_place_factory apply:
+
+.. compound::
+
+  ::
+  
+    template<class T> T* apply( void* addr ) const;
+  
   コンストラクタで渡された引数を用いて、指定されたメモリ領域に ``T`` 型のオブジェクトを構築し、
   構築されたオブジェクトへのポインタを返します。
   
@@ -347,7 +381,14 @@ under construction...
   ただし ``args...`` はコンストラクタで渡された引数です。
   
 
-``template<class T> T* move_apply( void* addr );``
+.. _in_place_factory move_apply:
+
+.. compound::
+
+  ::
+  
+    template<class T> T* move_apply( void* addr );
+  
   コンストラクタで渡された引数を用いて、指定されたメモリ領域に ``T`` 型のオブジェクトを構築し、
   構築されたオブジェクトへのポインタを返します。
   
@@ -366,14 +407,29 @@ under construction...
     これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
     undefined behavior を引き起こす可能性がある、ということです。
 
+
 ``in_place_factory`` observers
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``tuple_type const& get_tuple() const;``
+.. _in_place_factory get_tuple:
+
+.. compound::
+
+  ::
+  
+    tuple_type const& get_tuple() const;
+  
   コンストラクタで渡された引数を格納したタプルへの const 参照を得ます。
   
 
-``tuple_type const& move_tuple() const;``
+.. _in_place_factory move_tuple:
+
+.. compound::
+
+  ::
+  
+    tuple_type const& move_tuple() const;
+  
   コンストラクタで渡された引数を格納したタプルを move します。
   
   .. note::
@@ -387,36 +443,47 @@ under construction...
 ``in_place_factory`` non-member functions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );``
-  ::
-  
-    x.get_tuple()
-  
-  と同じです。
+.. compound::
 
-``template<class... Args> inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> && x );``
   ::
   
-    x.move_tuple()
+    template<class... Args>
+    inline std::tuple<Args...> const& get_tuple( in_place_factory<Args...> const& x );
   
-  と同じです。
+  ``x.get_tuple()``\ :ref:`¶<in_place_factory get_tuple>` と同じです。
+
+.. compound::
+
+  ::
+  
+    template<class... Args>
+    inline std::tuple<Args...> const& get_tuple( in_place_factory<Args...> && x );
+  
+  ``x.move_tuple()``\ :ref:`¶<in_place_factory move_tuple>` と同じです。
 
 .. index::
   single: In-Place Factories; apply_in_place
 
-``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );`` ``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );``
+.. compound::
+
   ::
   
-    x.template apply<T>( addr )
+    template<class T, class... Args>
+    inline T* apply_in_place( in_place_factory<Args...>& x, void* addr );
+    
+    template<class T, class... Args>
+    inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
   
-  と同じです。
+  ``x.template apply<T>( addr )``\ :ref:`¶<in_place_factory apply>` と同じです。
   
-``template<class T, class... Args> inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );``
+.. compound::
+
   ::
   
-    x.template move_apply<T>( addr )
+    template<class T, class... Args>
+    inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );
   
-  と同じです。
+  ``x.template move_apply<T>( addr )``\ :ref:`¶<in_place_factory move_apply>` と同じです。
 
 .. hint::
   
@@ -435,7 +502,13 @@ function template ``in_place``
 
 .. _in_place:
 
-``template<class... Args> inline in_place_factory<Args&&...> in_place( Args&& ...args );``
+.. compound::
+
+  ::
+  
+    template<class... Args>
+    inline in_place_factory<Args&&...> in_place( Args&&... args );
+  
   与えられた引数への右辺値参照を束縛した ``in_place_factory<Args...>`` を構築します。
   
   この関数は与えられた引数を「そのままに」束縛します。
@@ -484,7 +557,13 @@ function template ``in_place``
 
 .. _in_place_by_ref:
 
-``template<class... Args> inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );``
+.. compound::
+
+  ::
+  
+    template<class... Args>
+    inline in_place_factory<Args...> in_place_by_ref( Args&&... args );
+  
   与えられた引数を束縛した ``in_place_factory<Args...>`` を構築します。
   
   この関数は ``in_place``\ :ref:`¶<in_place>` とは違い、一時オブジェクトを値として束縛するので、
@@ -508,7 +587,13 @@ function template ``in_place``
 
 .. _in_place_by_val:
 
-``template<class... Args> inline in_place_factory<see-below...> in_place_by_val( Args&&... args );``
+.. compound::
+
+  ::
+  
+    template<class... Args>
+    inline in_place_factory<see-below...> in_place_by_val( Args&&... args );
+  
   与えられた引数を値として束縛した ``in_place_factory<Args...>`` を構築します。
   
   この関数の戻り値は
@@ -527,8 +612,14 @@ function template ``in_place``
 
 .. _in_place_from_tuple:
 
-``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );``
-  ``template<class... Args> inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );``
+.. compound::
+
+  ::
+
+    template<class... Args>
+    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );
+    template<class... Args>
+    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
   
   引数をパックしたタプルから ``in_place_factory`` を構築します。
   
