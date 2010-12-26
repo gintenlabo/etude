@@ -463,6 +463,8 @@ under construction...
 .. index::
   single: In-Place Factories; apply_in_place
 
+.. _in_place_factory apply_in_place:
+
 .. compound::
 
   ::
@@ -1029,6 +1031,8 @@ TypedInPlaceFactory への参照の場合には ``std::true_type`` を、そう�
 
 .. index::
   single: In-Place Factories; apply_typed_in_place
+  
+.. _typed_in_place_factory apply_typed_in_place:
 
 .. compound::
 
@@ -1161,12 +1165,12 @@ function template ``in_place`` (typed version)
 
 
 .. index::
-  single: In-Place Factories; apply_in_place
+  single: In-Place Factories; is_in_place_applyable
 
-.. _apply_in_place:
+.. _is_in_place_applyable:
 
-``apply_in_place``
-------------------
+``is_in_place_applyable``
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 必要ヘッダ
   ::
@@ -1175,36 +1179,19 @@ function template ``in_place`` (typed version)
 
 定義
   ::
-
+  
     #include "is_in_place_factory.hpp"
     #include "is_typed_in_place_factory.hpp"
 
     namespace etude {
     
-      template<class InPlace, class T>
+      template<class T, class InPlace>
       struct is_in_place_applyable
         : std::integral_constant<bool, see-below> {};
     
-      template<class T, class InPlace>
-      inline T* apply_in_place( InPlace && x, void* addr );
-    
     }
 
-.. index::
-  single: In-Place Factories; is_in_place_applyable
-
-.. _is_in_place_applyable:
-
-class template ``is_in_place_applyable``
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 .. compound::
-
-  ::
-  
-    template<class T, class InPlace>
-    struct is_in_place_applyable
-      : std::integral_constant<bool, see-below> {};
 
   このメタ関数は、
   ``is_in_place_factory<InPlace>::value``\ :ref:`¶<is_in_place_factory>`
@@ -1214,6 +1201,61 @@ class template ``is_in_place_applyable``
   それ以外の場合には ``std::false_type`` を継承します。
   
   .. hint::
-    このメタ関数は、主に後述の ``apply_in_place`` を呼び出すか否かを判定する為に使います。
+    このメタ関数は、主に後述の ``apply_in_place``\ :ref:`¶<apply_in_place>`
+    を呼び出すか否かを判定する為に使います。
 
 
+.. index::
+  single: In-Place Factories; apply_in_place
+
+.. _apply_in_place:
+
+``apply_in_place``
+~~~~~~~~~~~~~~~~~~
+
+必要ヘッダ
+  ::
+    
+    #include <etude/memory/apply_in_place.hpp>
+
+
+定義
+  ::
+  
+    #include "is_in_place_factory.hpp"
+    #include "is_typed_in_place_factory.hpp"
+
+    namespace etude {
+    
+      template<class T, class InPlace>
+      inline T* apply_in_place( InPlace && x, void* addr );
+    
+    }
+
+.. compound::
+
+  ``addr`` で示される領域に、 ``InPlace`` を適用することで ``T`` 型のオブジェクトを構築します。
+
+  この関数は、
+  ``typename typed_in_place_associated<InPlace>::type``\ :ref:`¶<typed_in_place_associated>`
+  が存在し ``T`` 型である場合には ::
+  
+    apply_typed_in_place( std::forward<InPlace>(x), addr );
+  
+  を\ :ref:`¶<apply_typed_in_place>` 、それ以外の場合には ::
+  
+    std::forward<InPlace>(x).template apply<T>( addr );
+  
+  を呼び出します。
+  
+  この関数の戻り値は構築されたオブジェクトのアドレスになります。
+
+  .. note::
+
+    ``etude::in_place_factory<Args...>``\ :ref:`¶<in_place_factory>` および
+    ``etude::typed_in_place_factory<T, Args...>``\ :ref:`¶<typed_in_place_factory>`
+    に対する ``apply_in_place`` 呼び出しは、
+    overload resolution により、各々のヘッダで定義された
+    ``apply_in_place``\ :ref:`¶<in_place_factory apply_in_place>` または
+    ``apply_typed_in_place``\ :ref:`¶<typed_in_place_factory apply_typed_in_place>`
+    が呼び出されます。
