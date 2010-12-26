@@ -130,16 +130,73 @@ Etude.InPlaceFactories には用意されています。
 基本的な使用法
 --------------
 
-InPlaceFactory を受け入れるクラスを書かないならば、専ら
-``etude::in_place``\ :ref:`¶<in_place>`\ :ref:`¶<in_place typed>`
-の使い方さえ覚えれば、それだけで 問題なく InPlaceFactory の恩恵にあやかることが出来ます。
+``boost::in_place(...)`` と書く場所で、 ``etude::in_place(...)`` と書く。これだけです。
 
-その際に気をつけることは一点、
-``etude::in_place``\ :ref:`¶<in_place>`\ :ref:`¶<in_place typed>`
-を呼び出した結果を、変数に束縛したり、関数の戻り値として使う場合には、
-``etude::in_place`` ではなく
+Etude.InPlaceFactory は、 Boost.InPlaceFactory の完全な上位互換となっているので、
+Boost.InPlaceFactory を使えるライブラリであるならば、そのライブラリがきちんと実装されている限り、
+Etude.InPlaceFactory も問題なく扱うことが出来ます。
+
+Boost との差異は、 Perfect Forward を使っていることです。
+これよにり、参照を取るコンストラクタであっても、問題なく転送することが出来ます。
+
+::
+  
+  struct Hoge {
+    int& r;
+    
+    explicit Hoge( int& r_ )
+      : r( r_ ) {}
+    
+  };
+  
+  int i;
+  
+  // NG
+  // boost::optional<Hoge> x( boost::in_place(i) );
+
+  // OK
+  boost::optional<Hoge> x( etude::in_place(i) );
+  
+
+また、これは受け取る側が Etude.InPlaceFactory に対応している場合に限りますが、
+Move Semantics により、一時オブジェクトをコピーすることなく渡すことが出来ます。
+
+::
+
+  // InPlaceFactory を受け入れられる何か
+  etude_in_place_acceptable x = etude::in_place( std::unique_ptr<int>( new int() ) );
+
+これにより、 ``boost::in_place`` よりも効率よく引数を転送できます。
+
+注意点
+~~~~~~
+
+「 Etude.InPlaceFactory は Boost.InPlaceFactory の完全な上位互換となっている」
+
+と書きましたが、これは厳密には正しくありません。
+
+Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでいるのは事実ですが、
+``etude::in_place``\ :ref:`¶<in_place>`\ :ref:`¶<in_place typed>` という関数自身については、
+``boost::in_place`` とは若干異なった動作をする関数になっています。
+
+具体的には、 ``etude::in_place`` によって作られたオブジェクトを、
+
+- コピーする場合
+- そのスコープで変数に束縛する場合
+- 関数の戻り値として使う場合
+
+には、コンパイルエラーになったり、さらに悪いことには、
+コンパイルエラーにすらならず異常動作を引き起こす可能性があります。
+
+``etude::in_place`` の結果を渡した先でコンパイルエラーになる場合や、
+``etude::in_place`` を呼び出した結果を
+
+- そのスコープで変数に束縛する場合
+- 関数の戻り値として使う場合
+
+には、 ``etude::in_place`` ではなく
 ``etude::in_place_by_val``\ :ref:`¶<in_place_by_val>`\ :ref:`¶<in_place_by_val typed>`
-を使う、ということだけです： ::
+を使うようにしてください ::
 
   int i = 5;
 
@@ -153,10 +210,37 @@ InPlaceFactory を受け入れるクラスを書かないならば、専ら
   auto in_place = etude::in_place_by_val( i, std::string("b") );
   x = in_place; // 問題なし
   
+そうすることで、これらの問題は、完全に回避することができます。
 
-これは、デフォルトの ``etude::in_place`` が、一切のコピーを行わない設計になっている為です。
+``etude::in_place_by_val`` に渡した引数は、参照ではなく値として束縛され、
+``std::ref`` や ``std::cref`` 経由で渡した引数のみが参照で束縛されます。
 
 詳細な動作は :ref:`こちら<in_place>` を参照してください。
+
+.. note::
+  ``etude::in_place`` が、このような
+  「コンパイルエラーにすらならず、異常動作を引き起こしうる」
+  という危険性をあえて残しているのは、
+  ``etude::in_place`` の設計方針として、 Perfect Forward であることと、
+  一切の余計なコピーを行わないことを重視しているためです。
+  
+  その設計に伴う危険性ですが、
+  
+  - コンパイルエラーにならずに異常動作を引き起こすの可能性があるのは、あくまで
+    
+    - ``etude::in_place`` を呼び出した「そのスコープで」変数に束縛した場合
+    - ``etude::in_place`` の呼び出し結果を関数の戻り値に「直接」使った場合
+    
+    のみであり、それ以外の場合には、コンパイルエラーによって通知されること。
+  
+  - 基本的に、 ``in_place`` で作られたオブジェクトを、すぐに使わず変数に束縛したり、
+    あるいは関数から返すようなことは、意図して行わない限りは起こらず、
+    仮に起こったとしても、よほど混み入ったコードでもない限り、コードを見ればすぐに分かること。
+  
+  - このような問題は、標準ライブラリの ``std::forward_as_tuple`` でも生じるものであり、
+    ``etude::in_place`` に固有の問題ではないこと
+  
+  上記の理由により十分に回避可能である、と判断しています。
 
 
 より高度な使用法
