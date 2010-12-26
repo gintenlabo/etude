@@ -238,7 +238,7 @@ under construction...
       template<class... Args>
       inline std::tuple<Args> const& get_tuple( in_place_factory<Args...> const& x );
       template<class... Args>
-      inline std::tuple<Args>&& get_tuple( in_place_factory<Args...> && x );
+      inline std::tuple<Args> && get_tuple( in_place_factory<Args...> && x );
       
       template<class T, class... Args>
       inline T* apply_in_place( in_place_factory<Args...> & x, void* addr );
@@ -424,7 +424,7 @@ under construction...
 
   ::
   
-    tuple_type const& move_tuple() const;
+    tuple_type && move_tuple();
   
   コンストラクタで渡された引数を格納したタプルを move します。
   
@@ -453,7 +453,7 @@ under construction...
   ::
   
     template<class... Args>
-    inline std::tuple<Args...> const& get_tuple( in_place_factory<Args...> && x );
+    inline std::tuple<Args...> && get_tuple( in_place_factory<Args...> && x );
   
   ``x.move_tuple()``\ :ref:`¶<in_place_factory move_tuple>` と同じです。
 
@@ -485,9 +485,11 @@ under construction...
   
   これらの関数は、対象オブジェクトが lvalue か rvalue かによって呼び出す関数を切り替える、
   といった面倒な手間をなくすために提供されています。
-  
+
+
 function template ``in_place``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 .. note::
 
   これらの関数群は、現状あまり良い名前とは言えないため、
@@ -617,7 +619,7 @@ function template ``in_place``
     template<class... Args>
     inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
   
-  引数をパックしたタプルから ``in_place_factory`` を構築します。
+  引数をパックしたタプルから ``in_place_factory<Args...>`` を構築します。
   
   .. hint::
   
