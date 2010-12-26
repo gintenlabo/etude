@@ -1170,7 +1170,7 @@ function template ``in_place`` (typed version)
 .. _is_in_place_applyable:
 
 ``is_in_place_applyable``
-~~~~~~~~~~~~~~~~~~~~~~~~~
+-------------------------
 
 必要ヘッダ
   ::
@@ -1211,7 +1211,7 @@ function template ``in_place`` (typed version)
 .. _apply_in_place:
 
 ``apply_in_place``
-~~~~~~~~~~~~~~~~~~
+------------------
 
 必要ヘッダ
   ::
@@ -1253,9 +1253,76 @@ function template ``in_place`` (typed version)
   .. note::
 
     ``etude::in_place_factory<Args...>``\ :ref:`¶<in_place_factory>` および
-    ``etude::typed_in_place_factory<T, Args...>``\ :ref:`¶<typed_in_place_factory>`
+    ``etude::typed_in_place_factory< T, Args... >``\ :ref:`¶<typed_in_place_factory>`
     に対する ``apply_in_place`` 呼び出しは、
     overload resolution により、各々のヘッダで定義された
     ``apply_in_place``\ :ref:`¶<in_place_factory apply_in_place>` または
     ``apply_typed_in_place``\ :ref:`¶<typed_in_place_factory apply_typed_in_place>`
-    が呼び出されます。
+    が選択されます。
+
+  .. hint::
+
+    この関数は、 Boost.InPlaceFactory と Boost.TypedInPlaceFactory 、
+    ``etude::in_place_factory<Args...>``\ :ref:`¶<typed_in_place_factory>` 、
+    および ``etude::typed_in_place_factory< T, Args... >``\ :ref:`¶<typed_in_place_factory>`
+    を、統一的なインターフェイスで扱うために用意されています。
+
+
+.. index::
+  single: In-Place Factories; apply_typed_in_place
+
+.. _apply_typed_in_place:
+
+``apply_typed_in_place``
+------------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/memory/apply_in_place.hpp>
+
+
+定義
+  ::
+  
+    #include "is_typed_in_place_factory.hpp"
+
+    namespace etude {
+    
+      template<class TypedInPlace,
+        class T = typename std::remove_reference<TypedInPlace>::type::value_type
+      >
+      inline T* apply_typed_in_place( TypedInPlace && x, void* addr );
+    
+    }
+
+.. compound::
+
+  ``addr`` で示される領域に、 ``TypedInPlace`` を適用して ``T`` 型のオブジェクトを構築します。
+  ``T`` 型は ``TypedInPlace`` に関連付けられた型で、自動的に型推論されます。
+
+  この関数は ::
+  
+    std::forward<TypedInPlace>(x).apply( addr );
+  
+  を呼び出します。
+  
+  戻り値は構築されたオブジェクトのアドレスになります。
+
+  .. note::
+
+    ``etude::typed_in_place_factory< T, Args... >``\ :ref:`¶<typed_in_place_factory>`
+    に対する ``apply_typed_in_place`` 呼び出しは、 overload resolution により、
+    ``<etude/memory/typed_inplace_factory.hpp>``\ :ref:`¶<typed_in_place_factory>`
+    で定義された
+    ``apply_typed_in_place``\ :ref:`¶<typed_in_place_factory apply_typed_in_place>`
+    が選択されます。
+
+  .. hint::
+
+    この関数は、 ``etude::typed_in_place_factory< T, Args... >``\ :ref:`¶<typed_in_place_factory>`
+    の ``apply``\ :ref:`¶<typed_in_place_factory apply>` と
+    ``move_apply``\ :ref:`¶<typed_in_place_factory move_apply>` 、および
+    Boost.TypedInPlaceFactory の ``apply`` 呼び出しを、
+    統一的なインターフェイスで扱うために用意されています。
+    
