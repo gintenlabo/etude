@@ -1229,6 +1229,16 @@ function template ``in_place`` (typed version)
     
       template<class T, class InPlace>
       inline T* apply_in_place( InPlace && x, void* addr );
+      
+      /*
+      // in header "in_place_factory.hpp"
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...> & x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...> const& x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_in_place( in_place_factory<Args...> && x, void* addr );
+      */
     
     }
 
@@ -1294,6 +1304,16 @@ function template ``in_place`` (typed version)
       >
       inline T* apply_typed_in_place( TypedInPlace && x, void* addr );
     
+      /*
+      // in header "typed_in_place_factory.hpp"
+      template<class T, class... Args>
+      inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> & x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> const& x, void* addr );
+      template<class T, class... Args>
+      inline T* apply_typed_in_place( typed_in_place_factory<T, Args...> && x, void* addr );
+      */
+      
     }
 
 .. compound::
