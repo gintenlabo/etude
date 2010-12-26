@@ -127,7 +127,147 @@ Etude.InPlaceFactories には用意されています。
 使い方（利用側）
 ================
 
-under construction...
+基本的な使用法
+--------------
+
+InPlaceFactory を受け入れるクラスを書かないならば、専ら
+``etude::in_place``\ :ref:`¶<in_place>`\ :ref:`¶<in_place typed>`
+の使い方さえ覚えれば、それだけで 問題なく InPlaceFactory の恩恵にあやかることが出来ます。
+
+その際に気をつけることは一点、
+``etude::in_place``\ :ref:`¶<in_place>`\ :ref:`¶<in_place typed>`
+を呼び出した結果を、変数に束縛したり、関数の戻り値として使う場合には、
+``etude::in_place`` ではなく
+``etude::in_place_by_val``\ :ref:`¶<in_place_by_val>`\ :ref:`¶<in_place_by_val typed>`
+を使う、ということだけです： ::
+
+  int i = 5;
+
+  boost::optional<T> x( etude::in_place( i, std::string("a") ) ); // 問題なし
+  
+  // ダメ。
+  // std::string の一時オブジェクトは auto in_place = ～; の実行後に破棄される
+  // auto in_place = etude::in_place( i, std::string("b") ); x = in_place;
+  
+  // 代わりに in_place_by_val を使う
+  auto in_place = etude::in_place_by_val( i, std::string("b") );
+  x = in_place; // 問題なし
+  
+
+これは、デフォルトの ``etude::in_place`` が、一切のコピーを行わない設計になっている為です。
+
+詳細な動作は :ref:`こちら<in_place>` を参照してください。
+
+
+より高度な使用法
+----------------
+
+タプルに束ねられた引数リストから InPlaceFactory への変換
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Etude.InPlaceFactory は ``std::tuple`` からの構築をサポートしています。
+
+何らかの理由により、 ``std::tuple`` によって予め束ねられた引数リストから InPlaceFactory
+を構築したくなった場合、通常ならば、プリプロセッサや補助クラス（例：
+``etude::indices``\ :ref:`¶<indices>` ）を使ったトリッキーなコードを書く必要がありますが、
+Etude.InPlaceFactory を使えば、
+``in_place_from_tuple``\ :ref:`¶<in_place_from_tuple>`\ :ref:`¶<in_place_from_tuple typed>`
+を使うことで、ごく自然に tuple を unpack することが可能になっています。
+
+普段、この機能を使うことは滅多に無いでしょうが、覚えておいて損はない筈です。
+
+
+InPlaceFactory の要件を満たすクラスの自作
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+何らかの理由で、 InPlaceFactory の仕組み自体は使いたいが、
+コンストラクタ呼び出しはライブラリ経由ではなく自前で行ないたい、という場合を考えます。
+
+例えば、 private constructor 経由で構築したい場合などが、その最たるものでしょう。
+
+::
+  
+  struct Hoge
+  {
+    // interfaces
+    void foo();
+    void bar();
+    // ...
+    
+    // 構築関数
+    static std::shared_ptr<Hoge> create();
+    
+   private:
+    Hoge() {} // スタック上に構築されると困る場合とか
+    
+  };
+
+上記のようなクラスで、 ``create()`` 関数内において InPlaceFactory を受け入れるライブラリ（例えば
+Boost.Optional ）を使いたい時、普通に ``etude::in_place`` を使うのでは、 ``Hoge::Hoge()`` は
+``private`` なので、 ``etude::in_place_factory`` から呼び出すことが出来ずエラーになります。
+
+その場合、 InPlaceFactory の要件を満たした自前のクラスを作れば、アクセス制限を回避しつつ、
+InPlaceFactory の恩恵を最大限に満たすことが出来るようになります。
+InPlaceFactory の要件は、以下の通りです：
+
+- クラス ``InPlace`` が以下の条件を充たす場合、
+  ``InPlace`` は InPlaceFactory の要件を満たします：
+
+  - ``InPlace`` が ``boost::in_place_factory_base`` を ``public`` 継承している
+  - ``InPlace const x = ...;  void* addr;`` に対し
+    ``x.template apply<T>(addr);`` という形のメンバ関数テンプレート呼び出しが可能である
+
+- クラス ``TypedInPlace`` が以下の条件を充たす場合、
+  ``TypedInPlace`` は TypedInPlaceFactory の要件を満たします：
+
+  - ``TypedInPlace`` が ``boost::typed_in_place_factory_base`` を ``public`` 継承している
+  - ``typename TypedInPlace::value_type`` が何かしらの型に ``typedef`` されている
+  - ``TypedInPlace const x = ...;  void* addr;`` に対し
+    ``x.apply(addr);`` という形のメンバ関数呼び出しが可能である
+
+例として、上記の ``Hoge`` の ``create()`` 周りを実装してみます： ::
+
+  struct Hoge
+  {
+    // interfaces
+    void foo();
+    void bar();
+    // ...
+    
+    static std::shared_ptr<Hoge> create();
+    
+   private:
+    Hoge() {}
+    
+    // この場合は TypedInPlace が妥当
+    struct Construct
+      : boost::typed_in_place_factory_base
+    {
+      typedef Hoge value_type;
+      
+      void apply( void* addr ) const {
+        ::new(addr) Hoge();
+      }
+    };
+    
+  };
+  
+  // 構築関数 本体
+  inline std::shared_ptr<Hoge> Hoge::create() {
+    auto p = std::make_shared<boost::optional<Hoge>>();
+    
+    // *p = etude::in_place();  // ダメ
+    *p = Hoge::Construct();
+    return std::shared_ptr<Hoge>( std::move(p), p->get_ptr() );
+  }
+
+このように ``Hoge::create()`` を実装することで、単純に ::
+
+  inline std::shared_ptr<Hoge> Hoge::create() {
+    return std::shared_ptr<Hoge>( new Hoge() );
+  }
+
+と書くのに比べ、メモリ確保回数を減らすことが可能になります。
 
 
 使い方（実装側）
@@ -492,6 +632,11 @@ under construction...
   といった面倒な手間をなくすために提供されています。
 
 
+.. index::
+  single: In-Place Factories; in_place
+
+.. _in_place:
+
 function template ``in_place``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -499,11 +644,6 @@ function template ``in_place``
 
   これらの関数群は、現状あまり良い名前とは言えないため、
   より相応しい名前が見つかった場合には変更するかもしれません。
-
-.. index::
-  single: In-Place Factories; in_place
-
-.. _in_place:
 
 .. compound::
 
@@ -1061,6 +1201,11 @@ TypedInPlaceFactory への参照の場合には ``std::true_type`` を、そう�
   といった面倒な手間をなくすために提供されています。
   
   
+.. index::
+  single: In-Place Factories; in_place
+
+.. _in_place typed:
+
 function template ``in_place`` (typed version)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -1068,11 +1213,6 @@ function template ``in_place`` (typed version)
 
   これらの関数群は、現状あまり良い名前とは言えないため、
   より相応しい名前が見つかった場合には変更するかもしれません。
-
-.. index::
-  single: In-Place Factories; in_place
-
-.. _in_place typed:
 
 .. compound::
 
