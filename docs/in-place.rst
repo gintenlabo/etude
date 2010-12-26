@@ -174,7 +174,8 @@ under construction...
 .. hint::
   
   特別な理由がなければ、このメタ関数を直接使うのではなく、
-  より一般的に使える ``etude::is_in_place_applyable<InPlace, T>`` を使う方がよいでしょう。
+  より一般的に使える ``etude::is_in_place_applyable<InPlace, T>``\ :ref:`¶<is_in_place_applyable>`
+  を使う方がよいでしょう。
 
 
 .. index::
@@ -1157,4 +1158,62 @@ function template ``in_place`` (typed version)
   :ref:`こちら<in_place typed>` を、
   渡された引数がどのように束縛されるかは
   :ref:`こちら<in_place_from_tuple>` を、それぞれ参照してください。
+
+
+.. index::
+  single: In-Place Factories; apply_in_place
+
+.. _apply_in_place:
+
+``apply_in_place``
+------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/memory/apply_in_place.hpp>
+
+定義
+  ::
+
+    #include "is_in_place_factory.hpp"
+    #include "is_typed_in_place_factory.hpp"
+
+    namespace etude {
+    
+      template<class InPlace, class T>
+      struct is_in_place_applyable
+        : std::integral_constant<bool, see-below> {};
+    
+      template<class T, class InPlace>
+      inline T* apply_in_place( InPlace && x, void* addr );
+    
+    }
+
+.. index::
+  single: In-Place Factories; is_in_place_applyable
+
+.. _is_in_place_applyable:
+
+class template ``is_in_place_applyable``
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. compound::
+
+  ::
+  
+    template<class T, class InPlace>
+    struct is_in_place_applyable
+      : std::integral_constant<bool, see-below> {};
+
+  このメタ関数は、
+  ``is_in_place_factory<InPlace>::value``\ :ref:`¶<is_in_place_factory>`
+  が ``true`` の場合、または
+  ``typename typed_in_place_associated<InPlace>::type``\ :ref:`¶<typed_in_place_associated>`
+  が存在し ``T`` 型である場合には ``std::true_type`` を継承し、
+  それ以外の場合には ``std::false_type`` を継承します。
+  
+  .. hint::
+    このメタ関数は、主に後述の ``apply_in_place`` を呼び出すか否かを判定する為に使います。
+
 
