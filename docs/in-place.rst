@@ -195,7 +195,7 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
 - 関数の戻り値として使う場合
 
 には、 ``etude::in_place`` ではなく
-``etude::in_place_by_val``\ :ref:`¶<in_place_by_val>`\ :ref:`¶<in_place_by_val typed>`
+``etude::bind_in_place``\ :ref:`¶<bind_in_place>`\ :ref:`¶<bind_in_place typed>`
 を使うようにしてください ::
 
   int i = 5;
@@ -206,13 +206,13 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
   // std::string の一時オブジェクトは auto in_place = ～; の実行後に破棄される
   // auto in_place = etude::in_place( i, std::string("b") ); x = in_place;
   
-  // 代わりに in_place_by_val を使う
-  auto in_place = etude::in_place_by_val( i, std::string("b") );
+  // 代わりに bind_in_place を使う
+  auto in_place = etude::bind_in_place( i, std::string("b") );
   x = in_place; // 問題なし
   
 そうすることで、これらの問題は、完全に回避することができます。
 
-``etude::in_place_by_val`` に渡した引数は、参照ではなく値として束縛され、
+``etude::bind_in_place`` に渡した引数は、参照ではなく値として束縛され、
 ``std::ref`` や ``std::cref`` 経由で渡した引数のみが参照で束縛されます。
 
 詳細な動作は :ref:`こちら<in_place>` を参照してください。
@@ -479,6 +479,8 @@ under construction...
       template<class... Args>
       inline in_place_factory<Args&&...> in_place( Args&& ...args );
       template<class... Args>
+      inline in_place_factory<see-below...> bind_in_place( Args&& ...args );
+      template<class... Args>
       inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );
       template<class... Args>
       inline in_place_factory<see-below...> in_place_by_val( Args&& ...args );
@@ -729,6 +731,7 @@ function template ``in_place``
   これらの関数群は、現状あまり良い名前とは言えないため、
   より相応しい名前が見つかった場合には変更するかもしれません。
 
+
 .. compound::
 
   ::
@@ -769,7 +772,7 @@ function template ``in_place``
     
     f( etude::in_place(1, 2) ); // コピー出来ないのでコンパイルエラー
   
-  これらの問題を避けてより安全に使いたい場合は、 ``in_place_by_val``\ :ref:`¶<in_place_by_val>`
+  これらの問題を避けてより安全に使いたい場合は、 ``bind_in_place``\ :ref:`¶<bind_in_place>`
   を使ってください。
   
   .. note::
@@ -777,7 +780,35 @@ function template ``in_place``
     引数を与えず単に ``etude::in_place()`` と使う場合には、
     変数への束縛もコピーも、安全に行うことが出来ます。
     
-    その場合に わざわざ ``etude::in_place_by_val()`` と書く必要はありません。
+    その場合に わざわざ ``etude::bind_in_place()`` と書く必要はありません。
+
+
+.. index::
+  single: In-Place Factories; bind_in_place
+
+.. _bind_in_place:
+
+.. compound::
+
+  ::
+  
+    template<class... Args>
+    inline in_place_factory<see-below...> bind_in_place( Args&&... args );
+  
+  与えられた引数を値として束縛した ``in_place_factory<Args...>`` を構築します。
+  
+  この関数の戻り値は
+  ``etude::in_place_factory< typename etude::decay_and_strip<Args>::type... >``\
+  :ref:`¶<decay_and_strip>` で与えられます。
+  
+  これは ``std::make_tuple`` で行われる型変換と同一です。
+  つまり与えられた引数は基本的に値として（配列や関数の場合はポインタとして）束縛され、
+  参照として束縛させたい場合には ``std::ref`` や ``std::cref`` を使う、ということです。
+  
+  この関数は本質的に安全ですが、一方で原則的に全ての引数を値によりキャプチャするため、
+  コピーコストの高いオブジェクトの場合は、明示的に
+  ``std::ref`` や ``std::cref`` を使うなどして、効率化を図る必要があるでしょう。
+
 
 .. index::
   single: In-Place Factories; in_place_by_ref
@@ -793,21 +824,38 @@ function template ``in_place``
   
   与えられた引数を束縛した ``in_place_factory<Args...>`` を構築します。
   
-  この関数は ``in_place``\ :ref:`¶<in_place>` とは違い、一時オブジェクトを値として束縛するので、
-  変数に格納しても安全に使うことができますし、コピーも通常のクラスと同じように行えます。
+  この関数は ``bind_in_place``\ :ref:`¶<bind_in_place>` とは違い、
+  一時オブジェクト以外は全て参照として束縛するので、
+  最低限の安全性を保ったまま、余計なコピーコストを省略することが出来ます。
   
-  一方で、一時オブジェクト以外のオブジェクト（lvalue）は参照として束縛されるので、
-  関数の戻り値として、この関数の結果を使うことは出来ません。
-  
-  また、参照として束縛されるため、参照先のオブジェクトが変更された場合、
-  意図しない結果になることもあります： ::
+  一方で、ローカル変数を参照として束縛するため、
+  関数の戻り値として この関数の結果を使うことは出来ませんし、
+  参照先のオブジェクトが変更された場合には意図しない結果になることもあります： ::
   
     int i = 0;
     auto x = etude::in_place_by_ref(i);
     i = 42; // x の「中身」は 42 になる
   
-  この問題を避けてより安全に使いたい場合は、 ``in_place_by_val``\ :ref:`¶<in_place_by_val>`
-  を使ってください。
+  一般に、この挙動は、不可解なバグを引き起こす原因となり得るので、
+  基本的に、この関数ではなく ``bind_in_place``\ :ref:`¶<bind_in_place>` を使い、
+  コピーコストが気になる場合には、 ``std::ref`` や ``std::cref`` を使って
+  「この変数は参照で渡している」
+  ということを明示的に示した方がよりよい場合が多いかと思います。
+  
+  また、この関数の限界として、 move されたオブジェクトは参照で渡すことが出来ません： ::
+  
+    std::unique_ptr<int> p( new int() );
+    auto x = etude::in_place_by_ref( std::move(p) );  // この時点で p は move される
+  
+  これは、関数のオーバーロード解決時に、純粋な一時変数と
+  move されたオブジェクトとを区別することは不可能である為です。
+  
+  もし move されたオブジェクトを ``in_place_factory`` に格納したければ、 ::
+  
+    std::unique_ptr<int> p( new int() );
+    auto x = etude::in_place_factory<std::unique_ptr<int>&&>( std::move(p) );
+  
+  のように、明示的に ``in_place_factory`` のコンストラクタを呼び出してください。
 
 .. index::
   single: In-Place Factories; in_place_by_val
@@ -824,15 +872,14 @@ function template ``in_place``
   与えられた引数を値として束縛した ``in_place_factory<Args...>`` を構築します。
   
   この関数の戻り値は
-  ``etude::in_place_factory< typename etude::decay_and_strip<Args>::type... >``\
-  :ref:`¶<decay_and_strip>` で与えられます。
+  ``etude::in_place_factory< typename std::decay<Args>::type... >``
+  で与えられます。
   
-  これは ``std::make_tuple`` で行われる型変換と同一です。
-  つまり与えられた引数は基本的に値として（配列や関数の場合はポインタとして）束縛され、
-  参照として束縛させたい場合には ``std::ref`` や ``std::cref`` を使う、ということです。
+  ``bind_in_place``\ :ref:`¶<bind_in_place>` との違いは、
+  ``std::reference_wrapper<T>`` に包まれたオブジェクトであっても そのまま束縛する、という点です。
   
-  この関数は本質的に安全ですが、一方で原則的に全ての引数を値によりキャプチャするため、
-  コンパイラにより、特にコピーコストの高いオブジェクトに関しては、非効率的になる場合があります。
+  ``std::reference_wrapper<T>`` 型の引数を取るコンストラクタに対して\
+  安全に引数を転送したい場合には、こちらを使うのが良いでしょう。
 
 .. index::
   single: In-Place Factories; in_place_from_tuple
@@ -1028,6 +1075,8 @@ TypedInPlaceFactory への参照の場合には ``std::true_type`` を、そう�
       // function template in_place
       template<class T, class... Args>
       inline typed_in_place_factory<T, Args&&...> in_place( Args&& ...args );
+      template<class T, class... Args>
+      inline typed_in_place_factory<T, see-below...> bind_in_place( Args&& ...args );
       template<class T, class... Args>
       inline typed_in_place_factory<T, Args...> in_place_by_ref( Args&& ...args );
       template<class T, class... Args>
@@ -1298,6 +1347,7 @@ function template ``in_place`` (typed version)
   これらの関数群は、現状あまり良い名前とは言えないため、
   より相応しい名前が見つかった場合には変更するかもしれません。
 
+
 .. compound::
 
   ::
@@ -1319,7 +1369,30 @@ function template ``in_place`` (typed version)
   ``in_place_factory<Args...>``\ :ref:`¶<in_place_factory>` 版の
   ``in_place``\ :ref:`¶<in_place>` と同じように動作します。
   詳しい解説は :ref:`そちら<in_place>` を参照してください。
+
+.. index::
+  single: In-Place Factories; bind_in_place
+
+.. _bind_in_place typed:
+
+.. compound::
+
+  ::
   
+    template<class T, class... Args>
+    inline typed_in_place_factory<T, see-below...> bind_in_place( Args&&... args );
+  
+  与えられた引数を値として束縛した ``typed_in_place_factory<T, Args...>`` を構築します。
+  
+  この関数の戻り値は
+  ``etude::typed_in_place_factory< T, typename etude::decay_and_strip<Args>::type... >``\
+  :ref:`¶<decay_and_strip>` で与えられます。
+  
+  ``in_place_factory<Args...>``\ :ref:`¶<in_place_factory>` 版の
+  ``bind_in_place``\ :ref:`¶<bind_in_place>` との使い分けに関しては
+  :ref:`こちら<in_place typed>` を、
+  渡された引数がどのように束縛されるかは
+  :ref:`こちら<bind_in_place>` を、それぞれ参照してください。
 
 .. index::
   single: In-Place Factories; in_place_by_ref
@@ -1356,8 +1429,8 @@ function template ``in_place`` (typed version)
   与えられた引数を値として束縛した ``typed_in_place_factory<T, Args...>`` を構築します。
   
   この関数の戻り値は
-  ``etude::typed_in_place_factory< T, typename etude::decay_and_strip<Args>::type... >``\
-  :ref:`¶<decay_and_strip>` で与えられます。
+  ``etude::typed_in_place_factory< T, typename std::decay<Args>::type... >``
+  で与えられます。
   
   ``in_place_factory<Args...>``\ :ref:`¶<in_place_factory>` 版の
   ``in_place_by_val``\ :ref:`¶<in_place_by_val>` との使い分けに関しては
