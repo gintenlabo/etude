@@ -89,24 +89,51 @@ struct hoge
 int main()
 {
   int x; int const y = 0;
+  typedef std::reference_wrapper<int> ref_wapper_t;
   
   // 束縛される型のチェック
+  // 引数なし
   BOOST_ASSERT(( is_type_of<etude::in_place_factory<>>( etude::in_place() ) ));
+  // 引数有り
   // in_place では、一時変数は rvalue-reference として、参照はそのまま束縛される
-  BOOST_ASSERT(( is_type_of<etude::in_place_factory<int&, int const&, int&&>>
-                                      ( etude::in_place( x, y, 1 ) ) ));
+  BOOST_ASSERT((
+    is_type_of<
+      etude::in_place_factory<int&, int const&, int&&, ref_wapper_t&&, char const (&)[5]>
+    >( 
+      etude::in_place( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
+  // bind_in_place では、一時変数／参照は値で、ref は参照で、配列はポインタとして束縛される
+  BOOST_ASSERT((
+    is_type_of<
+      etude::in_place_factory<int, int, int, int&, int const&, char const*>
+    >(
+      etude::bind_in_place( x, y, 1, std::ref(x), std::cref(x), "hoge" )
+    )
+  ));
   // in_place_by_ref では、一時変数は値で、参照はそのまま束縛される
-  BOOST_ASSERT(( is_type_of<etude::in_place_factory<int&, int const&, int>>
-                               ( etude::in_place_by_ref( x, y, 1 ) ) ));
-  // in_place_by_val では、一時変数／参照は値で、ref は参照で束縛される
-  BOOST_ASSERT(( is_type_of<etude::in_place_factory<int, int, int, int&, int const&>>
-    ( etude::in_place_by_val( x, y, 1, std::ref(x), std::cref(x) ) ) ));
+  BOOST_ASSERT((
+    is_type_of<
+      etude::in_place_factory<int&, int const&, int, ref_wapper_t, char const (&)[5]>
+    >(
+      etude::in_place_by_ref( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
+  // in_place_by_val では、全て値で束縛される
+  // ただし配列や関数はポインタとして束縛される
+  BOOST_ASSERT((
+    is_type_of<
+      etude::in_place_factory<int, int, int, ref_wapper_t, char const*>
+    >(
+      etude::in_place_by_val( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
   
   // 実際のチェック
   check_copy_apply<int>( etude::in_place() );
   basic_check<bool>( etude::in_place( std::unique_ptr<int>() ) );
   basic_check<hoge>( etude::in_place( 1, 2 ) ); // rvalue-reference はコピー出来ない
-  check_copy_apply<hoge>( etude::in_place_by_val( 1, 2 ) ); // コピーする場合は値で
+  check_copy_apply<hoge>( etude::bind_in_place( 1, 2 ) ); // コピーする場合は bind する
   basic_check<hoge>( etude::in_place( std::unique_ptr<int>(), 3, 4 ) );
   
   // 型変換チェック

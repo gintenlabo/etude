@@ -62,18 +62,29 @@ void basic_usage()
   // また、仮に in_place で得られたファクトリを変数（あるいは関数の引数）に束縛した場合、
   // その変数をコピーすることは出来ない（ rvalue-reference なのでコピーできたら困る）。
 
-  // 変数に束縛したい／コピーしたい場合は、 in_place_by_val/in_place_by_ref を使う
+  // 変数に束縛したい場合やコピーしたい場合は、 bind_in_place か、
+  // または in_place_by_val/in_place_by_ref を使う
+  
+  // 一般的なのは bind_in_place だが、
+  // 先に in_place_by_val/in_place_by_ref の例を挙げておく
   auto in_place_1 = etude::in_place_by_val( z, 8 );
   auto in_place_2 = etude::in_place_by_ref( z, 10 );
-  // 違いは簡単で、変数を値としてキャプチャするか、参照としてキャプチャするか
+  // by_val と by_ref の違いは、変数を値キャプチャするか、参照キャプチャするか
   z = 9;
   x = in_place_1; x->print(); // ( 7, 8 )
   x = in_place_2; x->print(); // ( 9, 10 )
   
-  // in_place_by_val で参照キャプチャしたい場合は、 std::ref を使う
-  x = etude::in_place_by_val( 10, 23, std::ref(z) );
+  // 注意： rvalue-reference の場合には in_place_by_ref を使っても値キャプチャされる
+  // xvalues と prvalues をオーバーロード解決で判別することは出来ないため
+  // 明示的に rvalue-reference を束縛したい場合には、
+  // etude::in_place_factory<int, std::unique_ptr<T>&&>( i, std::move(p) ) のように、
+  // 明示的に型を指定して etude::in_place_factory を構築する必要がある
+  
+  // bind_in_place を使うことで、参照キャプチャと値キャプチャを使い分けられる
+  // デフォルトでは値キャプチャ、 std::ref を使うと参照キャプチャ
+  x = etude::bind_in_place( 10, 23, std::ref(z) );
   std::cout << z << std::endl;  // 33
-  // in_place_by_val の束縛法は std::make_tuple と同じ。
+  // この束縛ルールは std::make_tuple と同じ。
   
   // なお、束縛された引数は、 get_tuple によって tuple として取得できる
   std::cout << std::get<0>( get_tuple(in_place_1) ) << std::endl; // 7
@@ -164,17 +175,15 @@ void advanced_usage()
   print( p1 );  // []
   
   // 変数に格納された in_place から move する例
-  // 注意： rvalue-reference の場合には by_ref でも値キャプチャされる
-  // 一時変数かどうかを判別することが出来ないので。
-  // 一時変数がないと分かってるなら in_place を使えば参照でキャプチャされる
-  auto in_place_1 = etude::in_place_by_ref( 3, std::move(p2) );
-  print( p2 );  // []
+  // 変数に格納するので bind_in_place を使う
+  auto in_place_1 = etude::bind_in_place( 3, std::move(p2) );
+  print( p2 );  // move されたので []
   // 構築。 変数に束縛されてるので move しないといけない
   p2 = make_unique<fuga>( std::move(in_place_1) );
   print( p2 );  // 3 -> 2 -> 1 -> []
   
   // 変数に格納された typed in-place からの構築
-  auto in_place_2 = etude::in_place_by_val<fuga>( 0, std::move(p1) );
+  auto in_place_2 = etude::bind_in_place<fuga>( 0, std::move(p1) );
   // typed in-place でも、 in-place として使える（型を明示して構築できる）。
   p1 = make_unique<fuga>( std::move(in_place_2) );
   print( p1 );  // 0 -> []

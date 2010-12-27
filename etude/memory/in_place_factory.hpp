@@ -155,21 +155,37 @@ namespace etude {
   inline in_place_factory<Args&&...> in_place( Args&& ...args ) {
     return in_place_factory<Args&&...>( std::forward<Args&&>(args)... );
   }
-  // 一時オブジェクトは値として、それ以外は参照として束縛する
-  // こちらは関数の戻り値として使わない限りは auto で束縛しても問題ない。
-  // ただし、使い回す場合は、参照なので不意な変更に注意！
+  // 変数や戻り値として使える安全版
+  // デフォルトでは全て値で束縛し、
+  // 参照を束縛したい場合は std::ref を使う
   template<class... Args>
-  inline in_place_factory<Args...> in_place_by_ref( Args&& ...args ) {
+  inline in_place_factory<
+      typename decay_and_strip<Args>::type...
+  >
+  bind_in_place( Args&&... args ) {
+    return in_place_factory<typename decay_and_strip<Args>::type...>(
+      std::forward<Args>(args)...
+    );
+  }
+  
+  // 気の利いた型変換をしない版も用意
+  
+  // rvalue は値として、 lvalue は参照としてキャプチャする
+  // 使い回す場合は、参照なので不意な変更に注意！
+  template<class... Args>
+  inline in_place_factory<Args...> in_place_by_ref( Args&&...args ) {
     return in_place_factory<Args...>( std::forward<Args>(args)... );
   }
-  // すべて値で束縛する安全版。関数の戻り値としても使える。
-  // 参照を束縛したい場合は std::ref を使う。
+  // すべて値で束縛する
   template<class... Args>
-  inline in_place_factory<typename decay_and_strip<Args>::type...>
-    in_place_by_val( Args&& ...args )
+  inline in_place_factory<
+    typename std::decay<Args>::type...
+  >
+  in_place_by_val( Args&&... args )
   {
-    return in_place_factory<typename decay_and_strip<Args>::type...>
-            ( std::forward<Args>(args)... );
+    return in_place_factory<typename std::decay<Args>::type...>(
+      std::forward<Args>(args)...
+    );
   }
   
   // タプルを in_place_factory に変換する版。
