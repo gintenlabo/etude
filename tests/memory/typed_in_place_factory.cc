@@ -100,15 +100,15 @@ int main()
   // in_place_by_ref では、一時変数は値で、参照はそのまま束縛される
   BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge, int&, int const&, int>>
                                ( etude::in_place_by_ref<hoge>( x, y, 1 ) ) ));
-  // in_place_by_val では、一時変数／参照は値で、ref は参照で束縛される
+  // in_place_safe では、一時変数／参照は値で、ref は参照で束縛される
   BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge, int, int, int, int&, int const&>>
-    ( etude::in_place_by_val<hoge>( x, y, 1, std::ref(x), std::cref(x) ) ) ));
+    ( etude::in_place_safe<hoge>( x, y, 1, std::ref(x), std::cref(x) ) ) ));
   
   // 実際のチェック
   check_copy_apply( etude::in_place<int>() );
   basic_check( etude::in_place<bool>( std::unique_ptr<int>() ) );
   basic_check( etude::in_place<hoge>( 1, 2 ) ); // rvalue-reference はコピー出来ない
-  check_copy_apply( etude::in_place_by_val<hoge>( 1, 2 ) ); // コピーする場合は値で
+  check_copy_apply( etude::in_place_safe<hoge>( 1, 2 ) ); // コピーする場合は値で
   basic_check( etude::in_place<hoge>( std::unique_ptr<int>(), 3, 4 ) );
   
   // 型変換チェック

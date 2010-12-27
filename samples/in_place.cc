@@ -62,18 +62,18 @@ void basic_usage()
   // また、仮に in_place で得られたファクトリを変数（あるいは関数の引数）に束縛した場合、
   // その変数をコピーすることは出来ない（ rvalue-reference なのでコピーできたら困る）。
 
-  // 変数に束縛したい／コピーしたい場合は、 in_place_by_val/in_place_by_ref を使う
-  auto in_place_1 = etude::in_place_by_val( z, 8 );
+  // 変数に束縛したい／コピーしたい場合は、 in_place_safe/in_place_by_ref を使う
+  auto in_place_1 = etude::in_place_safe( z, 8 );
   auto in_place_2 = etude::in_place_by_ref( z, 10 );
   // 違いは簡単で、変数を値としてキャプチャするか、参照としてキャプチャするか
   z = 9;
   x = in_place_1; x->print(); // ( 7, 8 )
   x = in_place_2; x->print(); // ( 9, 10 )
   
-  // in_place_by_val で参照キャプチャしたい場合は、 std::ref を使う
-  x = etude::in_place_by_val( 10, 23, std::ref(z) );
+  // in_place_safe で参照キャプチャしたい場合は、 std::ref を使う
+  x = etude::in_place_safe( 10, 23, std::ref(z) );
   std::cout << z << std::endl;  // 33
-  // in_place_by_val の束縛法は std::make_tuple と同じ。
+  // in_place_safe の束縛法は std::make_tuple と同じ。
   
   // なお、束縛された引数は、 get_tuple によって tuple として取得できる
   std::cout << std::get<0>( get_tuple(in_place_1) ) << std::endl; // 7
@@ -174,7 +174,7 @@ void advanced_usage()
   print( p2 );  // 3 -> 2 -> 1 -> []
   
   // 変数に格納された typed in-place からの構築
-  auto in_place_2 = etude::in_place_by_val<fuga>( 0, std::move(p1) );
+  auto in_place_2 = etude::in_place_safe<fuga>( 0, std::move(p1) );
   // typed in-place でも、 in-place として使える（型を明示して構築できる）。
   p1 = make_unique<fuga>( std::move(in_place_2) );
   print( p1 );  // 0 -> []
