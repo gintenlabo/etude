@@ -147,7 +147,7 @@ namespace etude {
   // 参照を束縛したい場合は std::ref を使う。
   template<class T, class... Args>
   inline typed_in_place_factory<T, typename decay_and_strip<Args>::type...>
-    in_place_safe( Args&&... args )
+    in_place_by_val( Args&& ...args )
   {
     return typed_in_place_factory<T, typename decay_and_strip<Args>::type...>
             ( std::forward<Args>(args)... );
