@@ -204,7 +204,8 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
   
   // ダメ。
   // std::string の一時オブジェクトは auto in_place = ～; の実行後に破棄される
-  // auto in_place = etude::in_place( i, std::string("b") ); x = in_place;
+  // auto in_place = etude::in_place( i, std::string("b") );
+  // x = in_place; // dangling reference !
   
   // 代わりに bind_in_place を使う
   auto in_place = etude::bind_in_place( i, std::string("b") );
@@ -228,8 +229,8 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
   
   - コンパイルエラーにならずに異常動作を引き起こすの可能性があるのは、あくまで
     
-    - ``etude::in_place`` を呼び出した「そのスコープで」変数に束縛した場合
-    - ``etude::in_place`` の呼び出し結果を関数の戻り値に「直接」使った場合
+    - ``etude::in_place`` を呼び出した **そのスコープで** 、 ``auto`` 等を使って変数に束縛した場合
+    - ``etude::in_place`` の呼び出し結果を、 ``decltype`` 等で、関数の戻り値に **直接** 使った場合
     
     のみであり、それ以外の場合には、コンパイルエラーによって通知されること。
   
@@ -237,8 +238,14 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
     あるいは関数から返すようなことは、意図して行わない限りは起こらず、
     仮に起こったとしても、よほど混み入ったコードでもない限り、コードを見ればすぐに分かること。
   
-  - このような問題は、標準ライブラリの ``std::forward_as_tuple`` でも生じるものであり、
-    ``etude::in_place`` に固有の問題ではないこと
+  - それに加え、従来の Boost.InPlaceFactories を使っていたコードは、基本的に
+    C++98/03 であり、 C++98/03 の範疇では、 ``auto`` を使って変数に束縛する、ということや、
+    ``decltype`` を使って戻り値に利用する、ということは行えなかったことから、
+    従来の ``boost::in_place`` を機械的に ``etude::in_place``
+    に書き換えても、問題は起こりにくいと考えられること。
+  
+  - それとは別に、このような問題は、標準ライブラリの ``std::forward_as_tuple``
+    でも生じるものであり、 ``etude::in_place`` に固有の問題というわけではないこと。
   
   上記の理由により十分に回避可能である、と判断しています。
 
