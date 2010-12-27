@@ -91,18 +91,57 @@ struct hoge
 int main()
 {
   int x; int const y = 0;
+  typedef std::reference_wrapper<int> ref_wapper_t;
   
   // 束縛される型のチェック
-  BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge>>( etude::in_place<hoge>() ) ));
+  // 引数なし
+  BOOST_ASSERT((
+    is_type_of< etude::typed_in_place_factory<hoge> >(
+      etude::in_place<hoge>()
+    )
+  ));
+  // 引数有り
   // in_place では、一時変数は rvalue-reference として、参照はそのまま束縛される
-  BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge, int&, int const&, int&&>>
-                                      ( etude::in_place<hoge>( x, y, 1 ) ) ));
+  BOOST_ASSERT((
+    is_type_of<
+      etude::typed_in_place_factory< hoge,
+        int&, int const&, int&&, ref_wapper_t&&, char const (&)[5]
+      >
+    >( 
+      etude::in_place<hoge>( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
+  // bind_in_place では、一時変数／参照は値で、ref は参照で、配列はポインタとして束縛される
+  BOOST_ASSERT((
+    is_type_of<
+      etude::typed_in_place_factory< hoge,
+        int, int, int, int&, int const&, char const*
+      >
+    >(
+      etude::bind_in_place<hoge>( x, y, 1, std::ref(x), std::cref(x), "hoge" )
+    )
+  ));
   // in_place_by_ref では、一時変数は値で、参照はそのまま束縛される
-  BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge, int&, int const&, int>>
-                               ( etude::in_place_by_ref<hoge>( x, y, 1 ) ) ));
-  // in_place_by_val では、一時変数／参照は値で、ref は参照で束縛される
-  BOOST_ASSERT(( is_type_of<etude::typed_in_place_factory<hoge, int, int, int, int&, int const&>>
-    ( etude::in_place_by_val<hoge>( x, y, 1, std::ref(x), std::cref(x) ) ) ));
+  BOOST_ASSERT((
+    is_type_of<
+      etude::typed_in_place_factory< hoge,
+        int&, int const&, int, ref_wapper_t, char const (&)[5]
+      >
+    >(
+      etude::in_place_by_ref<hoge>( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
+  // in_place_by_val では、全て値で束縛される
+  // ただし配列や関数はポインタとして束縛される
+  BOOST_ASSERT((
+    is_type_of<
+      etude::typed_in_place_factory< hoge,
+        int, int, int, ref_wapper_t, char const*
+      >
+    >(
+      etude::in_place_by_val<hoge>( x, y, 1, std::ref(x), "hoge" )
+    )
+  ));
   
   // 実際のチェック
   check_copy_apply( etude::in_place<int>() );
