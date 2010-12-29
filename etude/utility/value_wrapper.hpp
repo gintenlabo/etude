@@ -12,6 +12,9 @@
 #define ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
 
 #include "simple_wrapper.hpp"
+#include "emplace_construct.hpp"
+#include "unpack_construct.hpp"
+
 #include "../types/indices.hpp"
 #include "tuple_get.hpp"
 #include "../types/tuple_types.hpp"
@@ -21,14 +24,6 @@
 namespace etude {
  namespace value_wrapper_ { // ADL 回避
  
-  // 構築指定用のタグ
-  struct emplace_construct_t {};
-  struct unpack_construct_t {};
-  namespace {
-    emplace_construct_t const emplace_construct = {};
-    unpack_construct_t const unpack_construct = {};
-  }
-  
   // 直接 etude::simple_wrapper を使うのはアレなので
   // 実装用クラスを持ってくる
   using etude::simple_wrapper_::simple_wrapper_;
