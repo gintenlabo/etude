@@ -1,5 +1,5 @@
 //
-//  tuple_forward:
+//  forward_as_tuple:
 //    std::forward_as_tuple と同じ関数
 // 
 //    std::forward_as_tuple がまだ gcc に実装されてないので、実装されるまでのつなぎです。
@@ -11,8 +11,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_TUPLE_FORWARD_HPP_
-#define ETUDE_UTILITY_INCLUDED_TUPLE_FORWARD_HPP_
+#ifndef ETUDE_UTILITY_INCLUDED_FORWARD_AS_TUPLE_HPP_
+#define ETUDE_UTILITY_INCLUDED_FORWARD_AS_TUPLE_HPP_
 
 #include <tuple>
 #include <utility>
@@ -20,10 +20,10 @@
 namespace etude {
 
   template<class... Types>
-  inline std::tuple<Types&&...> tuple_forward( Types&&... args ) {
+  inline std::tuple<Types&&...> forward_as_tuple( Types&&... args ) {
     return std::tuple<Types&&...>( std::forward<Types>(args)... );
   }
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_UTILITY_INCLUDED_TUPLE_FORWARD_HPP_
+#endif  // #ifndef ETUDE_UTILITY_INCLUDED_FORWARD_AS_TUPLE_HPP_

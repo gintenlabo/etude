@@ -143,7 +143,7 @@ struct nontrivial_class
   
 };
 
-#include "../../etude/utility/tuple_forward.hpp"
+#include "../../etude/utility/forward_as_tuple.hpp"
 
 int main()
 {
@@ -184,12 +184,12 @@ int main()
   
   // unpack construction
   etude::value_wrapper<nontrivial_class> d( etude::unpack_construct,
-    etude::tuple_forward( get(a) )
+    etude::forward_as_tuple( get(a) )
   );
   BOOST_ASSERT( d.get().which_ctor_has_called == nontrivial_class::copy_ctor );
   
   etude::value_wrapper<nontrivial_class> e( etude::unpack_construct,
-    etude::tuple_forward( get( std::move(c) ) )
+    etude::forward_as_tuple( get( std::move(c) ) )
   );
   BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
 }

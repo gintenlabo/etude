@@ -1,12 +1,12 @@
 //
-//  tuple_forward のテストです。
+//  forward_as_tuple のテストです。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/utility/tuple_forward.hpp"
+#include "../../etude/utility/forward_as_tuple.hpp"
 
 #include <type_traits>
 #include <utility>
@@ -18,12 +18,12 @@ inline std::tuple<Args&&...> check( Args&&... args )
 {
   STATIC_ASSERT((
     std::is_same<
-      decltype( etude::tuple_forward( std::forward<Args>(args)... ) ),
+      decltype( etude::forward_as_tuple( std::forward<Args>(args)... ) ),
       std::tuple<Args&&...>
     >::value
   ));
   // 実際に呼び出す
-  return etude::tuple_forward( std::forward<Args>(args)... );
+  return etude::forward_as_tuple( std::forward<Args>(args)... );
 }
 
 #include <boost/assert.hpp>
