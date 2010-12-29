@@ -13,7 +13,7 @@
 
 #include "simple_wrapper.hpp"
 #include "../types/indices.hpp"
-#include "../types/tuple_element.hpp"
+#include "tuple_get.hpp"
 #include "../types/tuple_types.hpp"
 #include "../types/tuple_indices.hpp"
 #include "../types/is_convertible.hpp"
@@ -54,11 +54,7 @@ namespace etude {
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
     value_wrapper_( Tuple && t, etude::indices<Indices...> ) :
-      base (
-        std::forward<typename etude::tuple_element<Indices, Tuple>::type>(
-          std::get<Indices>(t)
-        )...
-      )
+      base ( tuple_get<Indices>( std::forward<Tuple>(t) )... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }
