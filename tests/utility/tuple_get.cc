@@ -20,6 +20,8 @@
 template<std::size_t I, class Tuple>
 inline void check( Tuple && t )
 {
+  typedef typename std::remove_reference<Tuple>::type tuple_type;
+  
   // 型チェック
   STATIC_ASSERT((
     std::is_same<
@@ -27,11 +29,31 @@ inline void check( Tuple && t )
       typename etude::tuple_element<I, Tuple>::type &&
     >::value
   ));
+  STATIC_ASSERT((
+    std::is_same<
+      decltype( etude::tuple_move<I>(t) ),
+      typename etude::tuple_element<I, tuple_type>::type &&
+    >::value
+  ));
+  STATIC_ASSERT((
+    std::is_same<
+      decltype( etude::tuple_forward<Tuple, I>(t) ),
+      typename etude::tuple_element<I, Tuple>::type &&
+    >::value
+  ));
   
   // アドレスチェック
+  using std::get;
+  auto && o = get<I>(t);
+  
   auto && x = etude::tuple_get<I>(t);
-  using std::get; auto && y = get<I>(t);
-  BOOST_ASSERT( boost::addressof(x) == boost::addressof(y) );
+  BOOST_ASSERT( boost::addressof(o) == boost::addressof(x) );
+  
+  auto && y = etude::tuple_move<I>(t);
+  BOOST_ASSERT( boost::addressof(o) == boost::addressof(y) );
+  
+  auto && z = etude::tuple_forward<Tuple, I>(t);
+  BOOST_ASSERT( boost::addressof(o) == boost::addressof(z) );
 }
 
 template<std::size_t I, class Tuple,

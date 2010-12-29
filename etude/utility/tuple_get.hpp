@@ -14,15 +14,38 @@
 #define ETUDE_UTILITY_INCLUDED_TUPLE_GET_HPP_
 
 #include "../types/tuple_element.hpp"
+#include <utility>
+#include <type_traits>
 
 namespace etude {
 
+  // t の型に合わせて要素を get
   template< std::size_t I, class Tuple,
-    class Result = typename etude::tuple_element<I, Tuple>::type &&
+    class Elem = typename etude::tuple_element<I, Tuple>::type
   >
-  inline Result tuple_get( Tuple && t ) {
+  inline Elem&& tuple_get( Tuple && t ) {
     using namespace std;
-    return static_cast<Result>( get<I>(t) );
+    return std::forward<Elem>( get<I>(t) );
+  }
+  
+  // get してから要素を move する
+  template< std::size_t I, class Tuple,
+    class Elem = typename etude::tuple_element< I,
+      typename std::remove_reference<Tuple>::type
+    >::type
+  >
+  inline Elem&& tuple_move( Tuple && t ) {
+    using namespace std;
+    return std::forward<Elem>( get<I>(t) );
+  }
+  
+  // get してから要素を Tuple の型に合わせて forward する
+  template< class Tuple, std::size_t I, class Tuple_,
+    class Elem = typename etude::tuple_element<I, Tuple>::type
+  >
+  inline Elem&& tuple_forward( Tuple_ && t ) {
+    using namespace std;
+    return std::forward<Elem>( get<I>(t) );
   }
 
 } // namespace etude
