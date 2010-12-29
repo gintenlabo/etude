@@ -103,8 +103,13 @@ Type Traits
     namespace etude {
     
       template<class... Types>
-      struct types {
+      struct types 
+      {
         typedef types<Types...> type;
+        
+        template<template<class...> class U>
+        struct apply { typedef U<Types...> type; }
+      
       };
       
     }
@@ -114,6 +119,9 @@ Type Traits
 
 このクラスの典型的な使われ方としては、複数の型を一つに束ねて
 ``etude::is_convertible``\ :ref:`¶<is_convertible>` といったメタ関数に渡す、などが挙げられます。
+
+また、 ``apply`` によって、関連付けられた ``Types...``
+を他のクラステンプレートに渡せることを覚えておくと、メタプログラミングの際に役立つ筈です。
 
 
 .. index::

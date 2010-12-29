@@ -9,6 +9,7 @@
 #include "../../etude/types/types.hpp"
 
 #include <type_traits>
+#include <tuple>
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
@@ -37,7 +38,24 @@ void check_traits( etude::types<Types...> )
   STATIC_ASSERT(( std::is_same<typename types_type::type, types_type>::value ));
   // size
   STATIC_ASSERT(( types_type::size == sizeof...(Types) ));
+  
+  // apply
+  STATIC_ASSERT((
+    std::is_same<
+      typename types_type::template apply<etude::types>::type,
+      types_type
+    >::value
+  ));
+  // 例として、同じパラメータの tuple を作る
+  STATIC_ASSERT((
+    std::is_same<
+      typename types_type::template apply<std::tuple>::type,
+      std::tuple<Types...>
+    >::value
+  ));
 }
+
+#include <string>
 
 int main()
 {
@@ -49,4 +67,11 @@ int main()
   check_traits( etude::types<>() );
   check_traits( etude::types<int>() );
   check_traits( etude::types<char, int&, void, char>() );
+  
+  // apply のチェック
+  STATIC_ASSERT((
+    std::is_same< std::string,
+      etude::types<char>::apply<std::basic_string>::type
+    >::value
+  ));
 }

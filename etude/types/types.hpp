@@ -24,9 +24,15 @@ namespace etude {
   
   // 複数の型に対する type envelope
   template<class... Types>
-  struct types {
+  struct types
+  {
     typedef types type;
     static std::size_t const size = sizeof...(Types);
+    
+    template<template <class...> class U>
+    struct apply {
+      typedef U<Types...> type;
+    };
   };
 
 } // namespace etude
