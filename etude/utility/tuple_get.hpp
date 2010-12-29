@@ -24,8 +24,7 @@ namespace etude {
     class Elem = typename etude::tuple_element<I, Tuple>::type
   >
   inline Elem&& tuple_get( Tuple && t ) {
-    using namespace std;
-    return std::forward<Elem>( get<I>(t) );
+    return std::forward<Elem>( etude::tuple_element<I, Tuple>::get(t) );
   }
   
   // get してから要素を move する

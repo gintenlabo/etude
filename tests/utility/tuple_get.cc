@@ -86,7 +86,7 @@ inline T const& to_const( T const& x ) {
 int main()
 {
   klass k;
-  std::tuple<int, char const*, klass&> t( 0, "hoge", k );
+  std::tuple<int, char const*, klass&, klass const&> t( 0, "hoge", k, k );
   
   test( t );
   test( to_const(t) );
