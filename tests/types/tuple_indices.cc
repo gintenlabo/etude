@@ -30,7 +30,7 @@ void check_indices()
 template<class Tuple>
 void check()
 {
-  static std::size_t const n = std::tuple_size<Tuple>::value;
+  static std::size_t const n = etude::tuple_size<Tuple>::value;
   typedef typename etude::make_indices<n>::type indices_t;
   
   check_indices<Tuple, indices_t>();

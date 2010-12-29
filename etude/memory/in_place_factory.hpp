@@ -196,7 +196,7 @@ namespace etude {
   // 実装
   template<class Tuple, std::size_t... Indices,
     class Result = in_place_factory<
-      typename std::tuple_element<
+      typename etude::tuple_element<
         Indices, typename std::decay<Tuple>::type
       >::type...
     >

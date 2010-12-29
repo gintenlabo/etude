@@ -3,7 +3,7 @@
 //    タプルにアクセスするための indices を作る
 //    
 //    このメタ関数は
-//      make_indices<std::tuple_size<typename std::decay<T>::type>::value>
+//      make_indices<etude::tuple_size<T>::value>::type
 //    を継承します。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
