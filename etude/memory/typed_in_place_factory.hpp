@@ -170,19 +170,28 @@ namespace etude {
     );
   }
   
-  // タプルを in_place_factory に変換する版。
-  // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
+  // in_place_factory から typed_in_place_factory への変換
   template<class T, class... Args>
   inline typed_in_place_factory<T, Args...>
-    in_place_from_tuple( std::tuple<Args...> const& t )
+    make_typed_in_place_factory( in_place_factory<Args...> const& x )
   {
-    return t;
+    return x;
   }
   template<class T, class... Args>
   inline typed_in_place_factory<T, Args...>
-    in_place_from_tuple( std::tuple<Args...> && t )
+    make_typed_in_place_factory( in_place_factory<Args...> && x )
   {
-    return std::move(t);
+    return std::move(x);
+  }
+  
+  // タプルを typed_in_place_factory に変換
+  // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に
+  template<class T, class Tuple>
+  inline decltype (
+    make_typed_in_place_factory<T>( in_place_from_tuple( std::declval<Tuple>() ) )
+  )
+  in_place_from_tuple( Tuple && t ) {
+    return in_place_from_tuple( std::forward<Tuple>(t) );
   }
 
 }

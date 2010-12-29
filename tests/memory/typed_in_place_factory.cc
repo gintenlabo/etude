@@ -159,6 +159,8 @@ int main()
     std::tuple<int, int> t( 5, 6 );
     auto in_place_1 = etude::in_place_from_tuple<hoge>(t);
     auto in_place_2 = etude::in_place_from_tuple<hoge>( std::make_tuple( std::unique_ptr<int>(), 7, 8 ) );
+    // tuple 以外でもおｋ！
+    auto in_place_2_ = etude::in_place_from_tuple<hoge>( std::make_pair( 9, 10 ) );
     
     // typed_in_place_factory 間の相互変換
     etude::typed_in_place_factory<hoge, double, float> in_place_3 = in_place_1;

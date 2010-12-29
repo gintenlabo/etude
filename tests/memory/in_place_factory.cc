@@ -149,6 +149,12 @@ int main()
     // in_place_factory 間の相互変換
     etude::in_place_factory<double, float> in_place_3 = in_place_1;
     etude::in_place_factory<std::unique_ptr<int>, unsigned int, double> in_place_4 = std::move(in_place_2);
+    
+    // 一般化された in_place_from_tuple
+    auto in_place_5 = etude::in_place_from_tuple( std::make_pair( 9, 10 ) );
+    BOOST_ASSERT(( std::is_same<
+      decltype(in_place_5), etude::in_place_factory<int, int>
+    >::value ));
   }
   
   // 型変換が「できない」チェック
