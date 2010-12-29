@@ -49,7 +49,7 @@ namespace etude {
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
     value_wrapper_( Tuple && t, etude::indices<Indices...> ) :
-      base ( tuple_get<Indices>( std::forward<Tuple>(t) )... )
+      base ( tuple_forward<Tuple, Indices>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }

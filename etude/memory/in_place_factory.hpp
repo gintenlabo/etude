@@ -203,7 +203,7 @@ namespace etude {
   >
   inline Result in_place_from_tuple_( Tuple && t, etude::indices<Indices...> ) {
     (void)t;  // サイズ 0 のタプルに対する警告避け
-    return Result( etude::tuple_get<Indices>( std::forward<Tuple>(t) )... );
+    return Result( etude::tuple_forward<Tuple, Indices>(t)... );
   }
   
   // 本体
