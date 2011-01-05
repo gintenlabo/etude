@@ -1497,7 +1497,7 @@ function template ``in_place`` (typed version)
 
     namespace etude {
     
-      template<class T, class InPlace>
+      template<class InPlace, class T>
       struct is_in_place_applyable
         : std::integral_constant<bool, see-below> {};
     
