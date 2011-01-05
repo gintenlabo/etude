@@ -368,6 +368,173 @@ InPlaceFactory の要件は、以下の通りです：
 使い方（実装側）
 ================
 
+.. note::
+  
+  この章を読む前に、
+  `Boost.InPlaceFactory の Container-side Usage <http://www.boost.org/doc/libs/1_45_0/libs/utility/in_place_factories.html#container-usage>`_
+  に一通り目を通すようにしてください。
+
+.. warning::
+  
+  これから扱う事項は、いくつもの落とし穴がある、 **本質的に安全でない** ものであり、
+  少なくとも、普通に C++ を扱う分には、まず必要とならないものです。
+  
+  これらは、「何をやっているか」を理解した上で使う分には、安全であり、様々な最適化に役立ちますが、
+  よく理解しないまま 安易に真似をした場合、 **非常に取りにくいバグの原因となります** 。
+  
+  以降の解説を参考にしてコードを書く場合は、そのことを常に留意し、
+  **必要ならば規格に当たる** など、安全性を常に意識するようにしてください。
+
+基本的な実装法
+--------------
+
+Etude.InPlaceFactory は基本的に、 Boost.InPlaceFactory と同じく、
+未初期化のメモリ領域に対し、メンバ関数テンプレート ``apply`` を呼び出すことにより、
+コンストラクタを呼び出して任意の型のオブジェクトを構築する、という動作を行います。
+
+具体的には、下記のコード ::
+
+  Hoge* p = etude::in_place( x, y, z ).apply<Hoge>( addr );
+
+は、 ``<new>`` 標準ライブラリ内で定義された ``void* operator new ( std::size_t, void* )`` を
+placement new 構文によって呼び出す、 ::
+
+  Hoge* p = ::new(addr) Hoge( x, y, z );
+
+と同じ動作を行います。
+
+.. note::
+  
+  この点は僅かに Boost と Etude で動作が異なり、
+  Boost.InPlaceFactory の ``apply`` は何も値を返さない一方、
+  Etude.InPlaceFactory の ``apply`` は構築されたオブジェクトのアドレスを返すようになっていますが、
+  些細な違いなので無視することにします。
+  （ Etude の ``apply`` が構築されたオブジェクトのアドレスを返すのは、本来不要な
+  ``static_cast`` を行わずに済ませられるようにするためです）
+
+ここで、実際に使用する場合を考えると、通常は、上記のように
+``in_place`` 関数を呼び出した後に直接 ``apply`` するのではなく、このように ::
+
+  void* addr = ～;
+  Hoge* p = 0;
+  
+  template<class InPlace>
+  inline void construct( InPlace const& x )
+  {
+    if(p) {
+      p->~Hoge();
+      p = 0;
+    }
+    
+    p = x.template apply<Hoge>(addr);
+    
+  }
+
+テンプレート経由で ``apply`` を呼び出すことになりますが、その場合、
+
+- ``template apply<T>`` の ``template`` を忘れやすい
+  （一部のコンパイラは ``template`` を忘れてもコンパイルエラーにならないが、
+  そのようなコンパイラは、あくまで一部でしかない）
+- ``InPlace`` が ``boost::in_place`` によって作られた場合、
+  ``p = x.template apply<Hoge>(addr);`` と書くことは出来ないので、
+  ``p = static_cast<Hoge*>(addr);`` と別個に書く必要があり、美しくない
+- せっかく Etude.InPlaceFactory が move semantics に対応しているのに、上記のコードでは
+  move 出来ていない
+
+といった、幾つかの問題点があります。
+
+そこで Etude.InPlaceFactory は、これらの問題を回避するために、
+``etude::apply_in_place`` というヘルパ関数を用意しています。
+
+これと ``std::forward`` を使えば、 ::
+
+  void* addr = ～;
+  Hoge* p = 0;
+  
+  template<class InPlace>
+  inline void construct( InPlace && x )
+  {
+    if(p) {
+      p->~Hoge();
+      p = 0;
+    }
+    
+    using etude::apply_in_place;
+    p = apply_in_place<Hoge>( std::forward<InPlace>(x), addr );
+    
+  }
+
+と書くことで、上記の問題点を全て解決することができます。
+
+それに加え、 Etude.InPlaceFactory には、ある型が
+InPlaceFactory の要件を満たすか否かによって 処理を変えたい場合に備え、
+SFINAE を行うための 各種メタ関数が用意されています： ::
+
+  void* addr = ～;
+  Hoge* p = 0;
+  
+  template<class InPlace,
+    class = typename std::enable_if<
+      etude::is_in_place_applyable<InPlace, Hoge>::value
+    >::type
+  >
+  inline void construct( InPlace && x )
+  {
+    if(p) {
+      p->~Hoge();
+      p = 0;
+    }
+    
+    using etude::apply_in_place;
+    p = apply_in_place<Hoge>( std::forward<InPlace>(x), addr );
+    
+  }
+
+上記のコードの ``construct`` は、 ``InPlace`` が InPlaceFactory の場合、あるいは
+``Hoge`` に関連付けられた TypedInPlaceFactory の場合にのみ定義され、
+それ以外の場合には定義されないため、また別の ``construct`` に処理を行わせることが可能になります。
+
+.. note::
+  
+  ``etude::apply_in_place<T>`` は、渡した ``InPlace`` が
+  ``T`` 型に関連付けられた TypedInPlaceFactory の場合にも 問題なく動作し、
+  該当する ``apply`` 関数を呼び出すことが出来ます。
+  
+  なお、関連付けられた型が ``T`` 以外の場合には、コンパイルエラーになります。
+
+
+また、 InPlaceFactory ではなく TypedInPlaceFactory を受け入れたい場合には、
+``etude::apply_typed_in_place`` および
+``etude::typed_in_place_associated`` を使って、このように書くことが出来ます： ::
+
+  void* addr = ～;
+  Hoge* p = 0;
+  
+  template<class TypedInPlace,
+    class T = typename etude::typed_in_place_associated<TypedInPlace>::type
+  >
+  inline void construct( TypedInPlace && x )
+  {
+    if(p) {
+      p->~Hoge();
+      p = 0;
+    }
+    
+    using etude::apply_typed_in_place;
+    p = apply_typed_in_place( std::forward<TypedInPlace>(x), addr );
+    
+  }
+
+ここで、 ``etude::typed_in_place_associated<TypedInPlace>::type`` は、 ``TypedInPlace`` が
+TypedInPlaceFactory でない場合には定義されないので、
+``construct`` も ``TypedInPlace`` が TypedInPlaceFactory でない場合には定義されません。
+渡された ``x`` が TypedInPlaceFactory か否かによって処理を切り替えたい場合にも
+きちんと対応できるようになっている、ということです。
+
+
+補足
+----
+
 under construction...
 
 
