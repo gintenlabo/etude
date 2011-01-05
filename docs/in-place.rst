@@ -256,14 +256,18 @@ Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでい�
 タプルに束ねられた引数リストから InPlaceFactory への変換
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Etude.InPlaceFactory は ``std::tuple`` からの構築をサポートしています。
+Etude.InPlaceFactory は、 ``std::tuple`` をはじめとした、各種タプルからの構築をサポートしています。
 
-何らかの理由により、 ``std::tuple`` によって予め束ねられた引数リストから InPlaceFactory
+何らかの理由により、タプルによって予め束ねられた引数リストから InPlaceFactory
 を構築したくなった場合、通常ならば、プリプロセッサや補助クラス（例：
 ``etude::indices``\ :ref:`¶<indices>` ）を使ったトリッキーなコードを書く必要がありますが、
 Etude.InPlaceFactory を使えば、
 ``in_place_from_tuple``\ :ref:`¶<in_place_from_tuple>`\ :ref:`¶<in_place_from_tuple typed>`
 を使うことで、ごく自然に tuple を unpack することが可能になっています。
+
+その際、渡すタプルが ``std::tuple`` である必要はありません。
+``std::tuple_size`` と ``std::tuple_element`` 、 ``std::get``
+さえ適切に定義されていれば、問題なく unpack することが可能です。
 
 普段、この機能を使うことは滅多に無いでしょうが、覚えておいて損はない筈です。
 
@@ -491,10 +495,8 @@ under construction...
       inline in_place_factory<Args...> in_place_by_ref( Args&& ...args );
       template<class... Args>
       inline in_place_factory<see-below...> in_place_by_val( Args&& ...args );
-      template<class... Args>
-      inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );
-      template<class... Args>
-      inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
+      template<class Tuple>
+      inline in_place_factory<see-below...> in_place_from_tuple( Tuple && t );
       
     }
 
@@ -897,12 +899,22 @@ function template ``in_place``
 
   ::
 
-    template<class... Args>
-    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& );
-    template<class... Args>
-    inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && );
+    template<class Tuple>
+    inline in_place_factory<see-below...> in_place_from_tuple( Tuple && t );
   
   引数をパックしたタプルから ``in_place_factory<Args...>`` を構築します。
+  
+  この関数の戻り値は、
+  ``etude::in_place_factory< typename etude::tuple_element< Indices, typename std::decay<Tuple>::type >::type... >``
+  で与えられます。 ただし ``Indices`` は ``0`` から ``etude::tuple_size<Tuple>::value - 1``
+  までの各インデックスを順に並べたものになります。
+  
+  例えば、 ::
+  
+    std::tuple<int, double, char const*> t;
+    auto x = etude::in_place_from_tuple( t );
+  
+  の ``x`` は、 ``etude::in_place_factory< int, double, char const* >`` になります。
   
   .. hint::
   
@@ -1088,10 +1100,8 @@ TypedInPlaceFactory への参照の場合には ``std::true_type`` を、そう�
       inline typed_in_place_factory<T, Args...> in_place_by_ref( Args&& ...args );
       template<class T, class... Args>
       inline typed_in_place_factory<T, see-below...> in_place_by_val( Args&& ...args );
-      template<class T, class... Args>
-      inline typed_in_place_factory<T, Args...> in_place_from_tuple( std::tuple<Args...> const& );
-      template<class T, class... Args>
-      inline typed_in_place_factory<T, Args...> in_place_from_tuple( std::tuple<Args...> && );
+      template<class T, class Tuple>
+      inline typed_in_place_factory<T, see-below...> in_place_from_tuple( Tuple && t );
       
     }
 
@@ -1454,10 +1464,8 @@ function template ``in_place`` (typed version)
 
   ::
 
-    template<class T, class... Args>
-    inline typed_in_place_factory<T, Args...> in_place_from_tuple( std::tuple<Args...> const& );
-    template<class T, class... Args>
-    inline typed_in_place_factory<T, Args...> in_place_from_tuple( std::tuple<Args...> && );
+    template<class T, class Tuple>
+    inline typed_in_place_factory<T, see-below...> in_place_from_tuple( Tuple && t );
   
   引数をパックしたタプルから ``typed_in_place_factory<T, Args...>`` を構築します。
   
