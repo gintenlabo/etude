@@ -16,28 +16,89 @@
 #define ETUDE_TYPES_INCLUDED_TUPLE_ELEMENT_HPP_
 
 #include <tuple>
+#include "tuple_size.hpp"
 
 namespace etude {
 
-  // デフォルトの場合
+  // 前方宣言
+  template<std::size_t I, class Tuple>
+  struct tuple_element;
+
+  // 実装
+  template<std::size_t I, class Tuple>
+  struct tuple_element_impl_
+  {
+    typedef typename std::tuple_element<I, Tuple>::type type;
+    
+    static type& get( Tuple& x ) {
+      using std::get;
+      return get<I>(x);
+    }
+    
+    static type const& get( Tuple const& x ) {
+      using std::get;
+      return get<I>(x);
+    }
+    
+  };
+  
+  // cv 付き
+  #define ETUDE_TUPLE_ELEMENT_GEN_( cv )                      \
+    template< std::size_t I, class Tuple >                    \
+    struct tuple_element_impl_< I, Tuple cv >                 \
+    {                                                         \
+      typedef typename tuple_element<I, Tuple>::type cv type; \
+                                                              \
+      static type& get( Tuple cv& x ) {                       \
+        return tuple_element<I, Tuple>::get(x);               \
+      }                                                       \
+                                                              \
+    };                                                        \
+    /* ETUDE_TUPLE_ELEMENT_GEN_( cv ) */
+    
+    ETUDE_TUPLE_ELEMENT_GEN_( const )
+    ETUDE_TUPLE_ELEMENT_GEN_( volatile )
+    ETUDE_TUPLE_ELEMENT_GEN_( const volatile )
+  
+  #undef ETUDE_TUPLE_ELEMENT_GEN_
+  
+  // 参照
+  template< std::size_t I, class Tuple >
+  struct tuple_element_impl_< I, Tuple& >
+  {
+    typedef typename tuple_element<I, Tuple>::type& type;
+    
+    static type get( Tuple& x ) {
+      return tuple_element<I, Tuple>::get(x);
+    }
+    
+  };
+  template< std::size_t I, class Tuple >
+  struct tuple_element_impl_< I, Tuple&& >
+  {
+    typedef typename tuple_element<I, Tuple>::type&& type;
+    
+    static type get( Tuple && x ) {
+      return std::forward<type>( tuple_element<I, Tuple>::get(x) );
+    }
+    
+  };
+
+  template<std::size_t I, class Tuple, class = void>
+  struct tuple_element_{};
+  
+  template<std::size_t I, class Tuple>
+  struct tuple_element_< I, Tuple,
+    typename std::enable_if<
+      ( I < etude::tuple_size<Tuple>::value )
+    >::type
+  >
+    : tuple_element_impl_<I, Tuple> {};
+  
+  // 実装
   template<std::size_t I, class Tuple>
   struct tuple_element
-    : std::tuple_element<I, Tuple> {};
-  
-  #define ETUDE_TUPLE_ELEMENT_GEN_( qualifier )                       \
-    template<std::size_t I, class Tuple>                              \
-    struct tuple_element<I, Tuple qualifier> {                        \
-      typedef typename tuple_element<I, Tuple>::type qualifier type;  \
-    }                                                                 \
-    /* ETUDE_TUPLE_ELEMENT_GEN_( qualifier ) */
-    
-    ETUDE_TUPLE_ELEMENT_GEN_( const );
-    ETUDE_TUPLE_ELEMENT_GEN_( volatile );
-    ETUDE_TUPLE_ELEMENT_GEN_( const volatile );
-    ETUDE_TUPLE_ELEMENT_GEN_( & );
-    ETUDE_TUPLE_ELEMENT_GEN_( && );
-    
-  #undef ETUDE_TUPLE_ELEMENT_GEN_
+    : tuple_element_<I, Tuple> {};
 
 } // namespace etude
 

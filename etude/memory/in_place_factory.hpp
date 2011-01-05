@@ -30,6 +30,8 @@
 #include "../types/types.hpp"
 #include "../types/is_convertible.hpp"
 #include "../types/decay_and_strip.hpp"
+#include "../types/tuple_indices.hpp"
+#include "../utility/tuple_get.hpp"
 
 namespace etude {
 
@@ -190,13 +192,28 @@ namespace etude {
   
   // タプルを in_place_factory に変換する版。
   // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
-  template<class... Args>
-  inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> const& t ) {
-    return t;
+  
+  // 実装
+  template<class Tuple, std::size_t... Indices,
+    class Result = in_place_factory<
+      typename etude::tuple_element<
+        Indices, typename std::decay<Tuple>::type
+      >::type...
+    >
+  >
+  inline Result in_place_from_tuple_( Tuple && t, etude::indices<Indices...> ) {
+    (void)t;  // サイズ 0 のタプルに対する警告避け
+    return Result( etude::tuple_forward<Tuple, Indices>(t)... );
   }
-  template<class... Args>
-  inline in_place_factory<Args...> in_place_from_tuple( std::tuple<Args...> && t ) {
-    return std::move(t);
+  
+  // 本体
+  template<class Tuple,
+    class Indices = typename etude::tuple_indices<Tuple>::type
+  >
+  inline auto in_place_from_tuple( Tuple && t )
+    -> decltype( in_place_from_tuple_( std::forward<Tuple>(t), Indices() ) )
+  {
+    return in_place_from_tuple_( std::forward<Tuple>(t), Indices() );
   }
 
 }

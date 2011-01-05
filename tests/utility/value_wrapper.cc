@@ -11,6 +11,7 @@
 #include "../../etude/utility/value_wrapper.hpp"
 #include <type_traits>
 #include <utility>
+#include <boost/assert.hpp>
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
@@ -142,6 +143,8 @@ struct nontrivial_class
   
 };
 
+#include "../../etude/utility/forward_as_tuple.hpp"
+
 int main()
 {
   test<int>();
@@ -165,4 +168,28 @@ int main()
   check_constructible<nontrivial_class, int*, double>();
   check_constructible<nontrivial_class, int, double, char*>();
   check_constructible<nontrivial_class, int, double, char const*>();
+  
+  // 実際にどのコンストラクタが呼ばれているか
+  
+  // direct initialization
+  etude::value_wrapper<nontrivial_class> a( etude::emplace_construct, 1 );
+  BOOST_ASSERT( a.get().which_ctor_has_called == nontrivial_class::from_int );
+  
+  // copy construction
+  etude::value_wrapper<nontrivial_class> b( get(a) );
+  BOOST_ASSERT( b.get().which_ctor_has_called == nontrivial_class::copy_ctor );
+  
+  etude::value_wrapper<nontrivial_class> c( get( std::move(a) ) );
+  BOOST_ASSERT( c.get().which_ctor_has_called == nontrivial_class::move_ctor );
+  
+  // unpack construction
+  etude::value_wrapper<nontrivial_class> d( etude::unpack_construct,
+    etude::forward_as_tuple( get(a) )
+  );
+  BOOST_ASSERT( d.get().which_ctor_has_called == nontrivial_class::copy_ctor );
+  
+  etude::value_wrapper<nontrivial_class> e( etude::unpack_construct,
+    etude::forward_as_tuple( get( std::move(c) ) )
+  );
+  BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
 }

@@ -12,8 +12,11 @@
 #define ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
 
 #include "simple_wrapper.hpp"
+#include "emplace_construct.hpp"
+#include "unpack_construct.hpp"
+
 #include "../types/indices.hpp"
-#include "../types/tuple_element.hpp"
+#include "tuple_get.hpp"
 #include "../types/tuple_types.hpp"
 #include "../types/tuple_indices.hpp"
 #include "../types/is_convertible.hpp"
@@ -21,14 +24,6 @@
 namespace etude {
  namespace value_wrapper_ { // ADL 回避
  
-  // 構築指定用のタグ
-  struct emplace_construct_t {};
-  struct unpack_construct_t {};
-  namespace {
-    emplace_construct_t const emplace_construct = {};
-    unpack_construct_t const unpack_construct = {};
-  }
-  
   // 直接 etude::simple_wrapper を使うのはアレなので
   // 実装用クラスを持ってくる
   using etude::simple_wrapper_::simple_wrapper_;
@@ -54,11 +49,7 @@ namespace etude {
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
     value_wrapper_( Tuple && t, etude::indices<Indices...> ) :
-      base (
-        std::forward<typename etude::tuple_element<Indices, Tuple>::type>(
-          std::get<Indices>(t)
-        )...
-      )
+      base ( tuple_forward<Tuple, Indices>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }
