@@ -535,7 +535,57 @@ TypedInPlaceFactory でない場合には定義されないので、
 補足
 ----
 
-under construction...
+etude::in_place で作られたオブジェクトのコピーについて
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+``etude::in_place`` で作成された ``etude::in_place_factory<Args...>`` など、
+rvalue reference を保持する InPlaceFactories は一般に、コピーすることが出来ません。 ::
+  
+  void* addr1 = ～;
+  void* addr2 = ～;
+  
+  template<class InPlace>
+  inline f( InPlace && x ) 
+  {
+    InPlace y = x;
+    
+    etude::apply_in_place<Hoge>( std::forward<InPlace>(x), addr1 );
+    etude::apply_in_place<Hoge>( std::forward<InPlace>(y), addr2 );
+    
+  }
+  
+  f( etude::in_place(1) );  // ダメ
+  f( etude::bind_in_place(1) );  // bind_in_place ならば大丈夫
+
+
+一つの InPlaceFactories に対し 複数回 ``apply_in_place`` を使いたい場合は、
+コピーするのではなく、 ``std::forward`` を使わずに ::
+  
+  void* addr1 = ～;
+  void* addr2 = ～;
+  
+  template<class InPlace>
+  inline f( InPlace && x )
+  {
+    etude::apply_in_place<Hoge>( x, addr1 );
+    etude::apply_in_place<Hoge>( x, addr2 );
+  }
+  
+  f( etude::in_place(1) );  // 問題なし
+
+とするのがよいでしょう。（最後の ``apply_in_place`` 呼び出しでは ``forward`` しても構いません。）
+
+なお、 ``etude::in_place`` で作られたファクトリであっても、 move ならば正しく行うことが出来ます。 ::
+  
+  template<class InPlace>
+  inline f( InPlace && x ) 
+  {
+    InPlace y = std::forward<InPlace>(x);
+    
+    /* 処理 */
+  }
+
+もっとも、こうしたい状況があるかどうかは分かりませんが。
 
 
 詳細データ
