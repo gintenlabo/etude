@@ -30,6 +30,17 @@ void test()
     etude::operator_delete<T[]>(p);
   }
   
+  // 多次元
+  {
+    auto* p = new T[n][n];
+    for( int i = n; i --> 0; ) {
+      for( int j = n; j --> 0; ) {
+        p[i][j].~T();
+      }
+    }
+    etude::operator_delete<T[n][n]>(p);
+  }
+  
   // unique_ptr を使った例
   {
     std::unique_ptr<T, etude::default_deallocate<T>> p( new T() );

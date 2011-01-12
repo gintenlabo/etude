@@ -111,21 +111,16 @@ int main()
   }
   BOOST_ASSERT( hoge::count_array() == 0 );
   
-  
-  // 固定長配列の場合
+  // 固定長配列も一応扱えるが
   for( int i = 0; i < n; ++i ) {
-    auto p = etude::operator_new<hoge[5]>();  // この場合は要素数は省略できる。
+    auto p = etude::operator_new<hoge[5]>( sizeof(hoge[5]) ); // サイズは省略できなくなった
+    // 一般に new hoge[5] で確保されるメモリサイズとは別物なので。
     BOOST_ASSERT( hoge::count_array() == 1 );
     
     STATIC_ASSERT(( std::is_same<
         decltype(p), etude::raw_storage_pointer<hoge[5]>::type
       >::value
     ));
-    STATIC_ASSERT(( std::is_same<
-        decltype(p), etude::raw_storage_pointer<hoge[]>::type
-      >::value
-    ));
   }
   BOOST_ASSERT( hoge::count_array() == 0 );
-  
 }
