@@ -11,6 +11,9 @@
 #ifndef ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
 #define ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
 
+#include <type_traits>
+#include <utility>
+
 #include "simple_wrapper.hpp"
 #include "emplace_construct.hpp"
 #include "unpack_construct.hpp"
@@ -37,6 +40,7 @@ namespace etude {
     
    public:
     using base::get;
+    using base::move;
     
     // デフォルト構築
     value_wrapper_() = default;
@@ -48,8 +52,8 @@ namespace etude {
     
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
-    value_wrapper_( Tuple && t, etude::indices<Indices...> ) :
-      base ( tuple_forward<Tuple, Indices>(t)... )
+    value_wrapper_( Tuple && t, etude::indices<Indices...> )
+      : base ( tuple_forward<Tuple, Indices>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }
@@ -63,13 +67,11 @@ namespace etude {
   // 本体
   template<class T, class Tag = void>
   class value_wrapper
-    : private value_wrapper_<T>
+    : private value_wrapper_<typename std::remove_const<T>::type>
   {
-    typedef value_wrapper_<T> base;
+    typedef value_wrapper_<typename std::remove_const<T>::type> base;
     
    public:
-    using base::get;
-    
     // デフォルト構築
     value_wrapper() = default;
     
@@ -106,6 +108,15 @@ namespace etude {
     value_wrapper( value_wrapper const& ) = default;
     value_wrapper( value_wrapper && )     = default;
     
+    
+    // get/move
+    
+    // get は T が const U の場合に対処するため明示的に指定する
+    T &      get()       { return base::get(); }
+    T const& get() const { return base::get(); }
+    // move はそのまま
+    using base::move;
+    
   };
   
   // 自由関数版 get
@@ -119,8 +130,8 @@ namespace etude {
   }
   // move 版
   template<class T, class Tag>
-  inline T&& get( value_wrapper<T, Tag> && x ) {
-    return std::forward<T>( x.get() );
+  inline typename std::remove_const<T>::type && get( value_wrapper<T, Tag> && x ) {
+    return x.move();
   }
  
  }  // namespace value_wrapper_

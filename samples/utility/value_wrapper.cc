@@ -36,7 +36,6 @@ struct person
   
 };
 
-
 int main()
 {
   // 普通に構築
@@ -62,4 +61,18 @@ int main()
   // クラスのメンバとして使うことを想定して書いたんだ。
   // なので、 value_wrapper を使うクラスで、その都度アクセサを書いて欲しい。
   // EBO に対応してる関係上、メンバ変数として公開することも出来ないしね。
+  
+  
+  // もう一つの使い方
+  // 再代入や move のできる const クラスとして使う
+  etude::value_wrapper<std::string const> s0 = "hoge";
+  // 通常は lvalue reference は取得できない
+  // std::string& s = s0.get();
+  // しかし move することはできる
+  etude::value_wrapper<std::string const> s1 = std::move(s0);
+  // 再代入も行える
+  s0 = "fuga";
+  
+  std::cout << "s0: " << s0.get() << std::endl;
+  std::cout << "s1: " << s1.get() << std::endl;
 }

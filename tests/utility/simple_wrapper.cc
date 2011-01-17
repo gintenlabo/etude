@@ -17,6 +17,7 @@ template<class T>
 void check()
 {
   typedef etude::simple_wrapper<T> wrapper;
+  typedef typename std::remove_const<T>::type U;
   
   STATIC_ASSERT((  sizeof(T) ==  sizeof(wrapper) || std::is_reference<T>::value ));
   STATIC_ASSERT(( alignof(T) == alignof(wrapper) || std::is_reference<T>::value ));
@@ -30,10 +31,14 @@ void check()
   
   // get
   STATIC_ASSERT(( std::is_same<
-    T&, decltype( std::declval<wrapper&>().get() )
+    T &, decltype( std::declval<wrapper&>().get() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
     T const&, decltype( std::declval<wrapper const&>().get() )
+  >::value ));
+  // move 時は const が外れる
+  STATIC_ASSERT(( std::is_same<
+    U &&, decltype( std::declval<wrapper&>().move() )
   >::value ));
   
   STATIC_ASSERT(( std::is_same<
@@ -42,8 +47,9 @@ void check()
   STATIC_ASSERT(( std::is_same<
     T const&, decltype( get( std::declval<wrapper const&>() ) )
   >::value ));
+  // 同様に move 時は const が外れる
   STATIC_ASSERT(( std::is_same<
-    T &&, decltype( get( std::declval<wrapper&&>() ) )
+    U &&, decltype( get( std::declval<wrapper&&>() ) )
   >::value ));
 }
 

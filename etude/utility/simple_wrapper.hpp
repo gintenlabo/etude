@@ -37,8 +37,9 @@ namespace etude {
     simple_wrapper_( simple_wrapper_ && )     = default;
     
     // 取得
-    T&       get()       { return x; }
+    T &      get()       { return x; }
     T const& get() const { return x; }
+    T &&    move()       { return std::forward<T>(x); }
     
    private:
     T x;
@@ -69,15 +70,16 @@ namespace etude {
     // 取得
     T&       get()       { return *this; }
     T const& get() const { return *this; }
+    T &&    move()       { return std::forward<T>(*this); }
     
   };
   
   // 本体
   template<class T>
   class simple_wrapper
-    : private simple_wrapper_<T>
+    : private simple_wrapper_<typename std::remove_const<T>::type>
   {
-    typedef simple_wrapper_<T> base;
+    typedef simple_wrapper_<typename std::remove_const<T>::type> base;
     struct dummy_ {};
     
    public:
@@ -117,8 +119,14 @@ namespace etude {
     simple_wrapper( simple_wrapper const& ) = default;
     simple_wrapper( simple_wrapper && )     = default;
     
-    // get
-    using base::get;
+    
+    // get/move
+    
+    // get は T が const U の場合に対処するため明示的に指定する
+    T &      get()       { return base::get(); }
+    T const& get() const { return base::get(); }
+    // move はそのまま
+    using base::move;
     
   };
  
@@ -133,8 +141,8 @@ namespace etude {
   }
   // move 版
   template<class T>
-  inline T&& get( simple_wrapper<T> && x ) {
-    return std::forward<T>( x.get() );
+  inline typename std::remove_const<T>::type && get( simple_wrapper<T> && x ) {
+    return x.move();
   }
  
  }  // namespace simple_wrapper_;
