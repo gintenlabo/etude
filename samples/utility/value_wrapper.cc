@@ -69,10 +69,10 @@ int main()
   // 通常は lvalue reference は取得できない
   // std::string& s = s0.get();
   // しかし move することはできる
-  etude::value_wrapper<std::string const> s1 = std::move(s0);
+  etude::value_wrapper<std::string> s1 = std::move(s0);
   // 再代入も行える
   s0 = "fuga";
   
-  std::cout << "s0: " << s0.get() << std::endl;
-  std::cout << "s1: " << s1.get() << std::endl;
+  std::cout << "s0: " << *s0 << std::endl;
+  std::cout << "s1: " << *s1 << std::endl;
 }

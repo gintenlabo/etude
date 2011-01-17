@@ -13,6 +13,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <boost/utility/addressof.hpp>
 
 #include "simple_wrapper.hpp"
 #include "emplace_construct.hpp"
@@ -69,7 +70,8 @@ namespace etude {
   class value_wrapper
     : private value_wrapper_<typename std::remove_const<T>::type>
   {
-    typedef value_wrapper_<typename std::remove_const<T>::type> base;
+    typedef typename std::remove_const<T>::type T_;
+    typedef value_wrapper_<T_> base;
     
    public:
     // デフォルト構築
@@ -108,6 +110,24 @@ namespace etude {
     value_wrapper( value_wrapper const& ) = default;
     value_wrapper( value_wrapper && )     = default;
     
+    // 型変換コンストラクタ
+    // copy
+    template<class U, class Tag_,
+      class = typename std::enable_if<
+        std::is_convertible<U, T>::value
+      >::type
+    >
+    value_wrapper( value_wrapper<U, Tag_> const& src )
+      : base( emplace_construct, src.get() ) {}
+    // move
+    template<class U, class Tag_,
+      class = typename std::enable_if<
+        std::is_convertible<U, T>::value
+      >::type
+    >
+    value_wrapper( value_wrapper<U, Tag_> && src )
+      : base( emplace_construct, src.move() ) {}
+    
     
     // get/move
     
@@ -116,6 +136,20 @@ namespace etude {
     T const& get() const { return base::get(); }
     // move はそのまま
     using base::move;
+    
+    
+    // operator*
+    friend T &      operator*( value_wrapper &      x ){ return x.get(); }
+    friend T const& operator*( value_wrapper const& x ){ return x.get(); }
+    friend T_ &&    operator*( value_wrapper &&     x ){ return x.move(); }
+    
+    // operator->
+    typename std::add_pointer<T>::type operator->() {
+      return boost::addressof( get() );
+    }
+    typename std::add_pointer<T const>::type operator->() const {
+      return boost::addressof( get() );
+    }
     
   };
   

@@ -13,6 +13,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <boost/utility/addressof.hpp>
 
 namespace etude {
  namespace simple_wrapper_ { // ADL 回避
@@ -79,7 +80,8 @@ namespace etude {
   class simple_wrapper
     : private simple_wrapper_<typename std::remove_const<T>::type>
   {
-    typedef simple_wrapper_<typename std::remove_const<T>::type> base;
+    typedef typename std::remove_const<T>::type T_;
+    typedef simple_wrapper_<T_> base;
     struct dummy_ {};
     
    public:
@@ -119,6 +121,24 @@ namespace etude {
     simple_wrapper( simple_wrapper const& ) = default;
     simple_wrapper( simple_wrapper && )     = default;
     
+    // 型変換コンストラクタ
+    // copy
+    template<class U,
+      class = typename std::enable_if<
+        std::is_convertible<U, T>::value
+      >::type
+    >
+    simple_wrapper( simple_wrapper<U> const& src )
+      : base( src.get() ) {}
+    // move
+    template<class U,
+      class = typename std::enable_if<
+        std::is_convertible<U, T>::value
+      >::type
+    >
+    simple_wrapper( simple_wrapper<U> && src )
+      : base( src.move() ) {}
+    
     
     // get/move
     
@@ -127,6 +147,19 @@ namespace etude {
     T const& get() const { return base::get(); }
     // move はそのまま
     using base::move;
+    
+    // operator*
+    friend T &      operator*( simple_wrapper &      x ){ return x.get(); }
+    friend T const& operator*( simple_wrapper const& x ){ return x.get(); }
+    friend T_ &&    operator*( simple_wrapper &&     x ){ return x.move(); }
+    
+    // operator->
+    typename std::add_pointer<T>::type operator->() {
+      return boost::addressof( get() );
+    }
+    typename std::add_pointer<T const>::type operator->() const {
+      return boost::addressof( get() );
+    }
     
   };
  

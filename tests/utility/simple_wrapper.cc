@@ -51,6 +51,17 @@ void check()
   STATIC_ASSERT(( std::is_same<
     U &&, decltype( get( std::declval<wrapper&&>() ) )
   >::value ));
+  
+  // operator*
+  STATIC_ASSERT(( std::is_same<
+    T &, decltype( *std::declval<wrapper&>() )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    T const&, decltype( *std::declval<wrapper const&>() )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    U &&, decltype( *std::declval<wrapper&&>() )
+  >::value ));
 }
 
 // （CVつきの）値と参照についてチェック
@@ -69,8 +80,12 @@ template<class T, class U>
 void check_convertible( int )
 {
   typedef etude::simple_wrapper<T> wrapper;
+  
   STATIC_ASSERT(( std::is_convertible<U, T>::value
     == std::is_convertible<U, wrapper>::value ));
+  // 型変換できるか否か
+  STATIC_ASSERT(( std::is_convertible<U, T>::value
+    == std::is_convertible<etude::simple_wrapper<U>, wrapper>::value ));
 }
 template<class T, class... Args,
   class = typename std::enable_if<sizeof...(Args) != 1>::type
