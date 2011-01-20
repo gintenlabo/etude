@@ -1,5 +1,5 @@
 //
-//  copied:
+//  copy:
 //    与えられた引数をコピーする関数
 // 
 //    与えられた引数をコピーした prvalue を返します。
@@ -11,18 +11,18 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_COPIED_HPP_
-#define ETUDE_UTILITY_INCLUDED_COPIED_HPP_
+#ifndef ETUDE_UTILITY_INCLUDED_COPY_HPP_
+#define ETUDE_UTILITY_INCLUDED_COPY_HPP_
 
 #include <type_traits>
 
 namespace etude {
 
   template<class T>
-  inline typename std::decay<T>::type copied( T && x ) {
+  inline typename std::decay<T>::type copy( T && x ) {
     return static_cast<T&&>(x);
   }
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_UTILITY_INCLUDED_COPIED_HPP_
+#endif  // #ifndef ETUDE_UTILITY_INCLUDED_COPY_HPP_
