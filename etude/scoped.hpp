@@ -13,6 +13,7 @@
 #define ETUDE_INCLUDED_SCOPED_HPP_
 
 #include <memory>
+#include <utility>
 #include <type_traits>
 #include "types/decay_and_strip.hpp"
 
@@ -20,17 +21,24 @@ namespace etude {
   
   // simple wrapper functions for std::unique_ptr
   
-  // ポインタとデリータから作る
-  template< class T, class D = std::default_delete<T>,
-    class D_ = typename decay_and_strip<D>::type >
-  inline std::unique_ptr<T, D_> scoped( T* p, D d = D() ) {
-    return std::unique_ptr<T, D_>( p, static_cast<D&&>(d) );
+  // デフォルト版
+  template<class T>
+  inline std::unique_ptr<T> scoped( T* p ) {
+    return std::unique_ptr<T>(p);
   }
   
   // デリータの種類を指定して作る
-  template< class D, class T >
+  template<class D, class T>
   inline std::unique_ptr<T, D> scoped( T* p ) {
     return std::unique_ptr<T, D>(p);
+  }
+  
+  // ポインタとデリータから作る
+  template< class T, class D,
+    class D_ = typename decay_and_strip<D>::type
+  >
+  inline std::unique_ptr<T, D_> scoped( T* p, D d ) {
+    return std::unique_ptr<T, D_>( p, std::forward<D>(d) );
   }
   
   
@@ -45,7 +53,7 @@ namespace etude {
     >::type
   >
   inline std::unique_ptr<void, D> scoped( P && p ) {
-    return std::unique_ptr<void, D>( static_cast<P&&>(p) );
+    return std::unique_ptr<void, D>( std::forward<P>(p) );
   }
   
   // デリータとポインタから作る
@@ -58,7 +66,7 @@ namespace etude {
     >::type
   >
   inline std::unique_ptr<void, D_> scoped( P && p, D && d ) {
-    return std::unique_ptr<void, D_>( static_cast<P&&>(p), static_cast<D&&>(d) );
+    return std::unique_ptr<void, D_>( std::forward<P>(p), std::forward<D>(d) );
   }
 
 } // namespace etude
