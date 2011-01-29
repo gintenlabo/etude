@@ -15,6 +15,16 @@
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
+// 参照の場合に対処するため、単純な sizeof, alignof ではなく
+template<class T>
+struct wrapper_ { T x; };
+template<class T>
+struct storage_size
+  : std::integral_constant<std::size_t, sizeof(wrapper_<T>)> {};
+template<class T>
+struct storage_align
+  : std::integral_constant<std::size_t, alignof(wrapper_<T>)> {};
+
 // 基礎的な性質に対するチェック
 template<class... Ts>
 void basic_check()
@@ -32,10 +42,10 @@ void basic_check()
   
   if( sizeof...(Ts) != 0 ) {
     // size, align は与えられた型の中での最大値
-    std::vector<std::size_t> const sizes = { sizeof(Ts)... };
+    std::vector<std::size_t> const sizes = { storage_size<Ts>::value... };
     BOOST_ASSERT(( *std::max_element( sizes.begin(), sizes.end() ) == size ));
     
-    std::vector<std::size_t> const aligns = { alignof(Ts)... };
+    std::vector<std::size_t> const aligns = { storage_align<Ts>::value... };
     BOOST_ASSERT(( *std::max_element( aligns.begin(), aligns.end() ) == align ));
     
     // is_empty は与えられた型が全て empty のとき、かつその時に限り true
@@ -127,15 +137,17 @@ void check()
   typedef etude::storage<T> storage_type;
   
   // storage_of::size, align, is_empty は単独クラスのそれに一致
-  STATIC_ASSERT(( etude::storage_of<T>::size == sizeof(T) ));
-  STATIC_ASSERT(( etude::storage_of<T>::align == alignof(T) ));
+  STATIC_ASSERT(( etude::storage_of<T>::size  == storage_size<T>::value ));
+  STATIC_ASSERT(( etude::storage_of<T>::align == storage_align<T>::value ));
   STATIC_ASSERT(( etude::storage_of<T>::is_empty == std::is_empty<T>::value ));
   
   // 重複になるが一応
-  STATIC_ASSERT((  sizeof(T) ==  sizeof(storage_type) ));
-  STATIC_ASSERT(( alignof(T) == alignof(storage_type) ));
+  STATIC_ASSERT(( storage_size<T>::value  ==  sizeof(storage_type) ));
+  STATIC_ASSERT(( storage_align<T>::value == alignof(storage_type) ));
   STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<storage_type>::value ));
   
+  // 参照でない場合、 storage_size<T>::value は sizeof(T) に等しい
+  STATIC_ASSERT(( std::is_reference<T>::value || storage_size<T>::value  ==  sizeof(T) ));  STATIC_ASSERT(( std::is_reference<T>::value || storage_align<T>::value == alignof(T) ));
 }
 
 // テスト用クラス
@@ -162,6 +174,7 @@ int main()
   check<char>();
   check<char*>();
   check<double&>();
+  check<void* const>();
   
   // trivial class
   check<trivial_empty_class>();
