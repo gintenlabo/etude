@@ -13,7 +13,6 @@
 #ifndef ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 #define ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 
-#include "../noncopyable.hpp"
 #include <type_traits>
 
 namespace etude {
@@ -35,12 +34,12 @@ namespace etude {
   class storage_of_<T, Types...>
   {
     typedef storage_of_<Types...> tail;
-    static const std::size_t s1 = sizeof(T) , s2 = tail::size;
+    static const std::size_t s1 =  sizeof(T), s2 = tail::size;
     static const std::size_t a1 = alignof(T), a2 = tail::align;
     
    public:
-    static const std::size_t size  = s1 > s2 ? s1 : s2;
-    static const std::size_t align = a1 > a2 ? a1 : a2;
+    static const std::size_t size  = (s1>s2) ? s1 : s2;
+    static const std::size_t align = (a1>a2) ? a1 : a2;
     
     static const bool is_empty = tail::is_empty && std::is_empty<T>::value;
     
@@ -62,18 +61,30 @@ namespace etude {
   // ストレージ部分の実装
   template<class, class... Ts>
   class storage_
-    : private noncopyable
   {
     typename storage_of<Ts...>::type buf_;
+    
+   public:
+    storage_() = default;
+    
+    storage_( storage_ const& ) = delete;
+    void operator=( storage_ const& ) = delete;
+    
   };
   // empty class に対する最適化
   // 何も格納させない
   template<class... Ts>
-  class storage_<
+  struct storage_<
     typename std::enable_if< storage_of<Ts...>::is_empty >::type,
     Ts...
   >
-    : private noncopyable {};
+  {
+    storage_() = default;
+    
+    storage_( storage_ const& ) = delete;
+    void operator=( storage_ const& ) = delete;
+    
+  };
   
   // 本体
   template<class... Ts>
