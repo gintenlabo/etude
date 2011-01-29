@@ -18,36 +18,70 @@
 
 namespace etude {
 
-  // std::aligned_storage<sizeof(T), alignof(T)> に対する alias
-  // 基本的には storage の方を使えばいいが、純粋なメタ関数も必要かも？
-  template<class T>
-  struct storage_of {
-    typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type type;
+  template<class... Types>
+  struct storage_of_;
+  
+  template<>
+  struct storage_of_<>
+  {
+    static const std::size_t size  = 1;
+    static const std::size_t align = 1;
+    
+    static const bool is_empty = true;
+    
+  };
+  
+  template<class T, class... Types>
+  class storage_of_<T, Types...>
+  {
+    typedef storage_of_<Types...> tail;
+    static const std::size_t s1 = sizeof(T) , s2 = tail::size;
+    static const std::size_t a1 = alignof(T), a2 = tail::align;
+    
+   public:
+    static const std::size_t size  = s1 > s2 ? s1 : s2;
+    static const std::size_t align = a1 > a2 ? a1 : a2;
+    
+    static const bool is_empty = tail::is_empty && std::is_empty<T>::value;
+    
+  };
+  
+  // 与えられた型全てを格納できるストレージクラス
+  template<class... Ts>
+  struct storage_of
+  {
+    static const std::size_t size  = storage_of_<Ts...>::size;
+    static const std::size_t align = storage_of_<Ts...>::align;
+    
+    static const bool is_empty = storage_of_<Ts...>::is_empty;
+    
+    typedef typename std::aligned_storage<size, align>::type type;
+    
   };
 
   // ストレージ部分の実装
-  template<class T, bool isEmpty = false>
+  template<class, class... Ts>
   class storage_
     : private noncopyable
   {
-    typename storage_of<T>::type buf_;
+    typename storage_of<Ts...>::type buf_;
   };
   // empty class に対する最適化
   // 何も格納させない
-  template<class T>
-  class storage_<T, true>
-    : private noncopyable
-  {
-    static_assert( std::is_empty<T>::value, "implementation error" );
-  };
+  template<class... Ts>
+  class storage_<
+    typename std::enable_if< storage_of<Ts...>::is_empty >::type,
+    Ts...
+  >
+    : private noncopyable {};
   
   // 本体
-  template<class T>
+  template<class... Ts>
   struct storage
-    : private storage_<T, std::is_empty<T>::value>
+    : private storage_<void, Ts...>
   {
     // storage type
-    typedef typename storage_of<T>::type type;
+    typedef typename storage_of<Ts...>::type type;
     
     // get address
     void* address() { return this; }
