@@ -14,30 +14,11 @@
 #define ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 
 #include <type_traits>
+#include "../types/storage_size.hpp"
+#include "../types/storage_align.hpp"
 
 namespace etude {
 
-  template<class T>
-  struct size_align_helper_
-  {
-    static_assert( std::is_object<T>::value, "T shall be an object type." );
-    
-    static const std::size_t size  =  sizeof(T);
-    static const std::size_t align = alignof(T);
-    
-  };
-  
-  template<class T>
-  class size_align_helper_<T&>
-  {
-    struct impl_{ T& x; };
-    
-   public:
-    static const std::size_t size  =  sizeof(impl_);
-    static const std::size_t align = alignof(impl_);
-    
-  };
-  
   template<class... Types>
   struct storage_of_;
   
@@ -55,8 +36,10 @@ namespace etude {
   class storage_of_<T, Types...>
   {
     typedef storage_of_<Types...> tail;
-    static const std::size_t s1 = size_align_helper_<T>::size,  s2 = tail::size;
-    static const std::size_t a1 = size_align_helper_<T>::align, a2 = tail::align;
+    static const std::size_t s1 = storage_size<T>::value,  s2 = tail::size;
+    static const std::size_t a1 = storage_align<T>::value, a2 = tail::align;
+    
+    static_assert( s1 != 0 && a1 != 0, "T must be object or reference." );
     
    public:
     static const std::size_t size  = (s1>s2) ? s1 : s2;
