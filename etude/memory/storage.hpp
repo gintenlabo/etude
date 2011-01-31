@@ -14,53 +14,9 @@
 #define ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 
 #include <type_traits>
-#include "../types/storage_size.hpp"
-#include "../types/storage_align.hpp"
+#include "../types/storage_of.hpp"
 
 namespace etude {
-
-  template<class... Types>
-  struct storage_of_;
-  
-  template<>
-  struct storage_of_<>
-  {
-    static const std::size_t size  = 1;
-    static const std::size_t align = 1;
-    
-    static const bool is_empty = true;
-    
-  };
-  
-  template<class T, class... Types>
-  class storage_of_<T, Types...>
-  {
-    typedef storage_of_<Types...> tail;
-    static const std::size_t s1 = storage_size<T>::value,  s2 = tail::size;
-    static const std::size_t a1 = storage_align<T>::value, a2 = tail::align;
-    
-    static_assert( s1 != 0 && a1 != 0, "T must be object or reference." );
-    
-   public:
-    static const std::size_t size  = (s1>s2) ? s1 : s2;
-    static const std::size_t align = (a1>a2) ? a1 : a2;
-    
-    static const bool is_empty = tail::is_empty && std::is_empty<T>::value;
-    
-  };
-  
-  // 与えられた型全てを格納できるストレージクラス
-  template<class... Ts>
-  struct storage_of
-  {
-    static const std::size_t size  = storage_of_<Ts...>::size;
-    static const std::size_t align = storage_of_<Ts...>::align;
-    
-    static const bool is_empty = storage_of_<Ts...>::is_empty;
-    
-    typedef typename std::aligned_storage<size, align>::type type;
-    
-  };
 
   // ストレージ部分の実装
   template<class, class... Ts>
