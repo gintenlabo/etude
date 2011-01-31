@@ -14,15 +14,22 @@
 
 namespace etude {
 
-  // 通常は align_of と同じ
-  template<class T>
-  struct storage_align
-    : align_of<T> {};
+  // 実装
   
+  // 通常は align_of と同じ
+  template<class T, class = void>
+  struct storage_align_
+    : align_of<T> {};
   // 参照の場合は、参照をメンバとして持つ構造体のアライメント
   template<class T>
-  struct storage_align<T&>
-    : align_of<typename make_struct<T&>::type> {};
+  struct storage_align_<T, typename std::enable_if<std::is_reference<T>::value>::type>
+    : align_of<typename make_struct<T>::type> {};
+  
+  
+  // 本体
+  template<class T>
+  struct storage_align
+    : storage_align_<T> {};
 
 } // namespace etude
 

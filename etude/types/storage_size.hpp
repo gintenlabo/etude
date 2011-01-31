@@ -9,20 +9,28 @@
 #ifndef ETUDE_TYPES_INCLUDED_STORAGE_SIZE_HPP_
 #define ETUDE_TYPES_INCLUDED_STORAGE_SIZE_HPP_
 
+#include <type_traits>
 #include "size_of.hpp"
 #include "make_struct.hpp"
 
 namespace etude {
 
-  // 通常は size_of と同じ
-  template<class T>
-  struct storage_size
-    : size_of<T> {};
+  // 実装
   
+  // 通常は size_of と同じ
+  template<class T, class = void>
+  struct storage_size_
+    : size_of<T> {};
   // 参照の場合は、参照をメンバとして持つ構造体のサイズ
   template<class T>
-  struct storage_size<T&>
-    : size_of<typename make_struct<T&>::type> {};
+  struct storage_size_<T, typename std::enable_if<std::is_reference<T>::value>::type>
+    : size_of<typename make_struct<T>::type> {};
+  
+  
+  // 本体
+  template<class T>
+  struct storage_size
+    : storage_size_<T> {};
 
 } // namespace etude
 
