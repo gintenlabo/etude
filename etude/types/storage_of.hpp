@@ -21,47 +21,25 @@
 #include <type_traits>
 #include "storage_size.hpp"
 #include "storage_align.hpp"
+#include "maximum_of.hpp"
+#include "all_of_c.hpp"
 
 namespace etude {
 
-  template<class... Types>
-  struct storage_of_;
-  
-  template<>
-  struct storage_of_<>
-  {
-    static const std::size_t size  = 1;
-    static const std::size_t align = 1;
-    
-    static const bool is_empty = true;
-    
-  };
-  
-  template<class T, class... Types>
-  class storage_of_<T, Types...>
-  {
-    typedef storage_of_<Types...> tail;
-    static const std::size_t s1 = storage_size<T>::value,  s2 = tail::size;
-    static const std::size_t a1 = storage_align<T>::value, a2 = tail::align;
-    
-    static_assert( s1 != 0 && a1 != 0, "T must be object or reference." );
-    
-   public:
-    static const std::size_t size  = (s1>s2) ? s1 : s2;
-    static const std::size_t align = (a1>a2) ? a1 : a2;
-    
-    static const bool is_empty = tail::is_empty && std::is_empty<T>::value;
-    
-  };
-  
   // 与えられた型全てを格納できるストレージクラス
   template<class... Ts>
   struct storage_of
   {
-    static const std::size_t size  = storage_of_<Ts...>::size;
-    static const std::size_t align = storage_of_<Ts...>::align;
+    static_assert( all_of_c<(storage_size<Ts>::value > 0)...>::value,
+      "each type of template parameter Ts... must be storable to a struct." );
     
-    static const bool is_empty = storage_of_<Ts...>::is_empty;
+    static const std::size_t size =
+      maximum_of<std::size_t, 1, storage_size<Ts>::value...>::value;
+    static const std::size_t align =
+      maximum_of<std::size_t, 1, storage_align<Ts>::value...>::value;
+    
+    static const bool is_empty =
+      all_of_c<std::is_empty<Ts>::value...>::value;
     
     typedef typename std::aligned_storage<size, align>::type type;
     
