@@ -18,6 +18,7 @@
 #include <utility>
 #include <type_traits>
 #include "../functional/invoke.hpp"
+#include "identity.hpp"
 
 namespace etude {
 
@@ -41,7 +42,7 @@ namespace etude {
   
   template<class T, class R, class... Args>
   struct is_callable<T, R (Args...)> :
-    std::enable_if<true,
+    etude::identity<
       decltype( is_callable_<R, Args...>::template test<T>(0) )
     >::type
   {
