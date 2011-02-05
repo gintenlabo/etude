@@ -22,14 +22,20 @@ namespace etude {
   // for implementation
   template<class T, class = void>
   struct size_of_ 
-    : std::integral_constant<std::size_t, 0> {};
+    : std::integral_constant<std::size_t, 0>
+  {
+    static bool const is_defined = false;
+  };
   
   template<class T>
   struct size_of_< T,
     typename std::enable_if<
       std::is_object<T>::value && !is_array_of_unknown_bound<T>::value
     >::type
-  > : std::integral_constant<std::size_t, sizeof(T)> {};
+  > : std::integral_constant<std::size_t, sizeof(T)>
+  {
+    static bool const is_defined = true;
+  };
   
   // 本体
   template<class T>

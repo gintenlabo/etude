@@ -23,15 +23,21 @@ namespace etude {
   // for implementation
   template<class T, class = void>
   struct align_of_
-    : std::integral_constant<std::size_t, 0> {};
+    : std::integral_constant<std::size_t, 0>
+  {
+    static bool const is_defined = false;
+  };
   
-  // 本当は alignof(T[]) は T と同じになる筈だけど gcc4.5.0 ではコンパイルエラー。
+  // 本当は alignof(T[]) は T と同じになる筈だけど gcc 4.5.0 ではコンパイルエラー。
   template<class T>
   struct align_of_< T,
     typename std::enable_if<
       std::is_object<T>::value && !is_array_of_unknown_bound<T>::value
     >::type
-  > : std::integral_constant<std::size_t, alignof(T)> {};
+  > : std::integral_constant<std::size_t, alignof(T)>
+  {
+    static bool const is_defined = true;
+  };
   // なので分ける
   template<class T>
   struct align_of_<T[]>

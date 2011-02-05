@@ -10,20 +10,36 @@
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
+template<class T, std::size_t N>
+void check() {
+  STATIC_ASSERT(( etude::align_of<T>::is_defined ));
+  STATIC_ASSERT(( etude::align_of<T>::value == N ));
+}
+
+template<class T>
+void check_not_defined() {
+  STATIC_ASSERT(( !etude::align_of<T>::is_defined ));
+  STATIC_ASSERT(( etude::align_of<T>::value == 0 ));
+}
+
 int main()
 {
-  STATIC_ASSERT(( etude::align_of<void>::value == 0 ));
-  STATIC_ASSERT(( etude::align_of<void const>::value == 0 ));
-  STATIC_ASSERT(( etude::align_of<void ()>::value == 0 ));
-  STATIC_ASSERT(( etude::align_of<void (&)()>::value == 0 ));
-  STATIC_ASSERT(( etude::align_of<void (*)()>::value == alignof(void (*)()) ));
+  check_not_defined<void>();
+  check_not_defined<void const>();
+  check_not_defined<void    ()>();
+  check_not_defined<void (&)()>();
+  check<void (*)(), alignof(void (*)())>();
   
-  STATIC_ASSERT(( etude::align_of<int>::value == alignof(int) ));
-  STATIC_ASSERT(( etude::align_of<int&>::value == alignof(int) ));
-  STATIC_ASSERT(( etude::align_of<int*>::value == alignof(int*) ));
+  check<int,  alignof(int)>();
+  check<int&, alignof(int)>();
+  check<int*, alignof(int*)>();
   
-  STATIC_ASSERT(( etude::align_of<int[]>::value == alignof(int) ));
-  STATIC_ASSERT(( etude::align_of<int(&)[]>::value == alignof(int) ));
-  STATIC_ASSERT(( etude::align_of<int[2]>::value == alignof(int) ));
-  STATIC_ASSERT(( etude::align_of<int(&)[2]>::value == alignof(int) ));
+  check<int   [], alignof(int)>();
+  check<int(&)[], alignof(int)>();
+  check<int   [2], alignof(int)>();
+  check<int(&)[2], alignof(int)>();
+  check<int   [][2], alignof(int)>();
+  check<int(&)[][2], alignof(int)>();
+  check<int   [2][2], alignof(int)>();
+  check<int(&)[2][2], alignof(int)>();
 }
