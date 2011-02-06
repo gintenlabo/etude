@@ -30,8 +30,8 @@ namespace etude {
   template<class... Ts>
   struct storage_of
   {
-    static_assert( all_of_c<(storage_size<Ts>::value > 0)...>::value,
-      "each type of template parameter Ts... must be storable to a struct." );
+    static_assert( all_of_c<storage_size<Ts>::is_defined...>::value,
+      "each type of template parameter Ts... must be complete." );
     
     static const std::size_t size =
       maximum_of<std::size_t, 1, storage_size<Ts>::value...>::value;

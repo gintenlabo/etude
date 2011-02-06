@@ -125,6 +125,7 @@ int main()
   
   // 空
   check<>();
+  // check<int, void>();  // エラー
   // 複数の型を格納した storage
   basic_check<char, int, long>();
   basic_check<char&, trivial_empty_class, std::string const, std::fstream>();
