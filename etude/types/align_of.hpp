@@ -16,6 +16,7 @@
 #define ETUDE_TYPES_INCLUDED_ALIGN_OF_HPP_
 
 #include <type_traits>
+#include "size_constant.hpp"
 #include "is_array_of_unknown_bound.hpp"
 
 namespace etude {
@@ -23,7 +24,7 @@ namespace etude {
   // for implementation
   template<class T, class = void>
   struct align_of_
-    : std::integral_constant<std::size_t, 0>
+    : etude::size_constant<0>::type
   {
     static bool const is_defined = false;
   };
@@ -34,7 +35,7 @@ namespace etude {
     typename std::enable_if<
       std::is_object<T>::value && !is_array_of_unknown_bound<T>::value
     >::type
-  > : std::integral_constant<std::size_t, alignof(T)>
+  > : etude::size_constant<alignof(T)>::type
   {
     static bool const is_defined = true;
   };
