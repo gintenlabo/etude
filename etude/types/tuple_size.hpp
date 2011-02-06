@@ -15,12 +15,30 @@
 #include <type_traits>
 #include <tuple>
 
+#include "is_tuple.hpp"
+#include "null_constant.hpp"
+
 namespace etude {
 
-  // 参照と CV 修飾子を消し飛ばして tuple_size を適用
+  // 実装補助
+  // tuple じゃなければ etude::null_constant<std::size_t>
+  template<class T, class = void>
+  struct tuple_size_
+    : etude::null_constant<std::size_t> {};
+  // tuple ならば std::tuple_size<T>
+  // 何故か gcc 4.5.0 では std::tuple_size が integral_constant でなかったので
+  // 明示的に integral_constant に
+  template<class T>
+  struct tuple_size_< T,
+    typename std::enable_if<etude::is_tuple<T>::value>::type
+  >
+    : std::integral_constant<std::size_t, std::tuple_size<T>::value> {};
+
+  // 本体
+  // 上記のメタ関数を、参照と CV 修飾子を消し飛ばした上で適用
   template<class T>
   struct tuple_size
-    : std::tuple_size<typename std::decay<T>::type> {};
+    : etude::tuple_size_<typename std::decay<T>::type>::type {};
 
 } // namespace etude
 

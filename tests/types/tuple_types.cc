@@ -47,6 +47,21 @@ void check_tuple()
   check< std::tuple<Args...>, Args... >();
 }
 
+template<class NotTuple>
+void check_not_tuple()
+{
+  STATIC_ASSERT((
+    std::is_same<
+      etude::void_type, typename etude::tuple_types<NotTuple>::type
+    >::value
+  ));
+  STATIC_ASSERT((
+    std::is_base_of<
+      etude::void_type, etude::tuple_types<NotTuple>
+    >::value
+  ));
+}
+
 int main()
 {
   check_tuple<>();
@@ -55,4 +70,12 @@ int main()
   check< std::pair<double, char*>, double, char* >();
   check< std::array<int, 0> >();
   check< std::array<int, 5>, int, int, int, int, int >();
+  
+  check_not_tuple<void>();
+  check_not_tuple<void*>();
+  check_not_tuple<int>();
+  check_not_tuple<int&>();
+  
+  class X{};
+  check_not_tuple<X>();
 }
