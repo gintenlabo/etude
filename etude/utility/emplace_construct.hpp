@@ -2,7 +2,7 @@
 //  emplace_construct:
 //    引数リストから直接構築する、という旨を明示するためのタグ用クラス
 // 
-//    主に value_wrapper で使います。
+//    主に value_holder で使います。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.

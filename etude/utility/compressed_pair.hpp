@@ -13,7 +13,7 @@
 #ifndef ETUDE_UTILITY_INCLUDED_COMPRESSED_PAIR_HPP_
 #define ETUDE_UTILITY_INCLUDED_COMPRESSED_PAIR_HPP_
 
-#include "value_wrapper.hpp"
+#include "value_holder.hpp"
 #include "piecewise_construct.hpp"
 
 #include <utility>
@@ -48,8 +48,8 @@ namespace etude {
     template<class T1, class T2, class = void>
     class compressed_pair_
     {
-      etude::value_wrapper<T1> first_;
-      etude::value_wrapper<T2> second_;
+      etude::value_holder<T1> first_;
+      etude::value_holder<T2> second_;
       
      public:
       // コンストラクタ生成
@@ -70,10 +70,10 @@ namespace etude {
         std::is_empty<T1>::value && !std::is_empty<T2>::value
       >::type
     >
-      : private etude::value_wrapper<T1>
+      : private etude::value_holder<T1>
     {
-      typedef etude::value_wrapper<T1> first_;
-      etude::value_wrapper<T2> second_;
+      typedef etude::value_holder<T1> first_;
+      etude::value_holder<T2> second_;
       
      public:
       ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_
@@ -93,10 +93,10 @@ namespace etude {
         !std::is_empty<T1>::value && std::is_empty<T2>::value
       >::type
     >
-      : private etude::value_wrapper<T2>
+      : private etude::value_holder<T2>
     {
-      etude::value_wrapper<T1> first_;
-      typedef etude::value_wrapper<T2> second_;
+      etude::value_holder<T1> first_;
+      typedef etude::value_holder<T2> second_;
       
      public:
       ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_
@@ -120,11 +120,11 @@ namespace etude {
         std::is_empty<T1>::value && std::is_empty<T2>::value
       >::type
     >
-      : private etude::value_wrapper<T1,  first_tag_>,
-        private etude::value_wrapper<T2, second_tag_>
+      : private etude::value_holder<T1,  first_tag_>,
+        private etude::value_holder<T2, second_tag_>
     {
-      typedef etude::value_wrapper<T1,  first_tag_>  first_;
-      typedef etude::value_wrapper<T2, second_tag_> second_;
+      typedef etude::value_holder<T1,  first_tag_>  first_;
+      typedef etude::value_holder<T2, second_tag_> second_;
       
      public:
       ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_

@@ -1,14 +1,17 @@
 //
-//  simple_wrapper のテストです。
+//  value_holder のテストです。
+//    
+//    殆ど holder の焼き直しですが
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/utility/simple_wrapper.hpp"
+#include "../../etude/utility/value_holder.hpp"
 #include <type_traits>
 #include <utility>
+#include <boost/assert.hpp>
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
@@ -16,51 +19,49 @@
 template<class T>
 void check()
 {
-  typedef etude::simple_wrapper<T> wrapper;
+  typedef etude::value_holder<T> holder;
   typedef typename std::remove_const<T>::type U;
   
-  STATIC_ASSERT((  sizeof(T) ==  sizeof(wrapper) || std::is_reference<T>::value ));
-  STATIC_ASSERT(( alignof(T) == alignof(wrapper) || std::is_reference<T>::value ));
-  STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<wrapper>::value ));
-  // STATIC_ASSERT(( std::is_trivially_copyable<T>::value == std::is_trivially_copyable<wrapper>::value )); // ない
+  STATIC_ASSERT((  sizeof(T) ==  sizeof(holder) || std::is_reference<T>::value ));
+  STATIC_ASSERT(( alignof(T) == alignof(holder) || std::is_reference<T>::value ));
+  STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<holder>::value ));
+  // STATIC_ASSERT(( std::is_trivially_copyable<T>::value == std::is_trivially_copyable<holder>::value )); // ない
   STATIC_ASSERT(( std::is_standard_layout<T>::value
-    == std::is_standard_layout<wrapper>::value ));
+    == std::is_standard_layout<holder>::value ));
   // trivially destructible class か
   STATIC_ASSERT(( std::has_trivial_destructor<T>::value
-    == std::has_trivial_destructor<wrapper>::value ));
+    == std::has_trivial_destructor<holder>::value ));
   
   // get
   STATIC_ASSERT(( std::is_same<
-    T &, decltype( std::declval<wrapper&>().get() )
+    T &, decltype( std::declval<holder&>().get() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    T const&, decltype( std::declval<wrapper const&>().get() )
+    T const&, decltype( std::declval<holder const&>().get() )
   >::value ));
-  // move 時は const が外れる
   STATIC_ASSERT(( std::is_same<
-    U &&, decltype( std::declval<wrapper&>().move() )
+    U &&, decltype( std::declval<holder&>().move() )
   >::value ));
   
   STATIC_ASSERT(( std::is_same<
-    T &, decltype( get( std::declval<wrapper&>() ) )
+    T &, decltype( get( std::declval<holder&>() ) )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    T const&, decltype( get( std::declval<wrapper const&>() ) )
+    T const&, decltype( get( std::declval<holder const&>() ) )
   >::value ));
-  // 同様に move 時は const が外れる
   STATIC_ASSERT(( std::is_same<
-    U &&, decltype( get( std::declval<wrapper&&>() ) )
+    U &&, decltype( get( std::declval<holder&&>() ) )
   >::value ));
   
   // operator*
   STATIC_ASSERT(( std::is_same<
-    T &, decltype( *std::declval<wrapper&>() )
+    T &, decltype( *std::declval<holder&>() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    T const&, decltype( *std::declval<wrapper const&>() )
+    T const&, decltype( *std::declval<holder const&>() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    U &&, decltype( *std::declval<wrapper&&>() )
+    U &&, decltype( *std::declval<holder&&>() )
   >::value ));
 }
 
@@ -79,13 +80,12 @@ void test()
 template<class T, class U>
 void check_convertible( int )
 {
-  typedef etude::simple_wrapper<T> wrapper;
-  
+  typedef etude::value_holder<T> holder;
   STATIC_ASSERT(( std::is_convertible<U, T>::value
-    == std::is_convertible<U, wrapper>::value ));
+    == std::is_convertible<U, holder>::value ));
   // 型変換できるか否か
   STATIC_ASSERT(( std::is_convertible<U, T>::value
-    == std::is_convertible<etude::simple_wrapper<U>, wrapper>::value ));
+    == std::is_convertible<etude::value_holder<U>, holder>::value ));
 }
 template<class T, class... Args,
   class = typename std::enable_if<sizeof...(Args) != 1>::type
@@ -96,10 +96,18 @@ void check_convertible( ... ) {}
 template<class T, class... Args>
 void check_constructible()
 {
-  typedef etude::simple_wrapper<T> wrapper;
+  typedef etude::value_holder<T> holder;
   
-  STATIC_ASSERT(( std::is_constructible<T, Args...>::value
-    == std::is_constructible<wrapper, Args...>::value ));
+  static bool const is_constructible = std::is_constructible<T, Args...>::value;
+  
+  STATIC_ASSERT((
+    std::is_constructible<holder, etude::emplace_construct_t, Args...>::value
+      == is_constructible
+  ));
+  STATIC_ASSERT((
+    std::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
+      == is_constructible
+  ));
   
   check_convertible<T, Args...>(0);
 }
@@ -153,6 +161,8 @@ struct nontrivial_class
   
 };
 
+#include "../../etude/utility/forward_as_tuple.hpp"
+
 int main()
 {
   test<int>();
@@ -176,4 +186,28 @@ int main()
   check_constructible<nontrivial_class, int*, double>();
   check_constructible<nontrivial_class, int, double, char*>();
   check_constructible<nontrivial_class, int, double, char const*>();
+  
+  // 実際にどのコンストラクタが呼ばれているか
+  
+  // direct initialization
+  etude::value_holder<nontrivial_class> a( etude::emplace_construct, 1 );
+  BOOST_ASSERT( a.get().which_ctor_has_called == nontrivial_class::from_int );
+  
+  // copy construction
+  etude::value_holder<nontrivial_class> b( get(a) );
+  BOOST_ASSERT( b.get().which_ctor_has_called == nontrivial_class::copy_ctor );
+  
+  etude::value_holder<nontrivial_class> c( get( std::move(a) ) );
+  BOOST_ASSERT( c.get().which_ctor_has_called == nontrivial_class::move_ctor );
+  
+  // unpack construction
+  etude::value_holder<nontrivial_class> d( etude::unpack_construct,
+    etude::forward_as_tuple( get(a) )
+  );
+  BOOST_ASSERT( d.get().which_ctor_has_called == nontrivial_class::copy_ctor );
+  
+  etude::value_holder<nontrivial_class> e( etude::unpack_construct,
+    etude::forward_as_tuple( get( std::move(c) ) )
+  );
+  BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
 }

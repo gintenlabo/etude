@@ -18,7 +18,7 @@
 #include <boost/preprocessor/empty.hpp>
 #include "../types/decay_and_strip.hpp"
 #include "../types/is_convertible.hpp"
-#include "../utility/simple_wrapper.hpp"
+#include "../utility/holder.hpp"
 #include "../utility/compressed_pair.hpp"
 
 namespace etude {
@@ -38,9 +38,9 @@ namespace etude {
   
   template<class F0>
   class function_sequence<F0>
-    : private etude::simple_wrapper<F0>
+    : private etude::holder<F0>
   {
-    typedef etude::simple_wrapper<F0> base;
+    typedef etude::holder<F0> base;
     using base::get;
     
    public:

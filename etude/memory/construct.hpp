@@ -15,7 +15,7 @@
 #include <memory>
 #include "pseudo_destructor_call.hpp"
 #include "default_deallocate.hpp"
-#include "../utility/simple_wrapper.hpp"
+#include "../utility/holder.hpp"
 
 #include "apply_in_place.hpp"
 
@@ -54,9 +54,9 @@ namespace etude {
   // 破棄してからメモリを解放するファンクタ
   template<class T, class Dealloc>
   class dispose_and_deallocate_
-    : private etude::simple_wrapper<Dealloc>
+    : private etude::holder<Dealloc>
   {
-    typedef etude::simple_wrapper<Dealloc> dealloc_;
+    typedef etude::holder<Dealloc> dealloc_;
     
    public:
     dispose_and_deallocate_() = default;

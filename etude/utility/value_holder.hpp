@@ -1,5 +1,5 @@
 //
-//  value_wrapper:
+//  value_holder:
 //    タプルを unpack しながら構築できるラッパークラス
 // 
 //    単独では特に意味はありませんが、メンバとして使うときに便利です。
@@ -8,14 +8,14 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
-#define ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
+#ifndef ETUDE_UTILITY_INCLUDED_VALUE_HOLDER_HPP_
+#define ETUDE_UTILITY_INCLUDED_VALUE_HOLDER_HPP_
 
 #include <type_traits>
 #include <utility>
 #include <boost/utility/addressof.hpp>
 
-#include "simple_wrapper.hpp"
+#include "holder.hpp"
 #include "emplace_construct.hpp"
 #include "unpack_construct.hpp"
 
@@ -26,56 +26,56 @@
 #include "../types/is_convertible.hpp"
 
 namespace etude {
- namespace value_wrapper_ { // ADL 回避
+ namespace value_holder_ { // ADL 回避
  
-  // 直接 etude::simple_wrapper を使うのはアレなので
+  // 直接 etude::holder を使うのはアレなので
   // 実装用クラスを持ってくる
-  using etude::simple_wrapper_::simple_wrapper_;
+  using etude::holder_::holder_;
   
   // タプルの unpack をするにはもう一段実装用クラスをはさむ必要あり
   template<class T>
-  class value_wrapper_
-    : private simple_wrapper_<T>
+  class value_holder_
+    : private holder_<T>
   {
-    typedef simple_wrapper_<T> base;
+    typedef holder_<T> base;
     
    public:
     using base::get;
     using base::move;
     
     // デフォルト構築
-    value_wrapper_() = default;
+    value_holder_() = default;
     
     // pack されてない引数から構築
     template<class... Args>
-    value_wrapper_( emplace_construct_t, Args&&... args )
+    value_holder_( emplace_construct_t, Args&&... args )
       : base( std::forward<Args>(args)... ) {}
     
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
-    value_wrapper_( Tuple && t, etude::indices<Indices...> )
+    value_holder_( Tuple && t, etude::indices<Indices...> )
       : base ( tuple_forward<Tuple, Indices>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }
     
     // gcc4.5.0 では implicit move が実装されていないので
-    value_wrapper_( value_wrapper_ const& ) = default;
-    value_wrapper_( value_wrapper_ && )     = default;
+    value_holder_( value_holder_ const& ) = default;
+    value_holder_( value_holder_ && )     = default;
     
   };
   
   // 本体
   template<class T, class Tag = void>
-  class value_wrapper
-    : private value_wrapper_<typename std::remove_const<T>::type>
+  class value_holder
+    : private value_holder_<typename std::remove_const<T>::type>
   {
     typedef typename std::remove_const<T>::type T_;
-    typedef value_wrapper_<T_> base;
+    typedef value_holder_<T_> base;
     
    public:
     // デフォルト構築
-    value_wrapper() = default;
+    value_holder() = default;
     
     // T からの構築
     template<class U,
@@ -83,7 +83,7 @@ namespace etude {
         std::is_convertible<U, T>::value
       >::type
     >
-    value_wrapper( U && src )
+    value_holder( U && src )
       : base( emplace_construct, std::forward<U>(src) ) {}
     
     // pack されてない引数から構築
@@ -92,7 +92,7 @@ namespace etude {
         std::is_constructible<T, Args...>::value
       >::type
     >
-    value_wrapper( emplace_construct_t, Args&&... args )
+    value_holder( emplace_construct_t, Args&&... args )
       : base( emplace_construct, std::forward<Args>(args)... ) {}
     
     // pack された引数から構築
@@ -103,12 +103,12 @@ namespace etude {
         >::value
       >::type
     >
-    value_wrapper( unpack_construct_t, Tuple && t )
+    value_holder( unpack_construct_t, Tuple && t )
       : base( std::forward<Tuple>(t), etude::tuple_indices<Tuple>() ) {}
     
     // gcc4.5.0 では implicit move が（ｒｙ
-    value_wrapper( value_wrapper const& ) = default;
-    value_wrapper( value_wrapper && )     = default;
+    value_holder( value_holder const& ) = default;
+    value_holder( value_holder && )     = default;
     
     // 型変換コンストラクタ
     // copy
@@ -117,7 +117,7 @@ namespace etude {
         std::is_convertible<U, T>::value
       >::type
     >
-    value_wrapper( value_wrapper<U, Tag_> const& src )
+    value_holder( value_holder<U, Tag_> const& src )
       : base( emplace_construct, src.get() ) {}
     // move
     template<class U, class Tag_,
@@ -125,7 +125,7 @@ namespace etude {
         std::is_convertible<U, T>::value
       >::type
     >
-    value_wrapper( value_wrapper<U, Tag_> && src )
+    value_holder( value_holder<U, Tag_> && src )
       : base( emplace_construct, src.move() ) {}
     
     
@@ -139,9 +139,9 @@ namespace etude {
     
     
     // operator*
-    friend T &      operator*( value_wrapper &      x ){ return x.get(); }
-    friend T const& operator*( value_wrapper const& x ){ return x.get(); }
-    friend T_ &&    operator*( value_wrapper &&     x ){ return x.move(); }
+    friend T &      operator*( value_holder &      x ){ return x.get(); }
+    friend T const& operator*( value_holder const& x ){ return x.get(); }
+    friend T_ &&    operator*( value_holder &&     x ){ return x.move(); }
     
     // operator->
     typename std::add_pointer<T>::type operator->() {
@@ -155,21 +155,21 @@ namespace etude {
   
   // 自由関数版 get
   template<class T, class Tag>
-  inline T& get( value_wrapper<T, Tag>& x ) {
+  inline T& get( value_holder<T, Tag>& x ) {
     return x.get();
   }
   template<class T, class Tag>
-  inline T const& get( value_wrapper<T, Tag> const& x ) {
+  inline T const& get( value_holder<T, Tag> const& x ) {
     return x.get();
   }
   // move 版
   template<class T, class Tag>
-  inline typename std::remove_const<T>::type && get( value_wrapper<T, Tag> && x ) {
+  inline typename std::remove_const<T>::type && get( value_holder<T, Tag> && x ) {
     return x.move();
   }
  
- }  // namespace value_wrapper_
- using namespace value_wrapper_;
+ }  // namespace value_holder_
+ using namespace value_holder_;
 }
 
-#endif  // #ifndef ETUDE_UTILITY_INCLUDED_VALUE_WRAPPER_HPP_
+#endif  // #ifndef ETUDE_UTILITY_INCLUDED_VALUE_HOLDER_HPP_
