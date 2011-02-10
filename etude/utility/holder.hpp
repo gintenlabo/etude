@@ -87,7 +87,10 @@ namespace etude {
    public:
     typedef T element_type;
     
-    // 型変換コンストラクタ
+    // T から構築（ 0 や {} といったものに対処するため）
+    holder( T && src )
+      : base( std::forward<T>(src) ) {}
+    // 型変換コンストラクタ（ T const& も含む）
     template<class U,
       class = typename std::enable_if<
         std::is_convertible<U, T>::value

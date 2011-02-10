@@ -78,6 +78,9 @@ namespace etude {
     value_holder() = default;
     
     // T からの構築
+    value_holder( T && src )
+      : base( emplace_construct, std::forward<T>(src) ) {}
+    // 型変換構築（ const T& も含む）
     template<class U,
       class = typename std::enable_if<
         std::is_convertible<U, T>::value

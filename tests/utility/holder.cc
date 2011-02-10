@@ -153,6 +153,8 @@ struct nontrivial_class
   
 };
 
+#include <boost/assert.hpp>
+
 int main()
 {
   test<int>();
@@ -176,4 +178,10 @@ int main()
   check_constructible<nontrivial_class, int*, double>();
   check_constructible<nontrivial_class, int, double, char*>();
   check_constructible<nontrivial_class, int, double, char const*>();
+  
+  // 実際に構築するチェック
+  etude::holder<int> i;  // デフォルト構築時は初期化される
+  BOOST_ASSERT( i.get() == int() );
+  etude::holder<void*> p = 0;  // リテラル 0 も正しく扱える
+  BOOST_ASSERT( p.get() == 0 );
 }

@@ -158,6 +158,21 @@ namespace etude {
     compressed_pair( compressed_pair && )     = default;
     
     // 二つの値の組から構築
+    compressed_pair( T1 && x1, T2 && x2 )
+      : base( std::forward<T1>(x1), std::forward<T2>(x2) ) {}
+    // 最初の引数を型変換、 T1 const& も含む
+    template< class U1,
+      class = typename std::enable_if< std::is_convertible<U1, T1>::value >::type
+    >
+    compressed_pair( U1 && x1, T2 && x2 )
+      : base( std::forward<U1>(x1), std::forward<T2>(x2) ) {}
+    // 二番目の引数を型変換、 T2 const& も含む
+    template< class U2,
+      class = typename std::enable_if< std::is_convertible<U2, T2>::value >::type
+    >
+    compressed_pair( T1 && x1, U2 && x2 )
+      : base( std::forward<T1>(x1), std::forward<U2>(x2) ) {}
+    // より一般的なコンストラクタ、 T1 const& / T2 const& も含む
     template<class U1, class U2,
       class = typename std::enable_if<
         std::is_convertible<U1, T1>::value && std::is_convertible<U2, T2>::value
@@ -166,7 +181,7 @@ namespace etude {
     compressed_pair( U1 && x1, U2 && x2 )
       : base( std::forward<U1>(x1), std::forward<U2>(x2) ) {}
     
-    // 型変換コンストラクタ
+    // compressed_pair 間の型変換コンストラクタ
     template<class U1, class U2,
       class = typename std::enable_if<
         std::is_convertible<U1, T1>::value && std::is_convertible<U2, T2>::value

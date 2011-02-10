@@ -134,6 +134,17 @@ int main()
   BOOST_ASSERT(( y.first().which_ctor_has_called == nontrivial_class::from_int ));
   BOOST_ASSERT(( y.second().which_ctor_has_called == nontrivial_class::from_int_and_double ));
   
+  // ポインタや list-initialization も正しく扱えるか
+  {
+    struct X{ int i; };
+    X x = {42};
+    void* vp = &x;
+    
+    etude::compressed_pair<void*, X> p1( 0,  {0} );
+    etude::compressed_pair<void*, X> p2( vp, {0} );
+    etude::compressed_pair<void*, X> p3( 0,   x  );
+  }
+  
   // 型変換チェック
   STATIC_ASSERT((
     std::is_constructible<

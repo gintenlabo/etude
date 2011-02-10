@@ -187,6 +187,10 @@ int main()
   check_constructible<nontrivial_class, int, double, char*>();
   check_constructible<nontrivial_class, int, double, char const*>();
   
+  // value_holder<int*> に 0 を渡したりとか
+  etude::value_holder<int*> p = 0;
+  BOOST_ASSERT( p.get() == 0 );
+  
   // 実際にどのコンストラクタが呼ばれているか
   
   // direct initialization
