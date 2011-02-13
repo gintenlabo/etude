@@ -6,7 +6,7 @@
 //    std::aligned_storage<sizeof(T), alignof(T)>::type 型のオブジェクトを
 //    内部に実際に格納する noncopyable なバッファとしての機能を持ったクラスです。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

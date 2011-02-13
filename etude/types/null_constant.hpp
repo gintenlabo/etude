@@ -5,7 +5,7 @@
 //    渡された型の「何も値を保持しない」コンパイル時定数を定義します。
 //    主に std::integral_constant を置きたいけど妥当な定数がない場所に使います。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

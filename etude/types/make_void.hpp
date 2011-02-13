@@ -5,7 +5,7 @@
 //    渡された型を無視して void に定義されます。
 //    主にクラスに対する SFINAE に使います。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

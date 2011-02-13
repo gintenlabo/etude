@@ -8,7 +8,7 @@
 //    
 //    etude::operator_delete<T[]>(p) と書くことで、配列にも対応可能。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

@@ -5,7 +5,7 @@
 //    is_array_of_unknown_bound<T> は、 T が要素数不明の配列の場合には
 //    std::true_type を、そうでない場合には std::false_type を継承します。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

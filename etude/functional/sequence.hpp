@@ -5,7 +5,7 @@
 //    関数合成…とはちょっと違うか。 与えられた引数 as... に対して、順に
 //    f1( as... ); f2( as... ); ... ; fn( as... ); を呼んで void を返す関数を作ります。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

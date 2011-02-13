@@ -8,7 +8,7 @@
 //    これにより、最大限の効率を保ったまま、
 //    変数に束縛されたオブジェクトに対する関数内部からの書き換えを防ぎます。
 //  
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

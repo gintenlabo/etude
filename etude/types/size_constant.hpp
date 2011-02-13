@@ -4,7 +4,7 @@
 // 
 //    etude::size_constant<N> は std::integral_constant<std::size_t, N> を継承します。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

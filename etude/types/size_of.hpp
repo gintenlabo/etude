@@ -7,7 +7,7 @@
 //    std::integral_constant<std::size_t, sizeof(U)> を継承します。
 //    そうでなければ size_of<T> は std::integral_constant<std::size_t, 0> を継承します。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

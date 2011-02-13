@@ -5,7 +5,7 @@
 //    簡単に std::unique_ptr を作るためのヘルパ関数です。
 //    to_unique という名前でしたが、より短く分かりやすく。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

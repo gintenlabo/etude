@@ -4,7 +4,7 @@
 // 
 //    与えられたシグネチャ（関数形式）に対応する各種 typedef を提供します。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

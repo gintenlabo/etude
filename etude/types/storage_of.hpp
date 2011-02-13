@@ -11,7 +11,7 @@
 //    storage_of<Ts...>::size および storage_of<Ts...>::align は、それぞれ
 //    storage_size<Ts>::value... および storage_align<Ts>::value... のうち最大の値です。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

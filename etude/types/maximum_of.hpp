@@ -6,7 +6,7 @@
 //    std::integral_constant<T, X> を継承します。
 //    ただし X は、 T 型の値 Xs... のうちで最大の要素です。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //

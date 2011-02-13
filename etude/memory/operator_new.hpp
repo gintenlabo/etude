@@ -6,7 +6,7 @@
 //    ::operator new を呼ぶ非テンプレート版と、
 //    T::operator new があればそちらを呼ぶテンプレート版の二種類があります。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
