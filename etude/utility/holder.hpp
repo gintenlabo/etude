@@ -4,7 +4,7 @@
 // 
 //    ADL ガードを搭載した単純なラッパークラスです。主に EBO をするために使います。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
@@ -14,6 +14,7 @@
 #include <type_traits>
 #include <utility>
 #include <boost/utility/addressof.hpp>
+#include "../types/is_strict_explicitly_convertible.hpp"
 
 namespace etude {
  namespace holder_ { // ADL 回避
@@ -102,8 +103,7 @@ namespace etude {
     // 型変換ではない一引数のコンストラクタは explicit に
     template<class U,
       class = typename std::enable_if<
-        !std::is_convertible<U, T>::value &&
-        std::is_constructible<T, U>::value
+        etude::is_strict_explicitly_convertible<U, T>::value
       >::type
     >
     explicit holder( U && x, dummy_ = dummy_() )
