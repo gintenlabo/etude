@@ -16,6 +16,7 @@
 #include <tuple>
 
 #include "is_tuple.hpp"
+#include "size_constant.hpp"
 #include "null_constant.hpp"
 
 namespace etude {
@@ -32,7 +33,7 @@ namespace etude {
   struct tuple_size_< T,
     typename std::enable_if<etude::is_tuple<T>::value>::type
   >
-    : std::integral_constant<std::size_t, std::tuple_size<T>::value> {};
+    : etude::size_constant<std::tuple_size<T>::value> {};
 
   // 本体
   // 上記のメタ関数を、参照と CV 修飾子を消し飛ばした上で適用
