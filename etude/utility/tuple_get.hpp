@@ -6,7 +6,7 @@
 //    ・直接 std::get って呼ぶと std::get が dependent name にならないので
 //      std::array 等を後から include した場合に std::get が見つからない問題にも対処
 //  
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
@@ -19,30 +19,32 @@
 
 namespace etude {
 
-  // t の型に合わせて要素を get
+  // t の I 番目の要素を get
   template< std::size_t I, class Tuple,
-    class Elem = typename etude::tuple_element<I, Tuple>::type
+    class Result = typename etude::tuple_element<I, Tuple&&>::type
   >
-  inline Elem&& tuple_get( Tuple && t ) {
-    return std::forward<Elem>( etude::tuple_element<I, Tuple>::get(t) );
+  inline Result tuple_get( Tuple && t ) {
+    return etude::tuple_element<I, Tuple&&>::get( std::forward<Tuple>(t) );
   }
   
-  // get してから要素を move する
+  // 要素を move しつつ get する
   template< std::size_t I, class Tuple,
-    class Elem = typename etude::tuple_element< I,
-      typename std::remove_reference<Tuple>::type
-    >::type
+    class Result = decltype (
+      tuple_get<I>( std::move( std::declval<Tuple>() ) )
+    )
   >
-  inline Elem&& tuple_move( Tuple && t ) {
-    return std::forward<Elem>( tuple_get<I>(t) );
+  inline Result tuple_move( Tuple && t ) {
+    return tuple_get<I>( std::move(t) );
   }
   
-  // get してから要素を Tuple の型に合わせて forward する
+  // 要素を Tuple の型に合わせて forward してから get する
   template< class Tuple, std::size_t I, class Tuple_,
-    class Elem = typename etude::tuple_element<I, Tuple>::type
+    class Result = decltype(
+      tuple_get<I>( std::forward<Tuple>( std::declval<Tuple_>() ) )
+    )
   >
-  inline Elem&& tuple_forward( Tuple_ && t ) {
-    return std::forward<Elem>( tuple_get<I>(t) );
+  inline Result tuple_forward( Tuple_ && t ) {
+    return tuple_get<I>( std::forward<Tuple>(t) );
   }
 
 } // namespace etude

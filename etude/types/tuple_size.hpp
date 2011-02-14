@@ -39,7 +39,24 @@ namespace etude {
   // 上記のメタ関数を、参照と CV 修飾子を消し飛ばした上で適用
   template<class T>
   struct tuple_size
-    : etude::tuple_size_<typename std::decay<T>::type>::type {};
+    : etude::tuple_size_<T>::type {};
+  
+  template<class T>
+  struct tuple_size<T const>
+    : etude::tuple_size<T>::type {};
+  template<class T>
+  struct tuple_size<T volatile>
+    : etude::tuple_size<T>::type {};
+  template<class T>
+  struct tuple_size<T const volatile>
+    : etude::tuple_size<T>::type {};
+  
+  template<class T>
+  struct tuple_size<T&>
+    : etude::tuple_size<T>::type {};
+  template<class T>
+  struct tuple_size<T&&>
+    : etude::tuple_size<T>::type {};
 
 } // namespace etude
 
