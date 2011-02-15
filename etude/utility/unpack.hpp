@@ -1,6 +1,6 @@
 //
 //  unpack:
-//    渡されたタプルから etude::unpacke_tuple を作る
+//    渡されたタプルから etude::unpacked_tuple を作る
 // 
 //    渡されたタプルへの参照を保持する etude::unpacke_tuple を作ります。
 //    これにより、 unpacke_tuple に対し特殊化されたアルゴリズムを使うことが出来ます。
@@ -38,11 +38,17 @@ namespace etude {
   };
   
   // 本体
-  template<class Tuple>
-  inline typename unpacked<Tuple&&>::type unpack( Tuple && t )
+  struct unpack_t
   {
-    return std::forward<Tuple>(t);
-  }
+    template<class Tuple>
+    inline typename unpacked<Tuple&&>::type operator()( Tuple && t ) const
+    {
+      return std::forward<Tuple>(t);
+    }
+    
+  };
+  
+  namespace { unpack_t const unpack = {}; }
 
 } // namespace etude
 
