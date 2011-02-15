@@ -9,6 +9,7 @@
 #include "../../etude/memory/operator_new.hpp"
 #include "../../etude/memory/in_place_factory.hpp"
 #include "../../etude/memory/typed_in_place_factory.hpp"
+#include "../../etude/unpack.hpp"
 #include "test_utilities.hpp"
 
 #include <boost/assert.hpp>
@@ -141,6 +142,29 @@ int main()
     }
   );
   
+  // 通常パス（ unpack ）
+  check(
+    [&](){
+      return etude::construct<hoge>( buf.address(), etude::unpack( std::make_tuple() ) );
+    },
+    []( hoge* p ){
+      BOOST_ASSERT( p != 0 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
+    }
+  );
+  // 例外パス（ unpack ）
+  check(
+    [&](){
+      return etude::construct<hoge>( buf.address(),
+        etude::unpack( std::make_tuple(true) )
+      );
+    },
+    []( hoge* ){
+      BOOST_ASSERT( !"should not get here." );
+    }
+  );
+  
+  
   // unique_ptr 版
   // 通常パス
   check(
@@ -207,4 +231,30 @@ int main()
       BOOST_ASSERT( !"should not get here." );
     }
   );
+  
+  // 通常パス（unpack）
+  check(
+    [&](){
+      return etude::construct<hoge>( etude::operator_new<hoge>(), 
+        etude::unpack( std::make_tuple() ) 
+      );
+    },
+    []( hoge* p ){
+      BOOST_ASSERT( p != 0 );
+      BOOST_ASSERT( hoge::count_allocated_instance() == 1 );
+      BOOST_ASSERT( hoge::count_existing_instance() == 1 );
+    }
+  );
+  // 例外パス（unpack）
+  check(
+    [&](){
+      return etude::construct<hoge>( etude::operator_new<hoge>(), 
+        etude::unpack( std::make_tuple(true) ) 
+      );
+    },
+    []( hoge* ){
+      BOOST_ASSERT( !"should not get here." );
+    }
+  );
+  
 }
