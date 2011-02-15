@@ -55,7 +55,7 @@ namespace etude {
     // pack された引数から構築
     template<class Tuple, std::size_t... Indices>
     value_holder_( Tuple && t, etude::indices<Indices...> )
-      : base ( tuple_forward<Tuple, Indices>(t)... )
+      : base ( tuple_forward<Indices, Tuple>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }

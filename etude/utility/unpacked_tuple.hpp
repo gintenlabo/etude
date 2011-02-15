@@ -84,13 +84,13 @@ namespace etude {
   inline typename etude::tuple_element<N, Tuple&&>::type
     move( unpacked_tuple<Tuple, Indices...> & x )
   {
-    return etude::tuple_forward<Tuple, N>( x.get_tuple() );
+    return etude::tuple_forward<N, Tuple>( x.get_tuple() );
   }
   template<std::size_t N, class Tuple, std::size_t... Indices>
   inline typename etude::tuple_element<N, Tuple&&>::type
     move( unpacked_tuple<Tuple, Indices...> && x )
   {
-    return etude::tuple_forward<Tuple, N>( x.get_tuple() );
+    return etude::tuple_forward<N, Tuple>( x.get_tuple() );
   }
 
 } // namespace etude

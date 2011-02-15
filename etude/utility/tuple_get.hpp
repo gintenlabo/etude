@@ -38,7 +38,7 @@ namespace etude {
   }
   
   // 要素を Tuple の型に合わせて forward してから get する
-  template< class Tuple, std::size_t I, class Tuple_,
+  template< std::size_t I, class Tuple, class Tuple_,
     class Result = decltype(
       tuple_get<I>( std::forward<Tuple>( std::declval<Tuple_>() ) )
     )
