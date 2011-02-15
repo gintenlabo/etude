@@ -1,10 +1,16 @@
 //
 //  unpacked_tuple:
-//    タプルからの値の get
+//    インデックスを付けて unpack しやすくした tuple
 // 
-//    ・現行の gcc が && 版の std::get に対応していないので、それに対応
-//    ・直接 std::get って呼ぶと std::get が dependent name にならないので
-//      std::array 等を後から include した場合に std::get が見つからない問題にも対処
+//    etude::unpacked_tuple は、タプルとインデックスを保持したクラスで、
+//    タプルを unpack するためのヘルパクラスとして機能します。
+//  
+//    etude::unpacked_tuple<T, Indices...> に格納された要素を取得するには、
+//    Indices... をテンプレート型推論によって得た後、対象オブジェクト t に対し
+//      etude::get<Indices>(t)...  // t の中身を move しない場合
+//    ないし
+//      etude::move<Indices>(t)...  // t の中身を move する場合
+//    と呼び出してください。
 //  
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -14,7 +20,7 @@
 #define ETUDE_UTILITY_INCLUDED_UNPACKED_TUPLE_HPP_
 
 #include "../types/tuple_element.hpp"
-#include "../utility/tuple_get.hpp"
+#include "tuple_get.hpp"
 
 #include <utility>
 #include <type_traits>
