@@ -18,6 +18,7 @@
 #include "holder.hpp"
 #include "emplace_construct.hpp"
 #include "unpack_construct.hpp"
+#include "unpacked_tuple.hpp"
 
 #include "../types/indices.hpp"
 #include "tuple_get.hpp"
@@ -108,6 +109,17 @@ namespace etude {
     >
     value_holder( unpack_construct_t, Tuple && t )
       : base( std::forward<Tuple>(t), etude::tuple_indices<Tuple>() ) {}
+    
+    // unpack された引数から構築
+    template<class Tuple, std::size_t... Indices,
+      class = typename std::enable_if<
+        etude::is_convertible<
+          typename etude::tuple_types<Tuple>::type, T
+        >::value
+      >::type
+    >
+    explicit value_holder( unpacked_tuple<Tuple, Indices...> t )
+      : base( emplace_construct, etude::move<Indices>(t)... ) {}
     
     // gcc4.5.0 では implicit move が（ｒｙ
     value_holder( value_holder const& ) = default;

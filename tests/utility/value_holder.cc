@@ -9,6 +9,7 @@
 //
 
 #include "../../etude/utility/value_holder.hpp"
+#include "../../etude/unpack.hpp"
 #include <type_traits>
 #include <utility>
 #include <boost/assert.hpp>
@@ -104,8 +105,18 @@ void check_constructible()
     std::is_constructible<holder, etude::emplace_construct_t, Args...>::value
       == is_constructible
   ));
+  
   STATIC_ASSERT((
     std::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
+      == is_constructible
+  ));
+  
+  STATIC_ASSERT((
+    std::is_constructible<holder,
+      decltype(
+        etude::unpack( std::declval<std::tuple<Args...>>() )
+      )
+    >::value
       == is_constructible
   ));
   
@@ -210,8 +221,8 @@ int main()
   );
   BOOST_ASSERT( d.get().which_ctor_has_called == nontrivial_class::copy_ctor );
   
-  etude::value_holder<nontrivial_class> e( etude::unpack_construct,
-    etude::forward_as_tuple( get( std::move(c) ) )
+  etude::value_holder<nontrivial_class> e(
+    etude::unpack( etude::forward_as_tuple( get( std::move(c) ) ) )
   );
   BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
 }
