@@ -1,12 +1,12 @@
 //
-//  head_of のテストです。
+//  last_type のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/types/head_of.hpp"
+#include "../../etude/types/last_type.hpp"
 
 #include <type_traits>
 
@@ -35,8 +35,8 @@ void check_not_defined()
 
 int main()
 {
-  check_not_defined< etude::head_of<> >();
-  check< etude::head_of<int>, int >();
-  check< etude::head_of<double, int>, double >();
-  check< etude::head_of<char, double, int>, char >();
+  check_not_defined< etude::last_type<> >();
+  check< etude::last_type<int>, int >();
+  check< etude::last_type<double, char>, char >();
+  check< etude::last_type<char, int, double>, double >();
 }

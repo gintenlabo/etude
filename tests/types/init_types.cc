@@ -1,12 +1,12 @@
 //
-//  last_of のテストです。
+//  init_types のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/types/last_of.hpp"
+#include "../../etude/types/init_types.hpp"
 
 #include <type_traits>
 
@@ -35,8 +35,8 @@ void check_not_defined()
 
 int main()
 {
-  check_not_defined< etude::last_of<> >();
-  check< etude::last_of<int>, int >();
-  check< etude::last_of<double, char>, char >();
-  check< etude::last_of<char, int, double>, double >();
+  check_not_defined< etude::init_types<> >();
+  check< etude::init_types<int>, etude::types<> >();
+  check< etude::init_types<double, int>, etude::types<double> >();
+  check< etude::init_types<char, double, int>, etude::types<char, double> >();
 }

@@ -1,12 +1,12 @@
 //
-//  init_of のテストです。
+//  head_type のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/types/init_of.hpp"
+#include "../../etude/types/head_type.hpp"
 
 #include <type_traits>
 
@@ -35,8 +35,8 @@ void check_not_defined()
 
 int main()
 {
-  check_not_defined< etude::init_of<> >();
-  check< etude::init_of<int>, etude::types<> >();
-  check< etude::init_of<double, int>, etude::types<double> >();
-  check< etude::init_of<char, double, int>, etude::types<char, double> >();
+  check_not_defined< etude::head_type<> >();
+  check< etude::head_type<int>, int >();
+  check< etude::head_type<double, int>, double >();
+  check< etude::head_type<char, double, int>, char >();
 }

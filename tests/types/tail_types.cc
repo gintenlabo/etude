@@ -1,12 +1,12 @@
 //
-//  tail_of のテストです。
+//  tail_types のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/types/tail_of.hpp"
+#include "../../etude/types/tail_types.hpp"
 
 #include <type_traits>
 
@@ -35,8 +35,8 @@ void check_not_defined()
 
 int main()
 {
-  check_not_defined< etude::tail_of<> >();
-  check< etude::tail_of<int>, etude::types<> >();
-  check< etude::tail_of<double, int>, etude::types<int> >();
-  check< etude::tail_of<char, double, int>, etude::types<double, int> >();
+  check_not_defined< etude::tail_types<> >();
+  check< etude::tail_types<int>, etude::types<> >();
+  check< etude::tail_types<double, int>, etude::types<int> >();
+  check< etude::tail_types<char, double, int>, etude::types<double, int> >();
 }
