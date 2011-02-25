@@ -85,6 +85,11 @@ namespace etude {
     friend T* get_pointer( self_type const& x ) /*noexcept*/ {
       return x.get_ptr();
     }
+    // 一応参照版も
+    T& get_ref() const /*noexcept*/ { 
+      BOOST_ASSERT( p_ != 0 );
+      return *p_;
+    }
     // 参照が欲しい場合は operator* で。
     
     // operator bool
@@ -103,7 +108,7 @@ namespace etude {
       return *p_;
     }
     
-    // get value or
+    // boost::optional の get_value_or 互換
     T& get_value_or( T& default_ ) const /*noexcept*/ {
       return p_ ? *p_ : default_;
     }
@@ -113,7 +118,7 @@ namespace etude {
         std::is_convertible<typename std::result_of<F()>::type, T&>::value
       >::type
     >
-    T& get_value_or_lazy( F && f ) const {
+    T& get_value_or_invoke( F && f ) const {
       return p_ ? *p_ : std::forward<F>(f)();
     }
     
@@ -159,8 +164,8 @@ namespace etude {
       std::is_convertible<typename std::result_of<F()>::type, T&>::value
     >::type
   >
-  inline T& get_optional_value_or_lazy( optional_reference<T> const& x, F && f ) {
-    return x.get_value_or_lazy( std::forward<F>(f) );
+  inline T& get_optional_value_or_invoke( optional_reference<T> const& x, F && f ) {
+    return x.get_value_or_invoke( std::forward<F>(f) );
   }
   
   

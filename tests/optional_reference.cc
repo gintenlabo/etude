@@ -133,10 +133,10 @@ int test_main( int, char** )
     BOOST_CHECK( is_same_object( get_optional_value_or( p1, x2 ), x1 ) );
     
     auto f = [&]() -> hoge& { return x2; };
-    BOOST_CHECK( is_same_object( p0.get_value_or_lazy(f), x2 ) );
-    BOOST_CHECK( is_same_object( get_optional_value_or_lazy( p0, f ), x2 ) );
-    BOOST_CHECK( is_same_object( p1.get_value_or_lazy(f), x1 ) );
-    BOOST_CHECK( is_same_object( get_optional_value_or_lazy( p1, f ), x1 ) );
+    BOOST_CHECK( is_same_object( p0.get_value_or_invoke(f), x2 ) );
+    BOOST_CHECK( is_same_object( get_optional_value_or_invoke( p0, f ), x2 ) );
+    BOOST_CHECK( is_same_object( p1.get_value_or_invoke(f), x1 ) );
+    BOOST_CHECK( is_same_object( get_optional_value_or_invoke( p1, f ), x1 ) );
   }
   
   // 比較
