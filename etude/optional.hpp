@@ -174,7 +174,11 @@ namespace etude {
 
   template<class T>
   class optional
-    : boost::totally_ordered< optional<T> >
+    : boost::totally_ordered<optional<T>,
+        boost::totally_ordered<optional<T>, T,
+          boost::totally_ordered<optional<T>, boost::none_t>
+        >
+      >
   {
     typedef optional<T> self_type;
     struct dummy_ {};
@@ -438,6 +442,27 @@ namespace etude {
         !lhs ? true : ( *lhs < *rhs )
       );
     }
+    
+    friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? (*lhs == rhs) : false;
+    }
+    friend bool operator<( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !lhs ? true : ( *lhs < rhs );
+    }
+    friend bool operator>( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !lhs ? false : ( rhs < *lhs );
+    }
+    
+    friend bool operator==( self_type const& lhs, boost::none_t ) /*noexcept*/ {
+      return !lhs;
+    }
+    friend bool operator<( self_type const&, boost::none_t ) /*noexcept*/ {
+      return false;
+    }
+    friend bool operator>( self_type const& lhs, boost::none_t ) /*noexcept*/ {
+      return bool(lhs);
+    }
+    
     // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
    private:
