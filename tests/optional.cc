@@ -11,6 +11,7 @@
 #include "../etude/optional.hpp"
 
 template class etude::optional<int>;
+template class etude::optional<int const>;
 template class etude::optional<int&>;
 
 #include <type_traits>
@@ -97,23 +98,60 @@ void check_compare()
   BOOST_CHECK(  checked_less ( -1, x1 ) );
 }
 
+#include <boost/noncopyable.hpp>
+
+// non-copyable class
+struct X
+  : private boost::noncopyable
+{
+  int x;
+  
+  explicit X( int x_ )
+    : x( x_ ) {}
+};
+
 #include <boost/none.hpp>
 int test_main( int, char** )
 {
-  etude::optional<int> x;
-  BOOST_CHECK( x == boost::none );
+  {
+    etude::optional<int> x;
+    BOOST_CHECK( x == boost::none );
+    // 自己代入チェック
+    x = x;
+    BOOST_CHECK( x == boost::none );
+    
+    int i = 0;
+    x = etude::make_optional(i);
+    BOOST_CHECK( x && *x == 0 && !is_same_object( *x, i ) );
+    // 自己代入チェック
+    x = x;
+    BOOST_CHECK( x && *x == 0 );
+    x = *x;
+    BOOST_CHECK( x && *x == 0 );
+    
+    x = 1;
+    etude::optional<int> y;
+    swap( x, y );
+    BOOST_CHECK( !x && y && y == 1 );
+    
+    check_compare();
+    
+    etude::optional<int const> z = 1;
+    z = 0;  // 問題なし
+    // *z = 1; // ダメ
+  }
   
-  int i = 0;
-  x = etude::make_optional(i);
-  
-  BOOST_CHECK( x && *x == 0 && !is_same_object( *x, i ) );
-  
-  x = 1;
-  etude::optional<int> y;
-  swap( x, y );
-  BOOST_CHECK( !x && y && y == 1 );
-  
-  check_compare();
+  {
+    etude::optional<X> x( etude::emplace_construct, 0 );
+    BOOST_CHECK( x && x->x == 0 );
+    
+    // in place
+    etude::optional<X const> y( boost::in_place(1) );
+    BOOST_CHECK( y && y->x == 1 );
+    
+    x = boost::in_place<X>(2);
+    BOOST_CHECK( x && x->x == 2 );
+  }
   
   return 0;
 }
