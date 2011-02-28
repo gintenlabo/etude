@@ -507,37 +507,40 @@ namespace etude {
       return get() ? *get() : default_;
     }
     
+    
     // 比較
-    friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return lhs ?
-        ( rhs ? (*lhs == *rhs) : false ) :
-        ( rhs ? false : true );
-    }
-    friend bool operator<( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return !rhs ? false : (
-        !lhs ? true : ( *lhs < *rhs )
-      );
-    }
     
-    friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? (*lhs == rhs) : false;
-    }
-    friend bool operator<( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return !lhs ? true : ( *lhs < rhs );
-    }
-    friend bool operator>( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return !lhs ? false : ( rhs < *lhs );
-    }
-    
+    // none_t との比較
     friend bool operator==( self_type const& lhs, boost::none_t ) /*noexcept*/ {
       return !lhs;
     }
-    friend bool operator<( self_type const&, boost::none_t ) /*noexcept*/ {
+    friend bool operator< ( self_type const&,     boost::none_t ) /*noexcept*/ {
       return false;
     }
-    friend bool operator>( self_type const& lhs, boost::none_t ) /*noexcept*/ {
-      return bool(lhs);
+    friend bool operator> ( self_type const& lhs, boost::none_t ) /*noexcept*/ {
+      return !!lhs;
     }
+    
+    // T const& との比較
+    friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? (*lhs == rhs) : false;
+    }
+    friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !lhs ? true  : ( *lhs < rhs );
+    }
+    friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !lhs ? false : ( rhs < *lhs );
+    }
+    
+    // optional 同士の相互比較
+    friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
+      return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
+    }
+    friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
+      return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
+    }
+    
+    
     
     // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
