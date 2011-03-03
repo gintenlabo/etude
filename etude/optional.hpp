@@ -123,13 +123,32 @@ namespace etude {
     >
     void assign( U && x )
     {
-      T* const p = this->get();
-      
-      if( p ) {
+      if( auto const p = this->get() ) {
         *p = std::forward<U>(x);
       }
       else {
         construct( std::forward<U>(x) );
+      }
+    }
+    
+    // swap
+    void swap( optional_impl_base_& other )
+    {
+      if( auto const p1 = this->get() ) {
+        if( auto const p2 = other.get() ) {
+          using std::swap;
+          swap( *p1, *p2 );
+        }
+        else {
+          other.construct( std::forward<T>(*p2) );
+          this->dispose();
+        }
+      }
+      else {
+        if( auto const p2 = other.get() ) {
+          this->construct( std::forward<T>(*p2) );
+          other.dispose();
+        }
       }
     }
     
@@ -145,23 +164,9 @@ namespace etude {
   {
     typedef optional_impl_base_<T> base_;
     
-    using base_::is_initialized;
-    using base_::get;
-    
-    using base_::construct;
-    using base_::in_place_construct;
-    using base_::assign;
-    using base_::dispose;
-    
     optional_impl_() = default;
     ~optional_impl_(){ base_::dispose(); }
     
-    /*
-    optional_impl_( optional_impl_ const& ) = default;
-    optional_impl_( optional_impl_ && )     = default;
-    optional_impl_& operator=( optional_impl_ const& ) = default;
-    // optional_impl_& operator=( optional_impl_ && ) = default; // gcc-4.5.0 では無理
-    */
   };
   
   template<class T>
@@ -175,23 +180,9 @@ namespace etude {
   {
     typedef optional_impl_base_<T> base_;
     
-    using base_::is_initialized;
-    using base_::get;
-    
-    using base_::construct;
-    using base_::in_place_construct;
-    using base_::assign;
-    using base_::dispose;
-    
     optional_impl_() = default;
     // ~optional_impl_(){ base_::dispose(); }
     
-    /*
-    optional_impl_( optional_impl_ const& ) = default;
-    optional_impl_( optional_impl_ && )     = default;
-    optional_impl_& operator=( optional_impl_ const& ) = default;
-    // optional_impl_& operator=( optional_impl_ && ) = default; // gcc-4.5.0 では無理
-    */
   };
   
   template<class T>
@@ -226,6 +217,10 @@ namespace etude {
     
     void dispose() {
       p_ = 0;
+    }
+    
+    void swap( optional_impl_& other ) {
+      std::swap( p_, other.p_ );
     }
     
    private:
@@ -468,22 +463,7 @@ namespace etude {
     
     // swap
     void swap( self_type& other ) {
-      if( *this ) {
-        if( other ) {
-          using std::swap;
-          swap( *get_(), *other.get_() );
-        }
-        else {
-          other = *std::move(*this);
-          *this = boost::none;
-        }
-      }
-      else {
-        if( other ) {
-          *this = *std::move(other);
-          other = boost::none;
-        }
-      }
+      impl_.swap( other.impl_ );
     }
     // 自由関数版
     friend void swap( self_type& one, self_type& another ) {
