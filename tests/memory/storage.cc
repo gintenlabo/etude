@@ -69,7 +69,7 @@ inline void basic_check()
   
   // address のテスト
   storage_type storage;
-  storage_type const const_storage = {};
+  storage_type const const_storage;
   
   // 型は void*, void const*
   STATIC_ASSERT((

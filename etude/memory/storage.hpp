@@ -15,6 +15,7 @@
 
 #include <type_traits>
 #include "../types/storage_of.hpp"
+#include "../utility/uninitialized.hpp"
 
 namespace etude {
 
@@ -26,9 +27,7 @@ namespace etude {
     
    public:
     storage_() = default;
-    
-    storage_( storage_ const& ) = delete;
-    void operator=( storage_ const& ) = delete;
+    storage_( etude::uninitialized_t ) {}
     
   };
   // empty class に対する最適化
@@ -40,9 +39,7 @@ namespace etude {
   >
   {
     storage_() = default;
-    
-    storage_( storage_ const& ) = delete;
-    void operator=( storage_ const& ) = delete;
+    storage_( etude::uninitialized_t ) {}
     
   };
   
@@ -53,6 +50,16 @@ namespace etude {
   {
     // storage type
     typedef typename storage_of<Ts...>::type type;
+    
+    // construct
+    storage() = default;
+    // 明示的に初期化しない旨を分かりやすく
+    storage( etude::uninitialized_t )
+      : storage_<void, Ts...>( etude::uninitialized ) {}
+    
+    // noncopyable
+    storage( storage const& ) = delete;
+    void operator=( storage const& ) = delete;
     
     // get address
     void* address() { return this; }
