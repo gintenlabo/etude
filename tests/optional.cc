@@ -19,6 +19,11 @@ template class etude::optional<int&>;
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
+// etude::optional<T&> は trivially copyable
+STATIC_ASSERT(( std::has_trivial_copy_constructor< etude::optional<int&> >::value ));
+STATIC_ASSERT(( std::has_trivial_assign< etude::optional<int&> >::value ));
+STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int&> >::value ));
+
 #include <boost/utility/addressof.hpp>
 template<class T>
 inline bool is_same_object( T& x, T& y )
@@ -98,16 +103,41 @@ void check_compare()
   BOOST_CHECK(  checked_less ( -1, x1 ) );
 }
 
-#include <boost/noncopyable.hpp>
+#include "../etude/noncopyable.hpp"
 
 // non-copyable class
 struct X
-  : private boost::noncopyable
+  : private etude::noncopyable
 {
   int x;
   
   explicit X( int x_ )
     : x( x_ ) {}
+};
+
+// move のみ可能な class
+struct Y
+  : private etude::noncopyable
+{
+  int x;
+  
+  explicit Y( int x_ )
+    : x( x_ ) {}
+  
+  Y( Y && src )
+    : x( src.x )
+  {
+    src.x = 0;
+  }
+  
+  Y& operator=( Y && rhs )
+  {
+    Y temp = std::move(rhs);
+    this->x = temp.x;
+    temp.x = 0;
+    return *this;
+  }
+  
 };
 
 #include <boost/none.hpp>
@@ -130,9 +160,10 @@ int test_main( int, char** )
     BOOST_CHECK( x && *x == 0 );
     
     x = 1;
-    etude::optional<int> y;
+    etude::optional<int> y = x;
+    x = boost::none;
     swap( x, y );
-    BOOST_CHECK( !x && y && y == 1 );
+    BOOST_CHECK( x && x == 1 && !y );
     
     check_compare();
     
@@ -151,6 +182,19 @@ int test_main( int, char** )
     
     x = boost::in_place<X>(2);
     BOOST_CHECK( x && x->x == 2 );
+    
+  }
+  
+  {
+    // move のチェック
+    etude::optional<Y> x = Y(1);
+    BOOST_CHECK( x && x->x == 1 );
+    
+    etude::optional<Y> y = std::move(x);
+    BOOST_CHECK( x->x == 0 && y && y->x == 1 );
+    
+    x = std::move(y);
+    BOOST_CHECK( x->x == 1 && y->x == 0 );
   }
   
   return 0;

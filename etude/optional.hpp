@@ -36,8 +36,43 @@ namespace etude {
   template<class T>
   struct optional_impl_base_
   {
+    // construct
     optional_impl_base_() {
       impl_.first() = false;
+    }
+    // copy/move construct
+    optional_impl_base_( optional_impl_base_ const& src )
+    {
+      if( auto const p = src.get() ) {
+        construct( *p );
+      }
+    }
+    optional_impl_base_( optional_impl_base_ && src )
+    {
+      if( auto const p = src.get() ) {
+        construct( std::forward<T>(*p) );
+      }
+    }
+    // copy/move assign
+    optional_impl_base_& operator=( optional_impl_base_ const& src )
+    {
+      if( auto const p = src.get() ) {
+        this->assign( *p );
+      }
+      else {
+        this->dispose();
+      }
+      return *this;
+    }
+    optional_impl_base_& operator=( optional_impl_base_ && src )
+    {
+      if( auto const p = src.get() ) {
+        this->assign( std::forward<T>(*p) );
+      }
+      else {
+        this->dispose();
+      }
+      return *this;
     }
     
     // observers
@@ -56,12 +91,9 @@ namespace etude {
     // modifiers
     void dispose()
     {
-      bool& initialized = impl_.first();
-      
-      if( initialized ) {
-        T* p = get();
+      if( T* p = this->get() ) {
         p->~T();
-        initialized = false;
+        impl_.first() = false;
       }
     }
     
@@ -91,7 +123,7 @@ namespace etude {
     >
     void assign( U && x )
     {
-      T* const p = get();
+      T* const p = this->get();
       
       if( p ) {
         *p = std::forward<U>(x);
@@ -121,9 +153,15 @@ namespace etude {
     using base_::assign;
     using base_::dispose;
     
-    optional_impl_(){}
+    optional_impl_() = default;
     ~optional_impl_(){ base_::dispose(); }
     
+    /*
+    optional_impl_( optional_impl_ const& ) = default;
+    optional_impl_( optional_impl_ && )     = default;
+    optional_impl_& operator=( optional_impl_ const& ) = default;
+    // optional_impl_& operator=( optional_impl_ && ) = default; // gcc-4.5.0 では無理
+    */
   };
   
   template<class T>
@@ -145,9 +183,15 @@ namespace etude {
     using base_::assign;
     using base_::dispose;
     
-    optional_impl_(){}
+    optional_impl_() = default;
     // ~optional_impl_(){ base_::dispose(); }
     
+    /*
+    optional_impl_( optional_impl_ const& ) = default;
+    optional_impl_( optional_impl_ && )     = default;
+    optional_impl_& operator=( optional_impl_ const& ) = default;
+    // optional_impl_& operator=( optional_impl_ && ) = default; // gcc-4.5.0 では無理
+    */
   };
   
   template<class T>
@@ -256,17 +300,11 @@ namespace etude {
       }
     }
     
-    // copy/move
-    optional( self_type const& src ) {
-      if( src ) {
-        impl_.construct( *src );
-      }
-    }
-    optional( self_type && src ) {
-      if( src ) {
-        impl_.construct( *std::move(src) );
-      }
-    }
+    // copy/move は基底クラスのを使う
+    /*
+    optional( optional const& ) = default;
+    optional( optional && )     = default;
+    */
     
     // 型変換
     template< class U,
@@ -387,18 +425,13 @@ namespace etude {
     }
     
     // assignment operators
+    // reset
     self_type& operator=( boost::none_t ) {
       impl_.dispose();
       return *this;
     }
-    self_type& operator=( self_type const& rhs ) {
-      assign_if( rhs );
-      return *this;
-    }
-    self_type& operator=( self_type && rhs ) {
-      assign_if( std::move(rhs) );
-      return *this;
-    }
+    // copy/move は基底クラスのを使う
+    // 型変換
     template<class U,
       class = typename std::enable_if<
         optional_assignable_<T_, U>::value
@@ -417,6 +450,7 @@ namespace etude {
       assign_if( std::move(rhs) );
       return *this;
     }
+    // T からの代入
     self_type& operator=( T_ && rhs ) {
       assign( std::forward<T>(rhs) );
       return *this;
