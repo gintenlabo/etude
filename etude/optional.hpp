@@ -23,6 +23,8 @@
 #include <boost/utility/addressof.hpp>
 
 #include "types/decay_and_strip.hpp"
+#include "types/is_assignable.hpp"
+#include "types/bool_constant.hpp"
 #include "memory/storage.hpp"
 #include "memory/apply_in_place.hpp"
 #include "utility/compressed_pair.hpp"
@@ -115,20 +117,10 @@ namespace etude {
       impl_.first() = true;
     }
     
-    template<class U,
-      class = typename std::enable_if<
-        std::is_convertible<U, T>::value
-      >::type,
-      class = decltype( std::declval<T&>() = std::declval<U>() )
-    >
+    template<class U>
     void assign( U && x )
     {
-      if( auto const p = this->get() ) {
-        *p = std::forward<U>(x);
-      }
-      else {
-        construct( std::forward<U>(x) );
-      }
+      return assign_( std::forward<U>(x), 0 );
     }
     
     // swap
@@ -155,6 +147,28 @@ namespace etude {
    private:
     typedef etude::storage<T> storage_type;
     etude::compressed_pair<bool, storage_type> impl_;
+    
+    // assignable ならば代入を使う
+    template< class U,
+      class = typename std::enable_if<
+        etude::is_assignable<T, U>::value
+      >::type
+    >
+    void assign_( U && x, int )
+    {
+      if( auto const p = this->get() ) {
+        *p = std::forward<U>(x);
+      }
+      else {
+        construct( std::forward<U>(x) );
+      }
+    }
+    // assignable でないなら construct を使う
+    template<class U>
+    void assign_( U && x, ... )
+    {
+      construct( std::forward<U>(x) );
+    }
     
   };
 
@@ -228,16 +242,12 @@ namespace etude {
   };
   
   // メタ関数 optional_assignable
-  template<class T, class U, class = void>
-  struct optional_assignable_
-    : std::false_type {};
   template<class T, class U>
-  struct optional_assignable_< T, U,
-    decltype (
-      std::declval<optional_impl_<T>&>().assign( std::declval<U>() )
-    )
-  >
-    : std::true_type {};
+  struct optional_assignable_ :
+    etude::bool_constant<
+      std::is_convertible<U, T>::value || etude::is_assignable<T, U>::value
+    >
+  {};
 
   // 実装本体
   template<class T>

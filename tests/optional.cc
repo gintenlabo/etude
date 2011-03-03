@@ -19,6 +19,8 @@ template class etude::optional<int&>;
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
+// etude::optional<int> は trivially destructible
+STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int> >::value ));
 // etude::optional<T&> は trivially copyable
 STATIC_ASSERT(( std::has_trivial_copy_constructor< etude::optional<int&> >::value ));
 STATIC_ASSERT(( std::has_trivial_assign< etude::optional<int&> >::value ));
@@ -140,6 +142,19 @@ struct Y
   
 };
 
+// rebind 不能なクラス
+struct Z
+{
+  int& x;
+  
+  explicit Z( int& x_ )
+    : x( x_ ) {}
+  
+  // 明示的に delete しないと gcc4.5.0 ではダメなよう。
+  void operator=( Z const& ) = delete;
+  
+};
+
 #include <boost/none.hpp>
 int test_main( int, char** )
 {
@@ -195,6 +210,13 @@ int test_main( int, char** )
     
     x = std::move(y);
     BOOST_CHECK( x->x == 1 && y->x == 0 );
+  }
+  
+  {
+    // rebind のチェック
+    int i = 0;
+    etude::optional<Z> x = Z(i), y;
+    y = x;
   }
   
   return 0;
