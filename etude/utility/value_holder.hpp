@@ -84,7 +84,9 @@ namespace etude {
     // 型変換構築（ const T& も含む）
     template<class U,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T>::value ||
+        ( std::is_scalar<T>::value &&
+          std::is_same<typename std::decay<U>::type, etude::uninitialized_t>::value )
       >::type
     >
     value_holder( U && src )

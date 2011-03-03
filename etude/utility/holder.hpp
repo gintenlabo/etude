@@ -15,6 +15,7 @@
 #include <utility>
 #include <boost/utility/addressof.hpp>
 #include "../types/is_strict_explicitly_convertible.hpp"
+#include "uninitialized.hpp"
 
 namespace etude {
  namespace holder_ { // ADL 回避
@@ -27,11 +28,6 @@ namespace etude {
     template<class... Args>
     explicit holder_( Args&&... args )
       : x( std::forward<Args>(args)... ) {}
-    
-    // デフォルトコンストラクタは上記のコンストラクタに含まれるはずだが、
-    // 何故かは知らないが組み込み型の場合に x を初期化してくれないので、明示的に書く。
-    holder_()
-      : x() {}
     
     // コピー／ムーブ
     // gcc4.5.0 には implicit move がないので
@@ -47,6 +43,32 @@ namespace etude {
     T x;
   };
   
+  // scalar type の場合
+  template<class T>
+  struct holder_< T,
+    typename std::enable_if<std::is_scalar<T>::value>::type
+  >
+  {
+    // デフォルト構築時はきっちり初期化させる
+    holder_()
+      : x() {}
+    // 未初期化にしたい場合は uninitialized を渡す
+    holder_( etude::uninitialized_t ) {}
+    
+    // scalar の場合は複数引数 ctor は無い
+    holder_( T x_ )
+      : x( x_ ) {}
+    
+    // 取得
+    T &      get()       { return x; }
+    T const& get() const { return x; }
+    T &&    move()       { return std::forward<T>(x); }
+    
+   private:
+    T x;
+  };
+  
+  // 空クラスの場合
   template<class T>
   struct holder_<T,
     typename std::enable_if<std::is_empty<T>::value>::type
@@ -61,8 +83,7 @@ namespace etude {
     
     // 組み込み型は empty ではないが、こちらでも一応明示的に書く。
     // なお {} による初期化リストはエラーになる場合があったので廃止。
-    holder_()
-      : T() {}
+    holder_() : T() {}
     
     // コピー／ムーブ
     // gcc4.5.0 には implicit move が（ｒｙ
@@ -83,7 +104,6 @@ namespace etude {
   {
     typedef typename std::remove_const<T>::type T_;
     typedef holder_<T_> base;
-    struct dummy_ {};
     
    public:
     typedef T element_type;
@@ -94,19 +114,22 @@ namespace etude {
     // 型変換コンストラクタ（ T const& も含む）
     template<class U,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T>::value ||
+        ( std::is_scalar<T>::value &&
+          std::is_same<typename std::decay<U>::type, etude::uninitialized_t>::value )
       >::type
     >
     holder( U && src )
       : base( std::forward<U>(src) ) {}
     
     // 型変換ではない一引数のコンストラクタは explicit に
-    template<class U,
+    template<class U, class... Args,
       class = typename std::enable_if<
+        ( sizeof...(Args) == 0 ) &&
         etude::is_strict_explicitly_convertible<U, T>::value
       >::type
     >
-    explicit holder( U && x, dummy_ = dummy_() )
+    explicit holder( U && x, Args... )
       : base( std::forward<U>(x) ) {}
     
     // 一引数じゃない場合は explicit にはしない

@@ -75,4 +75,14 @@ int main()
   
   std::cout << "s0: " << *s0 << std::endl;
   std::cout << "s1: " << *s1 << std::endl;
+  
+  // 細かい使い方、組み込み型を格納する場合
+  
+  // 普通に初期化させると初期化済みの値になり
+  etude::value_holder<int> i;
+  std::cout << "i: " << *i << std::endl; // 0
+  
+  // etude::uninitialized を渡すと未初期化の値になる
+  etude::value_holder<int> j = etude::uninitialized;
+  std::cout << "j: " << *j << std::endl;
 }

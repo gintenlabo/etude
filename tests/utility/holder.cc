@@ -182,6 +182,14 @@ int main()
   // 実際に構築するチェック
   etude::holder<int> i;  // デフォルト構築時は初期化される
   BOOST_ASSERT( i.get() == int() );
+  
+  // 初期化させない場合は uninitialized を渡す
+  etude::holder<int> j = etude::uninitialized;
+  // BOOST_ASSERT( j.get() == int() );  // これはそうとは限らない
+  
+  // scalar type じゃない場合には etude::uninitialized は使えない
+  // etude::holder<nontrivial_class> x = etude::uninitialized;
+  
   etude::holder<void*> p = 0;  // リテラル 0 も正しく扱える
   BOOST_ASSERT( p.get() == 0 );
 }
