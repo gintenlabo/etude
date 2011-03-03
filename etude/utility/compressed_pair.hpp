@@ -15,6 +15,7 @@
 
 #include "value_holder.hpp"
 #include "piecewise_construct.hpp"
+#include "emplace_construct.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -34,8 +35,8 @@ namespace etude {
                                                                           \
     template<class U1, class U2>                                          \
     compressed_pair_( U1 && x1, U2 && x2 )                                \
-      :  first_( std::forward<U1>(x1) ),                                  \
-        second_( std::forward<U2>(x2) ) {}                                \
+      :  first_( emplace_construct, std::forward<U1>(x1) ),               \
+        second_( emplace_construct, std::forward<U2>(x2) ) {}             \
                                                                           \
     template<class Tuple1, class Tuple2>                                  \
     compressed_pair_( piecewise_construct_t, Tuple1 && x1, Tuple2 && x2 ) \
@@ -226,6 +227,15 @@ namespace etude {
     compressed_pair( piecewise_construct_t, Tuple1 && t1, Tuple2 && t2 )
       : base( piecewise_construct,
           std::forward<Tuple1>(t1), std::forward<Tuple2>(t2) ) {}
+    // piecewise construction で tuple の要素が 1 の場合
+    template<class U1, class U2,
+      class = typename std::enable_if<
+        std::is_constructible< value_holder<T1>, emplace_construct_t, U1 >::value &&
+        std::is_constructible< value_holder<T2>, emplace_construct_t, U2 >::value
+      >::type
+    >
+    compressed_pair( emplace_construct_t, U1 && x1, U2 && x2 )
+      : base( std::forward<U1>(x1), std::forward<U2>(x2) ) {}
     
     // first/second
     T1 &      first()       { return *base::first(); }

@@ -39,17 +39,18 @@ namespace etude {
   struct optional_impl_base_
   {
     // construct
-    optional_impl_base_() {
-      impl_.first() = false;
-    }
+    optional_impl_base_()
+      : impl_() {}  // impl_ の ctor で first は初期化されて false になる
     // copy/move construct
     optional_impl_base_( optional_impl_base_ const& src )
+      : impl_()
     {
       if( auto const p = src.get() ) {
         construct( *p );
       }
     }
     optional_impl_base_( optional_impl_base_ && src )
+      : impl_()
     {
       if( auto const p = src.get() ) {
         construct( std::forward<T>(*p) );
@@ -148,6 +149,7 @@ namespace etude {
     typedef etude::storage<T> storage_type;
     etude::compressed_pair<bool, storage_type> impl_;
     
+    // assign の実装
     // assignable ならば代入を使う
     template< class U,
       class = typename std::enable_if<

@@ -54,6 +54,7 @@ namespace etude {
     // construct
     storage() = default;
     // 明示的に初期化しない旨を分かりやすく
+    // 実のところ、デフォルト構築でも初期化はされませんが
     storage( etude::uninitialized_t )
       : storage_<void, Ts...>( etude::uninitialized ) {}
     

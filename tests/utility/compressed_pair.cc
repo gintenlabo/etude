@@ -201,6 +201,9 @@ int main()
       etude::piecewise_construct, 
       std::make_tuple( etude::uninitialized ), std::make_tuple( etude::uninitialized )
     );
+    etude::compressed_pair<void*, int> p12(
+      etude::emplace_construct, etude::uninitialized, etude::uninitialized
+    );
   }
   
   // 型変換チェック

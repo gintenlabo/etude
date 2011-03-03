@@ -90,9 +90,7 @@ namespace etude {
     // 型変換構築（ const T& も含む）
     template<class U,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value ||
-        ( std::is_scalar<T>::value &&
-          std::is_same<typename std::decay<U>::type, etude::uninitialized_t>::value )
+        std::is_convertible< U, holder<T> >::value
       >::type
     >
     value_holder( U && src )
@@ -122,7 +120,7 @@ namespace etude {
     template<class Tuple, std::size_t... Indices,
       class = typename std::enable_if<
         etude::is_convertible<
-          typename etude::tuple_types<Tuple>::type, T
+          typename etude::tuple_types<Tuple>::type, holder<T>
         >::value
       >::type
     >
