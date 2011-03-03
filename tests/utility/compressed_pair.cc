@@ -27,7 +27,7 @@ void check()
   //     == std::is_trivially_copyable<pair_type>::value
   // )); // ない
   STATIC_ASSERT((
-    ( std::is_standard_layout<T1>::value && std::is_standard_layout<T2>::value )
+    ( std::is_standard_layout<etude::holder<T1>>::value && std::is_standard_layout<etude::holder<T2>>::value )
       == std::is_standard_layout<pair_type>::value ));
   // trivially destructible class か
   STATIC_ASSERT((
@@ -47,6 +47,38 @@ void check()
   >::value ));
   STATIC_ASSERT(( std::is_same<
     T2 const&, decltype( std::declval<pair_type const&>().second() )
+  >::value ));
+  
+  STATIC_ASSERT(( std::is_same<
+    typename std::remove_const<T1>::type&&,
+    decltype( std::declval<pair_type&>().move_first() )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    typename std::remove_const<T2>::type&&,
+    decltype( std::declval<pair_type&>().move_second() )
+  >::value ));
+  
+  STATIC_ASSERT(( std::is_same<
+    T1&, decltype( get_first( std::declval<pair_type&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    T2&, decltype( get_second( std::declval<pair_type&>() ) )
+  >::value ));
+  
+  STATIC_ASSERT(( std::is_same<
+    T1 const&, decltype( get_first( std::declval<pair_type const&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    T2 const&, decltype( get_second( std::declval<pair_type const&>() ) )
+  >::value ));
+  
+  STATIC_ASSERT(( std::is_same<
+    typename std::remove_const<T1>::type&&,
+    decltype( get_first( std::declval<pair_type>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    typename std::remove_const<T2>::type&&,
+    decltype( get_second( std::declval<pair_type>() ) )
   >::value ));
 }
 
@@ -143,6 +175,32 @@ int main()
     etude::compressed_pair<void*, X> p1( 0,  {0} );
     etude::compressed_pair<void*, X> p2( vp, {0} );
     etude::compressed_pair<void*, X> p3( 0,   x  );
+    
+    // move 版の get_first, get_second
+    etude::compressed_pair<X const, X const> p4;
+    X&& x1 = get_first( std::move(p4) );
+    X&& x2 = get_second( std::move(p4) );
+    BOOST_ASSERT( boost::addressof(x1) == boost::addressof(p4.first()) );
+    BOOST_ASSERT( boost::addressof(x2) == boost::addressof(p4.second()) );
+    
+    // 参照の swap
+    etude::compressed_pair<X&, X&> p5( p1.second(), p1.second() ),
+                                   p6( p2.second(), p3.second() );
+    swap( p5, p6 );
+    BOOST_ASSERT( boost::addressof(p5.first())  == boost::addressof(p2.second()) );
+    BOOST_ASSERT( boost::addressof(p5.second()) == boost::addressof(p3.second()) );
+    BOOST_ASSERT( boost::addressof(p6.first())  == boost::addressof(p1.second()) );
+    BOOST_ASSERT( boost::addressof(p6.second()) == boost::addressof(p1.second()) );
+    
+    // uninitialized
+    etude::compressed_pair<void*, int> p7 = etude::uninitialized;
+    etude::compressed_pair<void*, int> p8( 0, etude::uninitialized );
+    etude::compressed_pair<void*, int> p9( etude::uninitialized, 0 );
+    etude::compressed_pair<void*, int> p10( etude::uninitialized, etude::uninitialized );
+    etude::compressed_pair<void*, int> p11(
+      etude::piecewise_construct, 
+      std::make_tuple( etude::uninitialized ), std::make_tuple( etude::uninitialized )
+    );
   }
   
   // 型変換チェック

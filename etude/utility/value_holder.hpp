@@ -101,7 +101,7 @@ namespace etude {
     // pack されてない引数から構築
     template<class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        std::is_constructible<holder<T>, Args...>::value
       >::type
     >
     value_holder( emplace_construct_t, Args&&... args )
@@ -111,7 +111,7 @@ namespace etude {
     template<class Tuple,
       class = typename std::enable_if<
         etude::is_convertible<
-          typename etude::tuple_types<Tuple>::type, T
+          typename etude::tuple_types<Tuple>::type, holder<T>
         >::value
       >::type
     >
