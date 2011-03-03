@@ -85,4 +85,19 @@ int main()
   // etude::uninitialized を渡すと未初期化の値になる
   etude::value_holder<int> j = etude::uninitialized;
   std::cout << "j: " << *j << std::endl;
+  
+  // 参照の場合
+  etude::value_holder<int&> r1 = *i, r2 = *j;
+  *r1 = 23;
+  *r2 = 42;
+  std::cout << "i: " << *i << std::endl;  // 23
+  std::cout << "j: " << *j << std::endl;  // 42
+  // swap とか
+  swap( r1, r2 );
+  // 再代入も出来る
+  r1 = r2;
+  ++*r1;
+  ++*r2;
+  std::cout << "i: " << *i << std::endl;  // 25
+  std::cout << "j: " << *j << std::endl;  // 42
 }

@@ -27,11 +27,15 @@ void check()
   STATIC_ASSERT(( alignof(T) == alignof(holder) || std::is_reference<T>::value ));
   STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<holder>::value ));
   // STATIC_ASSERT(( std::is_trivially_copyable<T>::value == std::is_trivially_copyable<holder>::value )); // ない
-  STATIC_ASSERT(( std::is_standard_layout<T>::value
-    == std::is_standard_layout<holder>::value ));
+  STATIC_ASSERT((
+    ( std::is_reference<T>::value && std::is_standard_layout<holder>::value ) ||
+    std::is_standard_layout<T>::value == std::is_standard_layout<holder>::value
+  ));
   // trivially destructible class か
-  STATIC_ASSERT(( std::has_trivial_destructor<T>::value
-    == std::has_trivial_destructor<holder>::value ));
+  STATIC_ASSERT((
+    ( std::is_reference<T>::value && std::has_trivial_destructor<holder>::value ) ||
+    std::has_trivial_destructor<T>::value == std::has_trivial_destructor<holder>::value
+  ));
   
   // get
   STATIC_ASSERT(( std::is_same<

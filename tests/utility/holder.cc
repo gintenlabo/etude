@@ -23,11 +23,15 @@ void check()
   STATIC_ASSERT(( alignof(T) == alignof(holder) || std::is_reference<T>::value ));
   STATIC_ASSERT(( std::is_empty<T>::value == std::is_empty<holder>::value ));
   // STATIC_ASSERT(( std::is_trivially_copyable<T>::value == std::is_trivially_copyable<holder>::value )); // ない
-  STATIC_ASSERT(( std::is_standard_layout<T>::value
-    == std::is_standard_layout<holder>::value ));
+  STATIC_ASSERT ((
+    ( std::is_reference<T>::value && std::is_standard_layout<holder>::value ) ||
+    std::is_standard_layout<T>::value == std::is_standard_layout<holder>::value
+  ));
   // trivially destructible class か
-  STATIC_ASSERT(( std::has_trivial_destructor<T>::value
-    == std::has_trivial_destructor<holder>::value ));
+  STATIC_ASSERT ((
+    ( std::is_reference<T>::value && std::has_trivial_destructor<holder>::value ) ||
+    std::has_trivial_destructor<T>::value == std::has_trivial_destructor<holder>::value
+  ));
   
   // get
   STATIC_ASSERT(( std::is_same<
@@ -192,4 +196,12 @@ int main()
   
   etude::holder<void*> p = 0;  // リテラル 0 も正しく扱える
   BOOST_ASSERT( p.get() == 0 );
+  
+  // 参照の swap
+  etude::holder<int&> r1 = *i, r2 = *j;
+  BOOST_ASSERT( boost::addressof( *r1 ) == boost::addressof( *i ) );
+  BOOST_ASSERT( boost::addressof( *r2 ) == boost::addressof( *j ) );
+  swap( r1, r2 );
+  BOOST_ASSERT( boost::addressof( *r1 ) == boost::addressof( *j ) );
+  BOOST_ASSERT( boost::addressof( *r2 ) == boost::addressof( *i ) );
 }

@@ -39,6 +39,12 @@ namespace etude {
     T const& get() const { return x; }
     T &&    move()       { return std::forward<T>(x); }
     
+    // swap
+    void swap( holder_& other ) {
+      using std::swap;
+      swap( x, other.x );
+    }
+    
    private:
     T x;
   };
@@ -63,6 +69,12 @@ namespace etude {
     T &      get()       { return x; }
     T const& get() const { return x; }
     T &&    move()       { return std::forward<T>(x); }
+    
+    // swap
+    void swap( holder_& other ) {
+      using std::swap;
+      swap( x, other.x );
+    }
     
    private:
     T x;
@@ -94,6 +106,38 @@ namespace etude {
     T&       get()       { return *this; }
     T const& get() const { return *this; }
     T &&    move()       { return std::forward<T>(*this); }
+    
+    // swap
+    void swap( holder_& other ) {
+      using std::swap;
+      swap( get(), other.get() );
+    }
+    
+  };
+  
+  // 参照の場合
+  template<class T>
+  struct holder_<T,
+    typename std::enable_if<std::is_reference<T>::value>::type
+  >
+  {
+    // 初期化は T && からのみ
+    holder_( T && x )
+      : p( boost::addressof(x) ) {}
+    
+    // 取得
+    T&       get()       { return *p; }
+    T const& get() const { return *p; }
+    T &&    move()       { return std::forward<T>(*p); }
+    
+    // swap
+    void swap( holder_& other ) {
+      std::swap( p, other.p );
+    }
+    
+   private:
+    typedef typename std::add_pointer<T>::type pointer;
+    pointer p;
     
   };
   
@@ -187,6 +231,11 @@ namespace etude {
       return boost::addressof( get() );
     }
     
+    // swap
+    void swap( holder& x ) {
+      base::swap( static_cast<base&>(x) );
+    }
+    
   };
  
   // 自由関数版 get
@@ -202,6 +251,12 @@ namespace etude {
   template<class T>
   inline typename std::remove_const<T>::type && get( holder<T> && x ) {
     return x.move();
+  }
+  
+  // 自由関数版 swap
+  template<class T>
+  inline void swap( holder<T>& one, holder<T>& another ) {
+    one.swap( another );
   }
  
  }  // namespace holder_;

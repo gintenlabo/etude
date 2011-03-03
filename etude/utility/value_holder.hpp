@@ -64,6 +64,11 @@ namespace etude {
     value_holder_( value_holder_ const& ) = default;
     value_holder_( value_holder_ && )     = default;
     
+    // swap
+    void swap( value_holder_& x ) {
+      base::swap( static_cast<base&>(x) );
+    }
+    
   };
   
   // 本体
@@ -73,6 +78,7 @@ namespace etude {
   {
     typedef typename std::remove_const<T>::type T_;
     typedef value_holder_<T_> base;
+    typedef value_holder<T, Tag> self_type;
     
    public:
     // デフォルト構築
@@ -124,8 +130,8 @@ namespace etude {
       : base( emplace_construct, etude::move<Indices>(t)... ) {}
     
     // gcc4.5.0 では implicit move が（ｒｙ
-    value_holder( value_holder const& ) = default;
-    value_holder( value_holder && )     = default;
+    value_holder( self_type const& ) = default;
+    value_holder( self_type && )     = default;
     
     // 型変換コンストラクタ
     // copy
@@ -168,6 +174,11 @@ namespace etude {
       return boost::addressof( get() );
     }
     
+    // swap
+    void swap( self_type& x ) {
+      base::swap( static_cast<base&>(x) );
+    }
+    
   };
   
   // 自由関数版 get
@@ -183,6 +194,12 @@ namespace etude {
   template<class T, class Tag>
   inline typename std::remove_const<T>::type && get( value_holder<T, Tag> && x ) {
     return x.move();
+  }
+  
+  // 自由関数版 swap
+  template<class T, class Tag>
+  inline void swap( value_holder<T, Tag>& one, value_holder<T, Tag>& another ) {
+    one.swap( another );
   }
  
  }  // namespace value_holder_
