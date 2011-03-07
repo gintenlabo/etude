@@ -34,11 +34,11 @@ namespace etude {
   using etude::holder_::holder_;
   
   // タプルの unpack をするにはもう一段実装用クラスをはさむ必要あり
-  template<class T>
+  template<class T, class Tag>
   class value_holder_
-    : private holder_<T>
+    : private holder_<T, Tag>
   {
-    typedef holder_<T> base;
+    typedef holder_<T, Tag> base;
     
    public:
     using base::get;
@@ -74,10 +74,10 @@ namespace etude {
   // 本体
   template<class T, class Tag = void>
   class value_holder
-    : private value_holder_<typename std::remove_const<T>::type>
+    : private value_holder_<typename std::remove_const<T>::type, Tag>
   {
     typedef typename std::remove_const<T>::type T_;
-    typedef value_holder_<T_> base;
+    typedef value_holder_<T_, Tag> base;
     typedef value_holder<T, Tag> self_type;
     
    public:
@@ -85,8 +85,13 @@ namespace etude {
     value_holder() = default;
     
     // T からの構築
-    value_holder( T && src )
-      : base( emplace_construct, std::forward<T>(src) ) {}
+    template<class U = T_&&,
+      class = typename std::enable_if<
+        std::is_constructible<T, U>::value
+      >::type
+    >
+    value_holder( T_ && src )
+      : base( emplace_construct, std::forward<T_>(src) ) {}
     // 型変換構築（ const T& も含む）
     template<class U,
       class = typename std::enable_if<
@@ -134,20 +139,66 @@ namespace etude {
     // 型変換コンストラクタ
     // copy
     template<class U, class Tag_,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U_, T>::value
       >::type
     >
     value_holder( value_holder<U, Tag_> const& src )
       : base( emplace_construct, src.get() ) {}
     // move
     template<class U, class Tag_,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U_, T>::value
       >::type
     >
     value_holder( value_holder<U, Tag_> && src )
       : base( emplace_construct, src.move() ) {}
+    
+    
+    // 再代入
+    // 単純再代入
+    template< class U = T_,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U>::value
+      >::type
+    >
+    value_holder& operator=( T_ && x ) {
+      base::get() = std::forward<T_>(x);
+      return *this;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U>::value
+      >::type
+    >
+    value_holder& operator=( U && x ) {
+      base::get() = std::forward<U>(x);
+      return *this;
+    }
+    
+    // copy
+    template<class U, class Tag_,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U const&>::value
+      >::type
+    >
+    value_holder& operator=( value_holder<U, Tag_> const& rhs ) {
+      base::get() = rhs.get();
+      return *this;
+    }
+    // move
+    template<class U, class Tag_,
+      class U_ = typename std::remove_const<U>::type,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U_>::value
+      >::type
+    >
+    value_holder& operator=( value_holder<U, Tag_> && rhs ) {
+      base::get() = rhs.move();
+      return *this;
+    }
     
     
     // get/move

@@ -15,12 +15,13 @@
 #include <utility>
 #include <boost/utility/addressof.hpp>
 #include "../types/is_strict_explicitly_convertible.hpp"
+#include "../types/is_assignable.hpp"
 #include "uninitialized.hpp"
 
 namespace etude {
  namespace holder_ { // ADL 回避
  
-  template<class T, class = void>
+  template<class T, class Tag, class = void>
   struct holder_
   {
     // 引数転送
@@ -50,8 +51,8 @@ namespace etude {
   };
   
   // scalar type の場合
-  template<class T>
-  struct holder_< T,
+  template<class T, class Tag>
+  struct holder_< T, Tag,
     typename std::enable_if<std::is_scalar<T>::value>::type
   >
   {
@@ -81,8 +82,8 @@ namespace etude {
   };
   
   // 空クラスの場合
-  template<class T>
-  struct holder_<T,
+  template<class T, class Tag>
+  struct holder_< T, Tag,
     typename std::enable_if<std::is_empty<T>::value>::type
   >
     : private T
@@ -116,8 +117,8 @@ namespace etude {
   };
   
   // 参照の場合
-  template<class T>
-  struct holder_<T,
+  template<class T, class Tag>
+  struct holder_< T, Tag,
     typename std::enable_if<std::is_reference<T>::value>::type
   >
   {
@@ -142,19 +143,24 @@ namespace etude {
   };
   
   // 本体
-  template<class T>
+  template<class T, class Tag = void>
   class holder
-    : private holder_<typename std::remove_const<T>::type>
+    : private holder_<typename std::remove_const<T>::type, Tag>
   {
     typedef typename std::remove_const<T>::type T_;
-    typedef holder_<T_> base;
+    typedef holder_<T_, Tag> base;
     
    public:
     typedef T element_type;
     
-    // T から構築（ 0 や {} といったものに対処するため）
-    holder( T && src )
-      : base( std::forward<T>(src) ) {}
+    // T_ から構築（ 0 や {} といったものに対処するため）
+    template< class U = T_&&,
+      class = typename std::enable_if<
+        std::is_constructible<T, U>::value
+      >::type
+    >
+    holder( T_ && src )
+      : base( std::forward<T_>(src) ) {}
     // 型変換コンストラクタ（ T const& も含む）
     template<class U,
       class = typename std::enable_if<
@@ -193,22 +199,65 @@ namespace etude {
     
     // 型変換コンストラクタ
     // copy
-    template<class U,
+    template<class U, class Tag_,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T_>::value
       >::type
     >
-    holder( holder<U> const& src )
+    holder( holder<U, Tag_> const& src )
       : base( src.get() ) {}
     // move
-    template<class U,
+    template<class U, class Tag_,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U_, T_>::value
       >::type
     >
-    holder( holder<U> && src )
+    holder( holder<U, Tag_> && src )
       : base( src.move() ) {}
     
+    // 再代入
+    // 単純再代入
+    template< class U = T_,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U>::value
+      >::type
+    >
+    holder& operator=( T_ && x ) {
+      base::get() = std::forward<T_>(x);
+      return *this;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U>::value
+      >::type
+    >
+    holder& operator=( U && x ) {
+      base::get() = std::forward<U>(x);
+      return *this;
+    }
+    
+    // copy
+    template<class U, class Tag_,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U const&>::value
+      >::type
+    >
+    holder& operator=( holder<U, Tag_> const& rhs ) {
+      base::get() = rhs.get();
+      return *this;
+    }
+    // move
+    template<class U, class Tag_,
+      class U_ = typename std::remove_const<U>::type,
+      class = typename std::enable_if<
+        etude::is_assignable<T_, U_>::value
+      >::type
+    >
+    holder& operator=( holder<U, Tag_> && rhs ) {
+      base::get() = rhs.move();
+      return *this;
+    }
     
     // get/move
     
@@ -239,23 +288,23 @@ namespace etude {
   };
  
   // 自由関数版 get
-  template<class T>
-  inline T& get( holder<T>& x ) {
+  template<class T, class Tag>
+  inline T& get( holder<T, Tag>& x ) {
     return x.get();
   }
-  template<class T>
-  inline T const& get( holder<T> const& x ) {
+  template<class T, class Tag>
+  inline T const& get( holder<T, Tag> const& x ) {
     return x.get();
   }
   // move 版
-  template<class T>
-  inline typename std::remove_const<T>::type && get( holder<T> && x ) {
+  template<class T, class Tag>
+  inline typename std::remove_const<T>::type && get( holder<T, Tag> && x ) {
     return x.move();
   }
   
   // 自由関数版 swap
-  template<class T>
-  inline void swap( holder<T>& one, holder<T>& another ) {
+  template<class T, class Tag>
+  inline void swap( holder<T, Tag>& one, holder<T, Tag>& another ) {
     one.swap( another );
   }
  

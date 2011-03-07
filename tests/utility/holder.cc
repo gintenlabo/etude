@@ -204,4 +204,14 @@ int main()
   swap( r1, r2 );
   BOOST_ASSERT( boost::addressof( *r1 ) == boost::addressof( *j ) );
   BOOST_ASSERT( boost::addressof( *r2 ) == boost::addressof( *i ) );
+  
+  // 再代入
+  struct X
+  {
+    X& operator=( int ) {
+      return *this;
+    }
+  };
+  etude::holder<X const> x;
+  x = 43;
 }

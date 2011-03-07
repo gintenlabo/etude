@@ -206,6 +206,16 @@ int main()
   etude::value_holder<int*> p = 0;
   BOOST_ASSERT( p.get() == 0 );
   
+  // 再代入
+  struct X
+  {
+    X& operator=( int ) {
+      return *this;
+    }
+  };
+  etude::value_holder<X const> x;
+  x = 43;
+  
   // 実際にどのコンストラクタが呼ばれているか
   
   // direct initialization
