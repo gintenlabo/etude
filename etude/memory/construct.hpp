@@ -5,7 +5,7 @@
 //    ::new(p) T(...) のスマートポインタ版です。
 //    生ポインタを直接扱うよりは少しはマシになります。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
@@ -15,7 +15,8 @@
 #include <memory>
 #include "pseudo_destructor_call.hpp"
 #include "default_deallocate.hpp"
-#include "../utility/simple_wrapper.hpp"
+#include "../utility/holder.hpp"
+#include "../utility/unpacked_tuple.hpp"
 
 #include "apply_in_place.hpp"
 
@@ -48,15 +49,24 @@ namespace etude {
     return Result( apply_typed_in_place( std::forward<TypedInPlace>(x), p ) );
   }
   
+  // unpack 対応
+  template<class T, class Tuple, std::size_t... Indices,
+    class Result = std::unique_ptr< T, pseudo_destructor_call<T> >
+  >
+  inline Result construct( void* p, unpacked_tuple<Tuple, Indices...> t ) {
+    (void)t;  // Indices... が空の場合の警告避け
+    return Result( ::new(p) T( etude::move<Indices>(t)... ) );
+  }
+  
   
   // unique_ptr 版 construct
   
   // 破棄してからメモリを解放するファンクタ
   template<class T, class Dealloc>
   class dispose_and_deallocate_
-    : private etude::simple_wrapper<Dealloc>
+    : private etude::holder<Dealloc>
   {
-    typedef etude::simple_wrapper<Dealloc> dealloc_;
+    typedef etude::holder<Dealloc> dealloc_;
     
    public:
     dispose_and_deallocate_() = default;
@@ -145,6 +155,17 @@ namespace etude {
     return Result( pt,
       Del( std::forward<D>( p.get_deleter() ) )
     );
+  }
+  
+  // unpack 対応
+  template<class T, class D, class Tuple, std::size_t... Indices,
+    class Result = std::unique_ptr< T, dispose_and_deallocate_<T, D> >
+  >
+  inline Result construct( 
+    std::unique_ptr<void, D> && p, unpacked_tuple<Tuple, Indices...> t
+  ){
+    (void)t;  // Indices... が空の場合の警告避け
+    return etude::construct<T>( std::move(p), etude::move<Indices>(t)... );
   }
   
 }

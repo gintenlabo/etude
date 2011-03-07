@@ -6,7 +6,7 @@
 //    ::operator new を呼ぶ非テンプレート版と、
 //    T::operator new があればそちらを呼ぶテンプレート版の二種類があります。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
@@ -16,6 +16,7 @@
 #include "default_deallocate.hpp"
 #include "../types/types.hpp"
 #include <memory>
+#include <type_traits>
 
 namespace etude {
 
@@ -32,67 +33,77 @@ namespace etude {
   // テンプレート版
   
   // 戻り値を得るメタ関数
+  // T が object-type ではない場合（関数、参照、 void の場合）には type は定義されない
   template<class T = void>
   struct raw_storage_pointer
-  {
-    typedef std::unique_ptr< void, etude::default_deallocate<T> > type;
-  };
-  
-  template<class T, std::size_t N>
-  struct raw_storage_pointer<T[N]>
-  {
-    typedef std::unique_ptr< void, etude::default_deallocate<T[]> > type;
-  };
-  
+    : std::enable_if<
+        std::is_object<T>::value,
+        std::unique_ptr< void, etude::default_deallocate<T> >
+      >
+  {};
+  // void 版
   template<>
   struct raw_storage_pointer<void>
   {
     typedef raw_storage_ptr type;
   };
   
+  
   // 単独オブジェクト版
   // T::operator new があるなら
   template<class T,
+    class = typename std::enable_if<!std::is_array<T>::value>::type,
     class = decltype( T::operator new( (std::size_t)0 ) )
   >
-  inline void* operator_new_( std::size_t size, etude::type<T>, int ) {
+  inline void* operator_new_( std::size_t size, int, int ) {
     return T::operator new( size );
   }
   // T::operator new がないなら
-  template<class T>
-  inline void* operator_new_( std::size_t size, etude::type<T>, ... ) {
+  template<class T,
+    class = typename std::enable_if<!std::is_array<T>::value>::type
+  >
+  inline void* operator_new_( std::size_t size, int, ... ) {
     return ::operator new( size );
   }
   
   // 配列版
   // T::operator new[] があるなら
   template<class T,
-    class = decltype( T::operator new[]( (std::size_t)0 ) )
+    class = typename std::enable_if<std::is_array<T>::value>::type,
+    class U = typename std::remove_all_extents<T>::type,
+    class = decltype( U::operator new[]( (std::size_t)0 ) )
   >
-  inline void* operator_new_( std::size_t size, etude::type<T[]>, int ) {
-    return T::operator new[]( size );
+  inline void* operator_new_( std::size_t size, void*, int ) {
+    return U::operator new[]( size );
   }
   // T::operator new[] がないなら
-  template<class T>
-  inline void* operator_new_( std::size_t size, etude::type<T[]>, ... ) {
+  template<class T,
+    class = typename std::enable_if<std::is_array<T>::value>::type
+  >
+  inline void* operator_new_( std::size_t size, void*, ... ) {
     return ::operator new[]( size );
-  }
-  
-  // 固定配列は配列に dispatch する
-  template<class T, std::size_t N>
-  inline void* operator_new_( std::size_t size, etude::type<T[N]>, ... ) {
-    return operator_new_( size, etude::type<T[]>(), 0 );
   }
   
   
   // 本体
+  
+  // size を指定する基本版
   template<class T,
     class Pointer = typename raw_storage_pointer<T>::type
   >
-  inline Pointer operator_new( std::size_t size = sizeof(T) ) {
-    return Pointer( etude::operator_new_( size, etude::type<T>(), 0 ) );
+  inline Pointer operator_new( std::size_t size ) {
+    return Pointer( etude::operator_new_<T>( size, 0, 0 ) );
   }
   
+  // size を推論させる場合（単独オブジェクトに限る）
+  template<class T,
+    class = typename std::enable_if<!std::is_array<T>::value>::type,
+    class Pointer = typename raw_storage_pointer<T>::type,
+    std::size_t Size = sizeof(T)
+  >
+  inline Pointer operator_new() {
+    return Pointer( etude::operator_new_<T>( Size, 0, 0 ) );
+  }
   
 } // namespace etude
 

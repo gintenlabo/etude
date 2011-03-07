@@ -37,7 +37,7 @@ inline void check( Tuple && t )
   ));
   STATIC_ASSERT((
     std::is_same<
-      decltype( etude::tuple_forward<Tuple, I>(t) ),
+      decltype( etude::tuple_forward<I, Tuple>(t) ),
       typename etude::tuple_element<I, Tuple>::type &&
     >::value
   ));
@@ -52,7 +52,7 @@ inline void check( Tuple && t )
   auto && y = etude::tuple_move<I>(t);
   BOOST_ASSERT( boost::addressof(o) == boost::addressof(y) );
   
-  auto && z = etude::tuple_forward<Tuple, I>(t);
+  auto && z = etude::tuple_forward<I, Tuple>(t);
   BOOST_ASSERT( boost::addressof(o) == boost::addressof(z) );
 }
 

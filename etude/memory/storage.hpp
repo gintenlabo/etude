@@ -6,48 +6,61 @@
 //    std::aligned_storage<sizeof(T), alignof(T)>::type 型のオブジェクトを
 //    内部に実際に格納する noncopyable なバッファとしての機能を持ったクラスです。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 #ifndef ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 #define ETUDE_MEMORY_INCLUDED_STORAGE_HPP_
 
-#include "../noncopyable.hpp"
 #include <type_traits>
+#include "../types/storage_of.hpp"
+#include "../utility/uninitialized.hpp"
 
 namespace etude {
 
-  // std::aligned_storage<sizeof(T), alignof(T)> に対する alias
-  // 基本的には storage の方を使えばいいが、純粋なメタ関数も必要かも？
-  template<class T>
-  struct storage_of {
-    typedef typename std::aligned_storage<sizeof(T), alignof(T)>::type type;
-  };
-
   // ストレージ部分の実装
-  template<class T, bool isEmpty = false>
+  template<class, class... Ts>
   class storage_
-    : private noncopyable
   {
-    typename storage_of<T>::type buf_;
+    typename storage_of<Ts...>::type buf_;
+    
+   public:
+    storage_() = default;
+    storage_( etude::uninitialized_t ) {}
+    
   };
   // empty class に対する最適化
   // 何も格納させない
-  template<class T>
-  class storage_<T, true>
-    : private noncopyable
+  template<class... Ts>
+  struct storage_<
+    typename std::enable_if< storage_of<Ts...>::is_empty >::type,
+    Ts...
+  >
   {
-    static_assert( std::is_empty<T>::value, "implementation error" );
+    storage_() = default;
+    storage_( etude::uninitialized_t ) {}
+    
   };
   
   // 本体
-  template<class T>
+  template<class... Ts>
   struct storage
-    : private storage_<T, std::is_empty<T>::value>
+    : private storage_<void, Ts...>
   {
     // storage type
-    typedef typename storage_of<T>::type type;
+    typedef typename storage_of<Ts...>::type type;
+    
+    // construct
+    storage() = default;
+    // 明示的に初期化しない旨を分かりやすく
+    // 実のところ、デフォルト構築でも初期化はされませんが
+    storage( etude::uninitialized_t )
+      : storage_<void, Ts...>( etude::uninitialized ) {}
+    
+    // noncopyable
+    storage( storage const& ) = delete;
+    void operator=( storage const& ) = delete;
     
     // get address
     void* address() { return this; }

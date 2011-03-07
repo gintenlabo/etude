@@ -11,10 +11,10 @@
 #include "../../etude/memory/construct.hpp"
 
 #include <iostream>
-#include "../../etude/noncopyable.hpp"
+#include "../../etude/immovable.hpp"
 
 struct person
-  : etude::noncopyable
+  : etude::immovable<>
 {
   std::string name;
   int age;

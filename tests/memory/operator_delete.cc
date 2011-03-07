@@ -1,7 +1,7 @@
 //
 //  etude/memory/operator_delete.hpp に対するテスト
 //
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
@@ -28,6 +28,17 @@ void test()
       (p+i)->~T();
     }
     etude::operator_delete<T[]>(p);
+  }
+  
+  // 多次元
+  {
+    auto* p = new T[n][n];
+    for( int i = n; i --> 0; ) {
+      for( int j = n; j --> 0; ) {
+        p[i][j].~T();
+      }
+    }
+    etude::operator_delete<T[n][n]>(p);
   }
   
   // unique_ptr を使った例
