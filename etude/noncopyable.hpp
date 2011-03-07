@@ -1,29 +1,73 @@
 //
 //  noncopyable:
-//    boost::noncopyable の C++0x 拡張
+//    copy は出来ないが move は出来るクラス
 // 
-//    boost::noncopyable を = delete; を使って書きなおした版です。
-//    オリジナルの boost::noncopyable と違い、可能なかぎり trivial になっています。
+//    boost::noncopyable の C++0x 拡張ですが、 move は可能になっています。
+//    また、テンプレート引数により base class chaining を行うこともできます。
 //    
-//  Copyright (C) 2010  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 #ifndef ETUDE_INCLUDED_NONCOPYABLE_HPP_
 #define ETUDE_INCLUDED_NONCOPYABLE_HPP_
 
+#include <type_traits>
+#include <utility>
 
 namespace etude {
  namespace noncopyable_ { // ADL 回避
  
+  template<class Base = void>
   struct noncopyable
+    : Base
   {
     noncopyable() = default;
     
     noncopyable( noncopyable const& )    = delete;
     void operator=( noncopyable const& ) = delete;
-    noncopyable( noncopyable&& )         = delete;
-    void operator=( noncopyable&& )      = delete;
+    
+    noncopyable( noncopyable&& )            = default;
+    // noncopyable& operator=( noncopyable&& ) = default; // gcc 4.5.0 だと無理
+    noncopyable& operator=( noncopyable && rhs ) {
+      Base::operator=( static_cast<Base&&>(rhs) );
+      return *this;
+    }
+    
+    
+    // Base の構築
+    
+    // Base 自体から構築。ただし explicit
+    template< class T = Base,
+      class = typename std::enable_if<
+        std::is_constructible<Base, T&&>::value
+      >::type
+    >
+    explicit noncopyable( Base && x )
+      : Base( std::forward<Base>(x) ) {}
+    
+    // その他の構築も全て explicit
+    template< class... Args,
+      class = typename std::enable_if<
+        std::is_constructible<Base, Args...>::value
+      >::type
+    >
+    explicit noncopyable( Args&&... args )
+      : Base( std::forward<Args>(args)... ) {}
+    
+  };
+ 
+  template<>
+  struct noncopyable<void>
+  {
+    noncopyable() = default;
+    
+    noncopyable( noncopyable const& )    = delete;
+    void operator=( noncopyable const& ) = delete;
+    
+    noncopyable( noncopyable&& )            = default;
+    // noncopyable& operator=( noncopyable&& ) = default; // gcc 4.5.0 だと無理
+    noncopyable& operator=( noncopyable && ) { return *this; }
     
   };
  

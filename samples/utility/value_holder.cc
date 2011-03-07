@@ -8,7 +8,7 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 #include "../../etude/utility/value_holder.hpp"
-#include "../../etude/noncopyable.hpp"
+#include "../../etude/immovable.hpp"
 
 #include <tuple>
 #include <utility>
@@ -18,7 +18,7 @@
 #include <iostream>
 
 struct person
-  : etude::noncopyable
+  : etude::immovable<>
 {
   std::string name;
   int age;
