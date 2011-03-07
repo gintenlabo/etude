@@ -17,13 +17,18 @@
 #include <type_traits>
 #include <utility>
 
+#include "types/make_derivable.hpp"
+
 namespace etude {
  namespace immovable_ { // ADL 回避
  
   template<class Base = void>
-  struct immovable
-    : Base
+  class immovable
+    : public etude::make_derivable<Base>::type
   {
+    typedef typename etude::make_derivable<Base>::type base_;
+    
+   public:
     immovable() = default;
     
     immovable( immovable const& )      = delete;
@@ -43,7 +48,7 @@ namespace etude {
       >::type
     >
     explicit immovable( Base && x )
-      : Base( std::forward<Base>(x) ) {}
+      : base_( std::forward<Base>(x) ) {}
     
     // その他の構築も全て explicit
     template< class... Args,
@@ -52,7 +57,7 @@ namespace etude {
       >::type
     >
     explicit immovable( Args&&... args )
-      : Base( std::forward<Args>(args)... ) {}
+      : base_( std::forward<Args>(args)... ) {}
     
   };
   

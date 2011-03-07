@@ -51,4 +51,7 @@ int main()
   std::cout << std::boolalpha;
   std::cout << ( x.vec == y ) << std::endl;
   
+  // noncopyable なラッパとして使う場合、継承できないクラスでも問題なく扱える
+  etude::noncopyable<int> i( 0 );
+  std::cout << i << std::endl;
 }

@@ -62,4 +62,17 @@ int main()
   STATIC_ASSERT(( std::is_constructible<etude::noncopyable<X>, X&&>::value ));
   STATIC_ASSERT(( !std::is_constructible<etude::noncopyable<X>, int>::value ));
 
+
+  // noncopyable wrapper
+  STATIC_ASSERT(( !is_copy_constructible<etude::noncopyable<int>>::value ));
+  STATIC_ASSERT((  is_move_constructible<etude::noncopyable<int>>::value ));
+  
+  STATIC_ASSERT(( !is_copy_assignable<etude::noncopyable<int>>::value ));
+  STATIC_ASSERT((  is_move_assignable<etude::noncopyable<int>>::value ));
+  
+  // ctor “]‘—
+  STATIC_ASSERT(( !std::is_convertible<int, etude::noncopyable<int>>::value ));
+  STATIC_ASSERT(( std::is_constructible<etude::noncopyable<int>, int>::value ));
+  STATIC_ASSERT(( !std::is_constructible<etude::noncopyable<int>, void*>::value ));
+
 }

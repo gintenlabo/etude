@@ -15,13 +15,18 @@
 #include <type_traits>
 #include <utility>
 
+#include "types/make_derivable.hpp"
+
 namespace etude {
  namespace noncopyable_ { // ADL 回避
  
   template<class Base = void>
-  struct noncopyable
-    : Base
+  class noncopyable
+    : public etude::make_derivable<Base>::type
   {
+    typedef typename etude::make_derivable<Base>::type base_;
+    
+   public:
     noncopyable() = default;
     
     noncopyable( noncopyable const& )    = delete;
@@ -44,7 +49,7 @@ namespace etude {
       >::type
     >
     explicit noncopyable( Base && x )
-      : Base( std::forward<Base>(x) ) {}
+      : base_( std::forward<Base>(x) ) {}
     
     // その他の構築も全て explicit
     template< class... Args,
@@ -53,7 +58,7 @@ namespace etude {
       >::type
     >
     explicit noncopyable( Args&&... args )
-      : Base( std::forward<Args>(args)... ) {}
+      : base_( std::forward<Args>(args)... ) {}
     
   };
  

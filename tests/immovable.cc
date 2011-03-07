@@ -62,4 +62,16 @@ int main()
   STATIC_ASSERT(( std::is_constructible<etude::immovable<X>, X&&>::value ));
   STATIC_ASSERT(( !std::is_constructible<etude::immovable<X>, int>::value ));
 
+
+  // immovable wrapper
+  STATIC_ASSERT(( !is_copy_constructible<etude::immovable<int>>::value ));
+  STATIC_ASSERT(( !is_move_constructible<etude::immovable<int>>::value ));
+  
+  STATIC_ASSERT(( !is_copy_assignable<etude::immovable<int>>::value ));
+  STATIC_ASSERT(( !is_move_assignable<etude::immovable<int>>::value ));
+  
+  // ctor “]‘—
+  STATIC_ASSERT(( !std::is_convertible<int, etude::immovable<int>>::value ));
+  STATIC_ASSERT(( std::is_constructible<etude::immovable<int>, int>::value ));
+  STATIC_ASSERT(( !std::is_constructible<etude::immovable<int>, void*>::value ));
 }
