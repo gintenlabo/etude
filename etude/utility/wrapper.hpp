@@ -17,6 +17,7 @@
 #include <boost/utility/addressof.hpp>
 #include "uninitialized.hpp"
 #include "operator_arrow.hpp"
+#include "../types/is_derivable.hpp"
 
 namespace etude {
  namespace wrapper_ { // ADL 回避
@@ -50,12 +51,10 @@ namespace etude {
     
   };
   
-  // for class types
+  // for derivable types
   template<class T>
   struct wrapper< T,
-    typename std::enable_if<
-      std::is_class<T>::value || std::is_union<T>::value
-    >::type
+    typename std::enable_if< etude::is_derivable<T>::value >::type
   >
     : T
   {
