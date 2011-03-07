@@ -7,6 +7,9 @@
 //
 #include "../../etude/functional/invoke.hpp"
 
+#include "../../etude/unpack.hpp"
+#include <tuple>
+
 #include <type_traits>
 #include <boost/assert.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
@@ -56,7 +59,8 @@ void test1()
     etude::invoke<void>( foo, base );
     BOOST_ASSERT( base.member == 4 );
     
-    auto x = etude::invoke<double>( bar, base, 0 );
+    auto t = std::make_tuple(0);
+    auto x = etude::invoke<double>( bar, base, etude::unpack(t) );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
     BOOST_ASSERT( x == 4 );
   }
@@ -163,11 +167,20 @@ void test5()
   STATIC_ASSERT(( std::is_same<int, decltype(x)>::value ));
   BOOST_ASSERT( x == 42 );
   
+  auto t1 = std::make_tuple();
+  auto x_ = etude::invoke( f, etude::unpack(t1) );
+  STATIC_ASSERT(( std::is_same<decltype(x_), decltype(x)>::value ));
+  BOOST_ASSERT( x == x_ );
+  
   auto lambda = [&]( int i ){ return x += i; };
   
   auto y = etude::invoke<bool>( lambda, 13 );
   STATIC_ASSERT(( std::is_same<bool, decltype(y)>::value ));
   BOOST_ASSERT( x == 55 && y == true );
+  
+  auto y_ = etude::invoke<bool>( lambda, etude::unpack( std::make_tuple(0) ) );
+  STATIC_ASSERT(( std::is_same<bool, decltype(y_)>::value ));
+  BOOST_ASSERT( x == 55 && y_ == true );
 }
 
 int main()
