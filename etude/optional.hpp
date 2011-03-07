@@ -166,6 +166,20 @@ namespace etude {
       }
     }
     // assignable でないなら construct を使う
+    // 自己代入になりうる場合はチェックする
+    template< class U,
+      class = typename std::enable_if<
+        !etude::is_assignable<T, U>::value &&
+        std::is_convertible<typename std::decay<U>::type*, T*>::type
+      >::type
+    >
+    void assign_( U && x, ... )
+    {
+      if( boost::addressof(x) != this->get() ) {
+        construct( std::forward<U>(x) );
+      }
+    }
+    // それ以外
     template<class U>
     void assign_( U && x, ... )
     {
@@ -485,12 +499,23 @@ namespace etude {
     
     // observers
     
-    // get はポインタを返す（ boost::optional とは違う）
-    pointer       get()       { return impl_.get(); }
-    const_pointer get() const { return impl_.get(); }
-    // 互換性のため get_ptr も用意
-    pointer          get_ptr()       { return get(); }
-    const_pointer    get_ptr() const { return get(); }
+    // 格納された参照を返す（無効参照の場合は未定義動作）
+    T& get() {
+      BOOST_ASSERT( impl_.get() != 0 );
+      return *impl_.get();
+    }
+    T const& get() const {
+      BOOST_ASSERT( impl_.get() != 0 );
+      return *impl_.get();
+    }
+    // 中身に対する rvalue reference を返す（無効参照の場合は未定義、 const は付かない）
+    T_&& move() {
+      BOOST_ASSERT( impl_.get() != 0 );
+      return std::forward<T_>( *impl_.get() );
+    }
+    // 格納されたポインタを返す
+    pointer       get_ptr()       { return impl_.get(); }
+    const_pointer get_ptr() const { return impl_.get(); }
     // 自由関数版
     friend pointer get_pointer( self_type& x ) {
       return x.get_ptr();
@@ -506,33 +531,29 @@ namespace etude {
     
     // operator->
     pointer operator->() {
-      BOOST_ASSERT( !!*this );
-      return get();
+      BOOST_ASSERT( impl_.get() != 0 );
+      return get_ptr();
     }
     const_pointer operator->() const {
-      BOOST_ASSERT( !!*this );
-      return get();
+      BOOST_ASSERT( impl_.get() != 0 );
+      return get_ptr();
     }
     // operator*
     friend T& operator*( self_type& x ) {
-      BOOST_ASSERT( !!x );
-      return *x.get();
+      return x.get();
     }
     friend T const& operator*( self_type const& x ) {
-      BOOST_ASSERT( !!x );
-      return *x.get();
+      return x.get();
     }
-    // rvalue reference の場合には、 const を外した上で move する
+    // rvalue reference の場合には move する
     friend T_&& operator*( self_type && x ) {
-      BOOST_ASSERT( !!x );
-      return std::forward<T_>( *x.get_() );
+      return x.move();
     }
     
     // boost::optional の get_value_or 互換
     T const& get_value_or( T const& default_ ) const {
-      return get() ? *get() : default_;
+      return *this ? **this : default_;
     }
-    
     
     // 比較
     
@@ -544,18 +565,18 @@ namespace etude {
       return false;
     }
     friend bool operator> ( self_type const& lhs, boost::none_t ) /*noexcept*/ {
-      return !!lhs;
+      return lhs != boost::none;
     }
     
     // T const& との比較
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? (*lhs == rhs) : false;
+      return lhs ? ( *lhs == rhs ) : false;
     }
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return !lhs ? true  : ( *lhs < rhs );
+      return lhs ? ( *lhs <  rhs ) : true;
     }
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return !lhs ? false : ( rhs < *lhs );
+      return lhs ? (  rhs < *lhs ) : false;
     }
     
     // optional 同士の相互比較
@@ -566,14 +587,10 @@ namespace etude {
       return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
     }
     
-    
-    
     // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
    private:
     impl_type impl_;
-    
-    typename std::add_pointer<T_>::type get_() { return impl_.get(); }
     
   };
   
