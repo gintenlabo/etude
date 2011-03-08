@@ -105,11 +105,11 @@ void check_compare()
   BOOST_CHECK(  checked_less ( -1, x1 ) );
 }
 
-#include "../etude/noncopyable.hpp"
+#include "../etude/immovable.hpp"
 
 // non-copyable class
 struct X
-  : private etude::noncopyable
+  : private etude::immovable<>
 {
   int x;
   
@@ -119,7 +119,7 @@ struct X
 
 // move のみ可能な class
 struct Y
-  : private etude::noncopyable
+  : private etude::immovable<>
 {
   int x;
   

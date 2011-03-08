@@ -17,7 +17,6 @@
 #include <utility>
 #include <type_traits>
 
-#include <boost/operators.hpp>
 #include <boost/none.hpp>
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
@@ -29,6 +28,8 @@
 #include "memory/apply_in_place.hpp"
 #include "utility/compressed_pair.hpp"
 #include "utility/emplace_construct.hpp"
+#include "operators/totally_ordered.hpp"
+#include "operators/partially_ordered.hpp"
 
 namespace etude {
 
@@ -268,9 +269,9 @@ namespace etude {
   // 実装本体
   template<class T>
   class optional
-    : boost::totally_ordered<optional<T>,
-        boost::totally_ordered<optional<T>, T,
-          boost::totally_ordered<optional<T>, boost::none_t>
+    : etude::totally_ordered< optional<T>, boost::none_t,
+        etude::partially_ordered< optional<T>, T,
+          etude::partially_ordered< optional<T> >
         >
       >
   {
@@ -322,10 +323,6 @@ namespace etude {
     }
     
     // copy/move は基底クラスのを使う
-    /*
-    optional( optional const& ) = default;
-    optional( optional && )     = default;
-    */
     
     // 型変換
     template< class U,
@@ -555,6 +552,7 @@ namespace etude {
       return *this ? **this : default_;
     }
     
+    
     // 比較
     
     // none_t との比較
@@ -567,6 +565,7 @@ namespace etude {
     friend bool operator> ( self_type const& lhs, boost::none_t ) /*noexcept*/ {
       return lhs != boost::none;
     }
+    // <=, >= は etude::totally_ordered により自動定義される。
     
     // T const& との比較
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
@@ -578,6 +577,13 @@ namespace etude {
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? (  rhs < *lhs ) : false;
     }
+    friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? ( *lhs <=  rhs ) : true;
+    }
+    friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? (  rhs <= *lhs ) : false;
+    }
+    // 向きを反転したものは etude::partially_ordered により自動定義される。
     
     // optional 同士の相互比較
     friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
@@ -586,8 +592,11 @@ namespace etude {
     friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
     }
+    friend bool operator<=( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
+      return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
+    }
+    // 向きを反転したものは etude::partially_ordered により自動定義される。
     
-    // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
    private:
     impl_type impl_;
