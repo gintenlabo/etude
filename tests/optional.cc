@@ -243,10 +243,11 @@ void check_compare()
 }
 
 #include "../etude/immovable.hpp"
+#include "memory/lifetime_check.hpp"
 
 // non-copyable class
 struct X
-  : private etude::immovable<>
+  : public lifetime_check<X>, private etude::immovable<>
 {
   int x;
   
@@ -256,7 +257,7 @@ struct X
 
 // move のみ可能な class
 struct Y
-  : private etude::immovable<>
+  : public lifetime_check<Y>, private etude::immovable<>
 {
   int x;
   
@@ -281,6 +282,7 @@ struct Y
 
 // rebind 不能なクラス
 struct Z
+  : public lifetime_check<Z>
 {
   int& x;
   
