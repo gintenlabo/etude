@@ -11,25 +11,8 @@
 #include <type_traits>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
-// gcc 4.5.0 Ç…Ç»Ç¢ÇÃÇ≈é©çÏÇ∑ÇÈ
-template<class T>
-struct is_copy_constructible
-  : std::is_constructible<T, T const&>::type {};
-
-template<class T>
-struct is_move_constructible
-  : std::is_constructible<T, T&&>::type {};
-
-#include "../etude/types/is_assignable.hpp"
-
-template<class T>
-struct is_copy_assignable
-  : etude::is_assignable<T, T const&>::type {};
-
-template<class T>
-struct is_move_assignable
-  : etude::is_assignable<T, T&&>::type {};
-
+// for is_xxx_constructible/assignable
+#include "test_utilities.hpp"
 
 int main()
 {
