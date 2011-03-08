@@ -38,22 +38,24 @@ template<class LHS, class RHS>
 inline bool checked_equal( LHS const& lhs, RHS const& rhs )
 {
   bool result = ( lhs == rhs );
+  BOOST_CHECK( ( rhs == lhs ) ==  result );
   BOOST_CHECK( ( lhs != rhs ) == !result );
+  BOOST_CHECK( ( rhs != lhs ) == !result );
   return result;
 }
 
 template<class LHS, class RHS>
 inline bool checked_less( LHS const& lhs, RHS const& rhs )
 {
-  BOOST_CHECK( ( lhs >  rhs ) ==  ( rhs <  lhs ) );
-  BOOST_CHECK( ( rhs >  lhs ) ==  ( lhs <  rhs ) );
-  BOOST_CHECK( ( lhs >= rhs ) ==  ( rhs <= lhs ) );
-  BOOST_CHECK( ( rhs >= lhs ) ==  ( lhs <= rhs ) );
+  BOOST_CHECK( ( lhs >  rhs ) == ( rhs <  lhs ) );
+  BOOST_CHECK( ( rhs >  lhs ) == ( lhs <  rhs ) );
+  BOOST_CHECK( ( lhs >= rhs ) == ( rhs <= lhs ) );
+  BOOST_CHECK( ( rhs >= lhs ) == ( lhs <= rhs ) );
   
-  BOOST_CHECK( ( lhs >= rhs ) == !( lhs <  rhs ) );
-  BOOST_CHECK( ( rhs >= lhs ) == !( rhs <  lhs ) );
-  BOOST_CHECK( ( lhs <= rhs ) == !( lhs >  rhs ) );
-  BOOST_CHECK( ( rhs <= lhs ) == !( rhs >  lhs ) );
+  BOOST_CHECK( ( lhs >= rhs ) == !( lhs < rhs ) );
+  BOOST_CHECK( ( rhs >= lhs ) == !( rhs < lhs ) );
+  BOOST_CHECK( ( lhs <= rhs ) == !( lhs > rhs ) );
+  BOOST_CHECK( ( rhs <= lhs ) == !( rhs > lhs ) );
   
   return lhs < rhs;
 }

@@ -591,30 +591,54 @@ namespace etude {
     // <=, >= は etude::totally_ordered により自動定義される。
     
     // T const& との比較
+    template< class T_ = T const&,  // SFINAE する
+      class = decltype( bool( std::declval<T_>() == std::declval<T_>() ) )
+    >
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? ( *lhs == rhs ) : false;
+      return lhs ? bool( *lhs == rhs ) : false;
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    >
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? ( *lhs <  rhs ) : true;
+      return lhs ? bool( *lhs <  rhs ) : true;
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    >
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? (  rhs < *lhs ) : false;
+      return lhs ? bool(  rhs < *lhs ) : false;
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    >
     friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? ( *lhs <=  rhs ) : true;
+      return lhs ? bool( *lhs <=  rhs ) : true;
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    >
     friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? (  rhs <= *lhs ) : false;
+      return lhs ? bool(  rhs <= *lhs ) : false;
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
     // optional 同士の相互比較
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() == std::declval<T_>() ) )
+    >
     friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    >
     friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
     }
+    template< class T_ = T const&,
+      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    >
     friend bool operator<=( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
     }
