@@ -301,7 +301,7 @@ namespace etude {
     typedef optional<T> self_type;
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
-    struct dummy_ {};
+    struct dummy_ { explicit dummy_(){} };
     
    public:
     typedef T_   value_type;  // value_type   は const が付かない
@@ -319,6 +319,9 @@ namespace etude {
     optional( boost::none_t ) {}
     
     // T_ からの構築
+    template< class U = T_&&,
+      class = typename std::enable_if<std::is_constructible<T, U>::value>::type
+    >
     optional( T_ && x ) {
       impl_.construct( std::forward<T_>(x) );
     }
@@ -331,6 +334,9 @@ namespace etude {
     }
     
     // 条件付き構築
+    template< class U = T_&&,
+      class = typename std::enable_if<std::is_constructible<T, U>::value>::type
+    >
     optional( bool cond, T_ && x ) {
       if( cond ) {
         impl_.construct( std::forward<T_>(x) );
@@ -425,13 +431,14 @@ namespace etude {
     // 与えられた引数を代入する。
     // T に operator= があればそちらを、無いなら一旦破棄してから ctor を呼ぶ。
     // 破棄してから ctor を呼ぶ場合は、自己代入チェック有り
+    template< class U = T_&&,
+      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
+    >
     void assign( T_ && x ) {
       impl_.assign( std::forward<T_>(x) );
     }
     template< class U,
-      class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
-      >::type
+      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
     >
     void assign( U && x ) {
       impl_.assign( std::forward<U>(x) );
@@ -492,6 +499,9 @@ namespace etude {
       return *this;
     }
     // T からの代入
+    template< class U = T_&&,
+      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
+    >
     self_type& operator=( T_ && rhs ) {
       assign( std::forward<T>(rhs) );
       return *this;
@@ -591,32 +601,32 @@ namespace etude {
     // <=, >= は etude::totally_ordered により自動定義される。
     
     // T const& との比較
-    template< class T_ = T const&,  // SFINAE する
-      class = decltype( bool( std::declval<T_>() == std::declval<T_>() ) )
+    template< class U = T const&,  // SFINAE する
+      class = decltype( bool( std::declval<U>() == std::declval<U>() ) )
     >
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs == rhs ) : false;
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
     >
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <  rhs ) : true;
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
     >
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs < *lhs ) : false;
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
     >
     friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <=  rhs ) : true;
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
     >
     friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs <= *lhs ) : false;
@@ -624,20 +634,20 @@ namespace etude {
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
     // optional 同士の相互比較
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() == std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() == std::declval<U>() ) )
     >
     friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() < std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
     >
     friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
     }
-    template< class T_ = T const&,
-      class = decltype( bool( std::declval<T_>() <= std::declval<T_>() ) )
+    template< class U = T const&,
+      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
     >
     friend bool operator<=( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
@@ -653,7 +663,7 @@ namespace etude {
   
   // 取得
   template<class T>
-  inline T& get_optional_value_or( optional<T> const& x, T const& default_ ) {
+  inline T const& get_optional_value_or( optional<T> const& x, T const& default_ ) {
     return x.get_value_or( default_ );
   }
   
