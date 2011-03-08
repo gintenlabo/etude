@@ -13,6 +13,7 @@
 template class etude::optional<int>;
 template class etude::optional<int const>;
 template class etude::optional<int&>;
+template class etude::optional<int&&>;
 
 #include <type_traits>
 #include <boost/test/minimal.hpp>
