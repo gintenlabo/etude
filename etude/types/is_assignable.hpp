@@ -3,7 +3,8 @@
 //    std::is_assignable の改良版
 //    
 //    etude::is_assignable<T, U> は、
-//    std::is_assignable<T&, U> と同じです。
+//    型 T が参照でない場合は std::is_assignable<T&, U>::type を継承し、
+//    型 T が参照の場合は std::false_type を継承します。
 //
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -18,11 +19,11 @@
 namespace etude {
 
   // 実装クラス（ gcc4.5.0 だと std::is_assignable は未実装）
-  template<class T_, class U>
+  template<class T, class U, class = void>
   class is_assignable_
   {
-    template< class T = T_,
-      class = decltype( std::declval<T>() = std::declval<U>() )
+    template< class T_ = T&,
+      class = decltype( std::declval<T_>() = std::declval<U>() )
     >
     static std::true_type test_( int );
     
@@ -32,11 +33,22 @@ namespace etude {
     typedef decltype( test_(0) ) type;
     
   };
+  
+  // T がオブジェクトでない場合（参照を含む）は無条件で false
+  template<class T, class U>
+  struct is_assignable_<T, U,
+    typename std::enable_if<
+      !std::is_object<T>::value
+    >::type
+  >
+  {
+    typedef std::false_type type;
+  };
 
   // 実装クラスに転送
   template<class T, class U>
   struct is_assignable
-    : is_assignable_<T&, U>::type {};
+    : is_assignable_<T, U>::type {};
 
 } // namespace etude
 
