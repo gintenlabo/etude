@@ -119,6 +119,10 @@ inline void basic_check( Args&&... args )
   BOOST_CHECK( p == get_pointer(x) );
   BOOST_CHECK( p == cx.get_ptr() );
   BOOST_CHECK( p == get_pointer(cx) );
+  BOOST_CHECK( p == get(&x) );
+  BOOST_CHECK( p == get(&cx) );
+  BOOST_CHECK( 0 == get( static_cast<optional_t*>(0) ) );
+  BOOST_CHECK( 0 == get( static_cast<optional_t const*>(0) ) );
   
   if( p ) {
     BOOST_CHECK( x != boost::none );
@@ -127,14 +131,17 @@ inline void basic_check( Args&&... args )
     check_explicitly_same_object( *p, *x );
     BOOST_CHECK( p == x.operator->() );
     check_explicitly_same_object( *p, x.get() );
+    check_explicitly_same_object( *p, get(x) );
     
     BOOST_CHECK( is_same_object( *p, *cx ) );
     BOOST_CHECK( p == cx.operator->() );
     check_explicitly_same_object( *cx, cx.get() );
+    check_explicitly_same_object( *cx, get(cx) );
     
     auto && rv = x.move();
     BOOST_CHECK( is_same_object( *p, rv ) );
     check_explicitly_same_object( *std::move(x), x.move() );
+    check_explicitly_same_object( *std::move(x), get(std::move(x)) );
     
     // 型の審査
     STATIC_ASSERT((
@@ -371,6 +378,32 @@ int test_main( int, char** )
     BOOST_CHECK( is_same_object( x->x, i ) );
     
     basic_check<Z>( x );
+  }
+  
+  {
+    // 参照のチェック
+    
+    // lvalue reference に対して rvalue は束縛できない
+    // 例え const 参照であっても
+    STATIC_ASSERT((
+      // is_convertible だとエラーになる…。
+      !std::is_constructible<etude::optional<int const&>, int &&>::value
+    ));
+    
+    int i = 0, j = 1;
+    
+    etude::optional<int&> p = i;
+    BOOST_CHECK( is_same_object( *p, i ) );
+    
+    p = j;
+    BOOST_CHECK( is_same_object( *p, j ) );
+    
+    etude::optional<int const&> q = i;
+    BOOST_CHECK( is_same_object( *q, i ) );
+    
+    q = j;
+    BOOST_CHECK( is_same_object( *q, j ) );
+    
   }
   
   return 0;

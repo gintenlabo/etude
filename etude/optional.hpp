@@ -326,12 +326,21 @@ namespace etude {
       impl_.construct( std::forward<T_>(x) );
     }
     // 型変換構築
+    // 参照の場合には、一時オブジェクトへの参照を束縛させないよう無効化。
     template<class U,
-      class = typename std::enable_if<std::is_convertible<U, T>::value>::type
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        std::is_convertible<U, T>::value
+      >::type
     >
     optional( U && x ) {
       impl_.construct( std::forward<U>(x) );
     }
+    // 更に T が lvalue reference の場合、 rvalue を束縛できないようにする
+    template< class U = T,
+      class = typename std::enable_if<std::is_lvalue_reference<U>::value>::type
+    >
+    optional( typename std::remove_reference<U>::type && x ) = delete;
     
     // 条件付き構築
     template< class U = T_&&,
@@ -343,13 +352,22 @@ namespace etude {
       }
     }
     template<class U,
-      class = typename std::enable_if<std::is_convertible<U, T>::value>::type
+      class = typename std::enable_if<
+        !std::is_reference<T>::value && // 参照の場合は無効化
+        std::is_convertible<U, T>::value
+      >::type
     >
     optional( bool cond, U && x ) {
       if( cond ) {
         impl_.construct( std::forward<U>(x) );
       }
     }
+    // T が lvalue reference の場合
+    template< class U = T,
+      class = typename std::enable_if<std::is_lvalue_reference<U>::value>::type
+    >
+    optional( bool cond, typename std::remove_reference<U>::type && x ) = delete;
+    
     
     // copy/move は基底クラスのを使う
     
@@ -543,6 +561,11 @@ namespace etude {
       BOOST_ASSERT( impl_.get() != 0 );
       return std::forward<T_>( *impl_.get() );
     }
+    // friend 版
+    friend T &      get( self_type      & x ) { return x.get(); }
+    friend T const& get( self_type const& x ) { return x.get(); }
+    friend T_&&     get( self_type     && x ) { return x.move(); }
+    
     // 格納されたポインタを返す
     pointer       get_ptr()       { return impl_.get(); }
     const_pointer get_ptr() const { return impl_.get(); }
@@ -552,6 +575,13 @@ namespace etude {
     }
     friend const_pointer get_pointer( self_type const& x ) {
       return x.get_ptr();
+    }
+    // get のポインタ版
+    friend pointer get( self_type* p ) {
+      return p ? p->get_ptr() : 0;
+    }
+    friend const_pointer get( self_type const* p ) {
+      return p ? p->get_ptr() : 0;
     }
     
     // operator bool
