@@ -18,6 +18,7 @@
 #include "uninitialized.hpp"
 #include "operator_arrow.hpp"
 #include "../types/is_derivable.hpp"
+#include "../types/decay_and_strip.hpp"
 
 namespace etude {
  namespace wrapper_ { // ADL 回避
@@ -108,7 +109,15 @@ namespace etude {
     explicit wrapper( T && x )
       : p( boost::addressof(x) ) {}
     
+    // lvalue reference の場合には rvalue を束縛できないように
+    template< class U = T,
+      class = typename std::enable_if< std::is_lvalue_reference<U>::value >::type
+    >
+    explicit wrapper( typename std::remove_reference<T>::type && x ) = delete;
+    
+    // 参照取得
     operator T&() const { return *p; }
+    // operator T&& () const && { return std::forward<T>(*p); }
     
     // operator->
     template< class U = T&,
@@ -122,7 +131,18 @@ namespace etude {
     
   };
   
+  
   // free funcions
+  
+  // wrapping
+  template< class T,
+    class U = typename decay_and_strip<T>::type
+  >
+  inline wrapper<U> wrap( T && x ) {
+    return wrapper<U>( std::forward<T>(x) );
+  }
+  
+  // unwrapping
   template<class T>
   inline T& unwrap( wrapper<T>& x ) {
     return x;

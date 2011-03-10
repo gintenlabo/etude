@@ -41,7 +41,11 @@ int test_main( int, char** )
     ));
     
     X x = {1};
-    etude::wrapper<X*> p( &x );
+    // wrap もチェック
+    auto p = etude::wrap( &x );
+    STATIC_ASSERT((
+      std::is_same<decltype( p ), etude::wrapper<X*>>::value
+    ));
     BOOST_CHECK( p == &x );
     BOOST_CHECK( p->i == 1 );
   }
@@ -61,6 +65,11 @@ int test_main( int, char** )
     etude::wrapper<X&> r(x);
     etude::wrapper<X&&> rr( std::move( unwrap(r) ) );
     BOOST_CHECK( rr->i == 0 );
+    
+    // const lvalue reference に一時オブジェクトを束縛させることは出来ない
+    STATIC_ASSERT((
+      !std::is_convertible<X&&, etude::wrapper<X const&>>::value
+    ));
   }
   
   return 0;
