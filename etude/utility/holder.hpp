@@ -151,9 +151,19 @@ namespace etude {
     typedef holder_<T_, Tag> base;
     
    public:
-    typedef T element_type;
+    typedef T_   value_type;
+    typedef T  element_type;
+    
+    typedef T &            reference;
+    typedef T const& const_reference;
+    typedef T_ &&   rvalue_reference;
+    
+    typedef typename std::add_pointer<T>::type             pointer;
+    typedef typename std::add_pointer<T const>::type const_pointer;
+    
     
     // T_ から構築（ 0 や {} といったものに対処するため）
+    // T が参照の場合もこれを使う（一時オブジェクトを防ぐため）
     template< class U = T_&&,
       class = typename std::enable_if<
         std::is_constructible<T, U>::value
@@ -161,16 +171,30 @@ namespace etude {
     >
     holder( T_ && src )
       : base( std::forward<T_>(src) ) {}
+    
     // 型変換コンストラクタ（ T const& も含む）
+    // ただし参照の場合は機能させないようにする
     template<class U,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value ||
-        ( std::is_scalar<T>::value &&
-          std::is_same<typename std::decay<U>::type, etude::uninitialized_t>::value )
+        !std::is_reference<T>::value && (
+          std::is_convertible<U, T>::value || (
+            std::is_scalar<T>::value &&
+            std::is_convertible<U, etude::uninitialized_t>::value
+          )
+        )
       >::type
     >
     holder( U && src )
       : base( std::forward<U>(src) ) {}
+    
+    // lvalue reference に rvalue reference を束縛させようとしている場合は delete する
+    template<class U = T_>
+    holder(
+      typename std::enable_if<
+        std::is_lvalue_reference<U>::value,
+        typename std::remove_reference<U>::type
+      >::type &&
+    ) = delete;
     
     // 型変換ではない一引数のコンストラクタは explicit に
     template<class U, class... Args,
@@ -216,7 +240,12 @@ namespace etude {
     holder( holder<U, Tag_> && src )
       : base( src.move() ) {}
     
+    
     // 再代入
+    
+    // T が参照の場合は etude::is_assignable は常時 false なので、
+    // 暗黙に定義されたコピー代入演算子が使われる
+    
     // 単純再代入
     template< class U = T_,
       class = typename std::enable_if<
@@ -259,6 +288,7 @@ namespace etude {
       return *this;
     }
     
+    
     // get/move
     
     // get は T が const U の場合に対処するため明示的に指定する
@@ -267,25 +297,27 @@ namespace etude {
     // move はそのまま
     using base::move;
     
+    // get_ptr
+    pointer       get_ptr()       { return boost::addressof( get() ); }
+    const_pointer get_ptr() const { return boost::addressof( get() ); }
+    
     // operator*
     friend T &      operator*( holder &      x ){ return x.get(); }
     friend T const& operator*( holder const& x ){ return x.get(); }
     friend T_ &&    operator*( holder &&     x ){ return x.move(); }
     
     // operator->
-    typename std::add_pointer<T>::type operator->() {
-      return boost::addressof( get() );
-    }
-    typename std::add_pointer<T const>::type operator->() const {
-      return boost::addressof( get() );
-    }
+    pointer       operator->()       { return get_ptr(); }
+    const_pointer operator->() const { return get_ptr(); }
     
     // swap
     void swap( holder& x ) {
       base::swap( static_cast<base&>(x) );
     }
     
+    
   };
+ 
  
   // 自由関数版 get
   template<class T, class Tag>
@@ -302,11 +334,41 @@ namespace etude {
     return x.move();
   }
   
+  // ポインタ版 get
+  template<class T, class Tag>
+  inline auto get( holder<T, Tag>* p )
+    -> decltype( p->get_ptr() )
+  {
+    return p ? p->get_ptr() : 0;
+  }
+  template<class T, class Tag>
+  inline auto get( holder<T, Tag> const* p )
+    -> decltype( p->get_ptr() )
+  {
+    return p ? p->get_ptr() : 0;
+  }
+  
+  // 自由関数版 get_ptr
+  template<class T, class Tag>
+  inline auto get_pointer( holder<T, Tag>& x )
+    -> decltype( x.get_ptr() )
+  {
+    return x.get_ptr();
+  }
+  template<class T, class Tag>
+  inline auto get_pointer( holder<T, Tag> const& x )
+    -> decltype( x.get_ptr() )
+  {
+    return x.get_ptr();
+  }
+  
+  
   // 自由関数版 swap
   template<class T, class Tag>
   inline void swap( holder<T, Tag>& one, holder<T, Tag>& another ) {
     one.swap( another );
   }
+ 
  
  }  // namespace holder_;
  using namespace holder_;

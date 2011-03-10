@@ -81,6 +81,16 @@ namespace etude {
     typedef value_holder<T, Tag> self_type;
     
    public:
+    typedef T_   value_type;
+    typedef T  element_type;
+    
+    typedef T &            reference;
+    typedef T const& const_reference;
+    typedef T_ &&   rvalue_reference;
+    
+    typedef typename std::add_pointer<T>::type             pointer;
+    typedef typename std::add_pointer<T const>::type const_pointer;
+    
     // デフォルト構築
     value_holder() = default;
     
@@ -95,11 +105,20 @@ namespace etude {
     // 型変換構築（ const T& も含む）
     template<class U,
       class = typename std::enable_if<
+        !std::is_reference<T>::value && // 参照の場合は上の ctor を使わせる
         std::is_convertible< U, holder<T> >::value
       >::type
     >
     value_holder( U && src )
       : base( emplace_construct, std::forward<U>(src) ) {}
+    // lvalue reference に rvalue reference を束縛させようとしている場合は delete する
+    template<class U = T_>
+    value_holder (
+      typename std::enable_if<
+        std::is_lvalue_reference<U>::value,
+        typename std::remove_reference<U>::type
+      >::type &&
+    ) = delete;
     
     // pack されてない引数から構築
     template<class... Args,
@@ -158,6 +177,10 @@ namespace etude {
     
     
     // 再代入
+    
+    // T が参照の場合は etude::is_assignable は常時 false なので、
+    // 暗黙に定義されたコピー代入演算子が使われる
+    
     // 単純再代入
     template< class U = T_,
       class = typename std::enable_if<
@@ -209,6 +232,9 @@ namespace etude {
     // move はそのまま
     using base::move;
     
+    // get_ptr
+    pointer       get_ptr()       { return boost::addressof( get() ); }
+    const_pointer get_ptr() const { return boost::addressof( get() ); }
     
     // operator*
     friend T &      operator*( value_holder &      x ){ return x.get(); }
@@ -216,12 +242,9 @@ namespace etude {
     friend T_ &&    operator*( value_holder &&     x ){ return x.move(); }
     
     // operator->
-    typename std::add_pointer<T>::type operator->() {
-      return boost::addressof( get() );
-    }
-    typename std::add_pointer<T const>::type operator->() const {
-      return boost::addressof( get() );
-    }
+    pointer       operator->()       { return get_ptr(); }
+    const_pointer operator->() const { return get_ptr(); }
+    
     
     // swap
     void swap( self_type& x ) {
@@ -229,6 +252,7 @@ namespace etude {
     }
     
   };
+  
   
   // 自由関数版 get
   template<class T, class Tag>
@@ -244,6 +268,35 @@ namespace etude {
   inline typename std::remove_const<T>::type && get( value_holder<T, Tag> && x ) {
     return x.move();
   }
+  
+  // ポインタ版 get
+  template<class T, class Tag>
+  inline auto get( value_holder<T, Tag>* p )
+    -> decltype( p->get_ptr() )
+  {
+    return p ? p->get_ptr() : 0;
+  }
+  template<class T, class Tag>
+  inline auto get( value_holder<T, Tag> const* p )
+    -> decltype( p->get_ptr() )
+  {
+    return p ? p->get_ptr() : 0;
+  }
+  
+  // 自由関数版 get_ptr
+  template<class T, class Tag>
+  inline auto get_pointer( value_holder<T, Tag>& x )
+    -> decltype( x.get_ptr() )
+  {
+    return x.get_ptr();
+  }
+  template<class T, class Tag>
+  inline auto get_pointer( value_holder<T, Tag> const& x )
+    -> decltype( x.get_ptr() )
+  {
+    return x.get_ptr();
+  }
+  
   
   // 自由関数版 swap
   template<class T, class Tag>
