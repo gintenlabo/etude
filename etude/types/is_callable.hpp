@@ -3,10 +3,9 @@
 //    関数呼び出し可能ならば true_type になるメタ関数
 //    
 //    is_callable<T, R (Args...)> は、 T 型の t 及び Args... 型の args... に対し
-//    INVOKE( t, args... ) が well-formed で R 型に暗黙変換できる場合には
-//    std::true_type を、そうでない場合には std::false_type を継承します。
-//    
-//    これは std::function<R (Args...)> の一引数コンストラクタに渡せるオブジェクトと
+//      etude::invoke<R>( std::forward<T>(t), std::forward<Aegs>(args)... )
+//    が well-formed ならば std::true_type を、
+//    そうでない場合には std::false_type を継承します。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
