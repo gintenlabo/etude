@@ -28,6 +28,11 @@
 #include "memory/apply_in_place.hpp"
 #include "utility/compressed_pair.hpp"
 #include "utility/emplace_construct.hpp"
+
+#include "types/is_equality_comparable.hpp"
+#include "types/is_less_than_comparable.hpp"
+#include "types/is_less_or_equal_comparable.hpp"
+#include "types/is_assignable.hpp"
 #include "operators/totally_ordered.hpp"
 #include "operators/partially_ordered.hpp"
 
@@ -302,6 +307,10 @@ namespace etude {
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
     struct dummy_ { explicit dummy_(){} };
+    
+    static bool const eq_comparable = etude::is_equality_comparable<T>::value;
+    static bool const lt_comparable = etude::is_less_than_comparable<T>::value;
+    static bool const le_comparable = etude::is_less_or_equal_comparable<T>::value;
     
    public:
     typedef T_   value_type;  // value_type   は const が付かない
@@ -631,32 +640,32 @@ namespace etude {
     // <=, >= は etude::totally_ordered により自動定義される。
     
     // T const& との比較
-    template< class U = T const&,  // SFINAE する
-      class = decltype( bool( std::declval<U>() == std::declval<U>() ) )
+    template< bool EqualityComparable = eq_comparable,
+      class = typename std::enable_if<EqualityComparable>::type
     >
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs == rhs ) : false;
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
+    template< bool LessThanComparable = lt_comparable,
+      class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <  rhs ) : true;
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
+    template< bool LessThanComparable = lt_comparable,
+      class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs < *lhs ) : false;
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
+    template< bool LessOrEqualComparable = le_comparable,
+      class = typename std::enable_if<LessOrEqualComparable>::type
     >
     friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <=  rhs ) : true;
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
+    template< bool LessOrEqualComparable = le_comparable,
+      class = typename std::enable_if<LessOrEqualComparable>::type
     >
     friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs <= *lhs ) : false;
@@ -664,20 +673,20 @@ namespace etude {
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
     // optional 同士の相互比較
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() == std::declval<U>() ) )
+    template< bool EqualityComparable = eq_comparable,
+      class = typename std::enable_if<EqualityComparable>::type
     >
     friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() < std::declval<U>() ) )
+    template< bool LessThanComparable = lt_comparable,
+      class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
     }
-    template< class U = T const&,
-      class = decltype( bool( std::declval<U>() <= std::declval<U>() ) )
+    template< bool LessOrEqualComparable = le_comparable,
+      class = typename std::enable_if<LessOrEqualComparable>::type
     >
     friend bool operator<=( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
       return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
