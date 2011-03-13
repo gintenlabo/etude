@@ -2,10 +2,20 @@
 //  optional:
 //    Boost.Optional の C++0x 拡張
 // 
-//    for Boost.勉強会 #4
+//    Boost.Optional の C++0x 拡張版です。
+//    rvalue reference と explicit operator bool 、
+//    および各種の SFINAE に対応しています。
 //    
-//    TODO: lazy 版の get_optional_value_or を実装する
-//          テストを書く
+//    また、その実装は、現行（ Boost 1.46.1 ）の Boost.Optional に比べて、
+//    格納される型がデストラクタを持たない場合や、特に参照の場合において
+//    大きく最適化されたものになっています。
+//    
+//    特に etude::optional<T&> は、「 delete できない安全なポインタ」として
+//    ほぼオーバーヘッドなく扱えるクラスになっています。
+//    
+//    
+//    なおこのクラスは、 T がポインタ以外で各操作が例外を投げない場合、
+//    標準ライブラリの NullablePointer Requirement を満たします。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -47,7 +57,6 @@ namespace etude {
     typedef optional<T> self_type;
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
-    struct dummy_ { explicit dummy_(){} };
     
     static bool const eq_comparable = etude::is_equality_comparable<T>::value;
     static bool const lt_comparable = etude::is_less_than_comparable<T>::value;
@@ -166,20 +175,22 @@ namespace etude {
     }
     
     // in_place
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    optional( InPlace && in_place, dummy_ = dummy_() ) {
+    optional( InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    optional( bool cond, InPlace && in_place, dummy_ = dummy_() ) {
+    optional( bool cond, InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
     
@@ -218,12 +229,13 @@ namespace etude {
       impl_.assign( std::forward<U>(x) );
     }
     // in place assignment
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    void assign( InPlace && in_place, dummy_ = dummy_() ) {
+    void assign( InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
     
