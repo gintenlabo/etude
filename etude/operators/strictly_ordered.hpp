@@ -43,15 +43,15 @@ namespace etude {
     static_assert( !std::is_same<T const&, U const&>::value, "bad template arguments" );
     
     // > から <= の製作
-    template< class T_ = T const&,
-      class Result = decltype( !( std::declval<T_>() > std::declval<T_>() ) )
+    template< class T_ = T const&, class U_ = U const&,
+      class Result = decltype( !( std::declval<T_>() > std::declval<U_>() ) )
     >
     friend Result operator<=( T const& lhs, U const& rhs ) {
       return !( lhs > rhs );
     }
     // < から >= の製作
-    template< class T_ = T const&,
-      class Result = decltype( !( std::declval<T_>() < std::declval<T_>() ) )
+    template< class T_ = T const&, class U_ = U const&,
+      class Result = decltype( !( std::declval<T_>() < std::declval<U_>() ) )
     >
     friend Result operator>=( T const& lhs, U const& rhs ) {
       return !( lhs < rhs );
