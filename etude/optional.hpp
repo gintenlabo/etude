@@ -23,7 +23,7 @@
 
 #include "types/decay_and_strip.hpp"
 #include "types/is_assignable.hpp"
-#include "types/bool_constant.hpp"
+#include "types/is_assignable_or_convertible.hpp"
 #include "memory/storage.hpp"
 #include "memory/apply_in_place.hpp"
 #include "utility/compressed_pair.hpp"
@@ -267,14 +267,6 @@ namespace etude {
     pointer p_;
   };
   
-  // メタ関数 optional_assignable
-  template<class T, class U>
-  struct optional_assignable_ :
-    etude::bool_constant<
-      std::is_convertible<U, T>::value || etude::is_assignable<T, U>::value
-    >
-  {};
-
   // メタ関数 optional_base_
   // T の copy/move の有無に合わせて optional の copy/move の有無を変える
   template<class T>
@@ -339,7 +331,8 @@ namespace etude {
     template<class U,
       class = typename std::enable_if<
         !std::is_reference<T>::value &&
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
       >::type
     >
     optional( U && x ) {
@@ -363,7 +356,8 @@ namespace etude {
     template<class U,
       class = typename std::enable_if<
         !std::is_reference<T>::value && // 参照の場合は無効化
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
       >::type
     >
     optional( bool cond, U && x ) {
@@ -459,13 +453,17 @@ namespace etude {
     // T に operator= があればそちらを、無いなら一旦破棄してから ctor を呼ぶ。
     // 破棄してから ctor を呼ぶ場合は、自己代入チェック有り
     template< class U = T_&&,
-      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
+      class = typename std::enable_if<is_assignable_or_convertible<T_, U>::value>::type
     >
     void assign( T_ && x ) {
       impl_.assign( std::forward<T_>(x) );
     }
     template< class U,
-      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
+      class = typename std::enable_if<
+        !std::is_reference<T>::value && // 参照の場合は無効化
+        is_assignable_or_convertible<T_, U>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
+      >::type
     >
     void assign( U && x ) {
       impl_.assign( std::forward<U>(x) );
@@ -473,7 +471,6 @@ namespace etude {
     // in place assignment
     template< class InPlace,
       class = typename std::enable_if<
-        !optional_assignable_<T_, InPlace>::value &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
@@ -486,7 +483,7 @@ namespace etude {
       class = decltype( bool( std::declval<P>() ) ),
       class U = decltype( *std::declval<P>() ),
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, U>::value
       >::type
     >
     void assign_if( P && p )
@@ -509,7 +506,7 @@ namespace etude {
     // 型変換
     template<class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, U>::value
       >::type
     >
     self_type& operator=( optional<U> const& rhs ) {
@@ -518,7 +515,7 @@ namespace etude {
     }
     template<class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, U>::value
       >::type
     >
     self_type& operator=( optional<U> && rhs ) {
@@ -527,7 +524,7 @@ namespace etude {
     }
     // T からの代入
     template< class U = T_&&,
-      class = typename std::enable_if<optional_assignable_<T_, U>::value>::type
+      class = typename std::enable_if<is_assignable_or_convertible<T_, U>::value>::type
     >
     self_type& operator=( T_ && rhs ) {
       assign( std::forward<T>(rhs) );
@@ -535,8 +532,10 @@ namespace etude {
     }
     template<class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value ||
-        etude::is_in_place_applyable<U, T>::value
+        !std::is_reference<T>::value && ( // 参照の場合は無効化
+          is_assignable_or_convertible<T_, U>::value ||
+          etude::is_in_place_applyable<U, T>::value
+        )
       >::type
     >
     self_type& operator=( U && rhs ) {
