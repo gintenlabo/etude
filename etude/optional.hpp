@@ -23,9 +23,6 @@
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
 
-#include "utility/empty_base.hpp"
-#include "noncopyable.hpp"
-#include "immovable.hpp"
 #include "operators/totally_ordered.hpp"
 #include "operators/partially_ordered.hpp"
 
@@ -38,31 +35,12 @@
 
 namespace etude {
 
-  // メタ関数 optional_base_
-  // T の copy/move の有無に合わせて optional の copy/move の有無を変える
-  template<class T>
-  struct optional_base_
-  {
-    typedef etude::empty_base< etude::optional<T> > base;
-    
-    typedef typename std::conditional<
-      !std::is_constructible<T, T&&>::value, etude::immovable<base>,
-      typename std::conditional<
-        !std::is_constructible<T, T const&>::value,
-        etude::noncopyable<base>, base
-      >::type
-    >::type type;
-  
-  };
-
   // 実装本体
   template<class T>
   class optional
     : etude::totally_ordered< optional<T>, boost::none_t,
         etude::partially_ordered< optional<T>, T,
-          etude::partially_ordered1< optional<T>,
-            typename optional_base_<T>::type
-          >
+          etude::partially_ordered< optional<T> >
         >
       >
   {

@@ -21,14 +21,18 @@
 #include "../types/is_assignable.hpp"
 #include "../memory/apply_in_place.hpp"
 
+#include "../noncopyable.hpp"
+#include "../immovable.hpp"
+
 namespace etude {
 
   // 前方宣言
   template<class T>
   class optional;
 
+
   // 実装用基底クラス
-  template<class T>
+  template<class T, class = void>
   struct optional_impl_base_
   {
     // construct
@@ -190,50 +194,16 @@ namespace etude {
     }
     
   };
-
-
-  // etude::optional の中で保持されるクラス optional_impl_
-  // T が参照か否か、 T の dtor が trivial か否かに応じて切り分ける
-  
-  // T の dtor が non-trivial の場合
-  template<class T, class = void>
-  struct optional_impl_
-    : optional_impl_base_<T>
-  {
-    typedef optional_impl_base_<T> base_;
-    
-    optional_impl_() = default;
-    ~optional_impl_(){ base_::dispose(); }
-    
-  };
-  
-  // T の dtor が trivial の場合
-  template<class T>
-  struct optional_impl_< T,
-    typename std::enable_if<
-      !std::is_reference<T>::value &&
-      std::has_trivial_destructor<T>::value
-    >::type
-  >
-    : optional_impl_base_<T>
-  {
-    typedef optional_impl_base_<T> base_;
-    
-    optional_impl_() = default;
-    // dtor は trivial でいい
-    // ~optional_impl_() = default;
-    
-  };
   
   // 参照の場合
   template<class T>
-  struct optional_impl_< T,
+  struct optional_impl_base_< T,
     typename std::enable_if<std::is_reference<T>::value>::type
   >
   {
     typedef typename std::add_pointer<T>::type pointer;
     
-    optional_impl_()
+    optional_impl_base_()
       : p_() {}
     // dtor は trivial
     
@@ -258,7 +228,7 @@ namespace etude {
       p_ = 0;
     }
     
-    void swap( optional_impl_& other ) {
+    void swap( optional_impl_base_& other ) {
       std::swap( p_, other.p_ );
     }
     
@@ -266,6 +236,59 @@ namespace etude {
     pointer p_;
   
   };
+
+
+  // メタ関数 optional_impl_select_base_
+  // T の copy/move の有無に合わせて copy/move の有無を変える
+  // T が U&& の場合には copy 不能にする必要あるので参照の場合も select する
+  template<class T>
+  struct optional_impl_select_base_
+  {
+    typedef optional_impl_base_<T> base;
+    
+    typedef typename std::conditional<
+      !std::is_constructible<T, T&&>::value,
+      etude::immovable<base>, typename std::conditional<
+        !std::is_constructible<T, T const&>::value,
+        etude::noncopyable<base>, base
+      >::type
+    >::type type;
+  
+  };
+  
+
+  // etude::optional の中で保持されるクラス optional_impl_
+  // T の dtor が trivial か否かに応じて切り分ける
+  
+  // T の dtor が non-trivial の場合
+  template<class T, class = void>
+  struct optional_impl_
+    : optional_impl_select_base_<T>::type
+  {
+    typedef optional_impl_base_<T> base_;
+    
+    optional_impl_() = default;
+    ~optional_impl_(){ base_::dispose(); }
+    
+  };
+  
+  // T の dtor が trivial の場合（参照含む）
+  template<class T>
+  struct optional_impl_< T,
+    typename std::enable_if<
+      std::has_trivial_destructor<T>::value
+    >::type
+  >
+    : optional_impl_select_base_<T>::type
+  {
+    typedef optional_impl_base_<T> base_;
+    
+    optional_impl_() = default;
+    // dtor は trivial でいい
+    // ~optional_impl_() = default;
+    
+  };
+  
   
 
 } // namespace etude
