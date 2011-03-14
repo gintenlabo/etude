@@ -390,19 +390,29 @@ int test_main( int, char** )
       !std::is_constructible<etude::optional<int const&>, int &&>::value
     ));
     
-    int i = 0, j = 1;
+    int i = 0, j = 0; // 同じ値を保持する
     
     etude::optional<int&> p = i;
     BOOST_CHECK( is_same_object( *p, i ) );
+    BOOST_CHECK( p == i );
+    BOOST_CHECK( p != j );
     
     p = j;
     BOOST_CHECK( is_same_object( *p, j ) );
+    BOOST_CHECK( p != i );
+    BOOST_CHECK( p == j );
     
     etude::optional<int const&> q = i;
     BOOST_CHECK( is_same_object( *q, i ) );
+    BOOST_CHECK( q == i );
+    BOOST_CHECK( q != j );
+    BOOST_CHECK( p != q );
     
     q = j;
     BOOST_CHECK( is_same_object( *q, j ) );
+    BOOST_CHECK( q != i );
+    BOOST_CHECK( q == j );
+    BOOST_CHECK( p == q );
     
   }
   

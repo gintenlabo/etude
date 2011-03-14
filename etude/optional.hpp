@@ -4,7 +4,7 @@
 // 
 //    Boost.Optional の C++0x 拡張版です。
 //    rvalue reference と explicit operator bool 、
-//    および各種の SFINAE に対応しています。
+//    optional<T const> および各種の SFINAE に対応しています。
 //    
 //    また、その実装は、現行（ Boost 1.46.1 ）の Boost.Optional に比べて、
 //    格納される型がデストラクタを持たない場合や、特に参照の場合において
@@ -12,6 +12,18 @@
 //    
 //    特に etude::optional<T&> は、「 delete できない安全なポインタ」として
 //    ほぼオーバーヘッドなく扱えるクラスになっています。
+//    
+//    現行の Boost.Optional との差異ですが、
+//    参照に対する etude::optional の比較演算子は、 T そのものではなく、
+//    参照先のアドレスを比較するものとなっています。
+//    これにより、 T が比較できない型であっても、 etude::optional<T&> は比較できます。
+//    
+//    また、 T が再代入できない型の場合、 boost::optional<T> も再代入できませんでしたが、
+//    etude::optional<T> は再構築による再代入が可能になっています。
+//    （再代入できる型なら、再構築ではなく再代入による処理を行います）
+//    
+//    特に etude::optional<T const> は、再代入が可能になっているだけでなく、
+//    move 時には非 const の T&& を得られるようになっています。
 //    
 //    
 //    なおこのクラスは、 T がポインタ以外で各操作が例外を投げない場合、
@@ -29,6 +41,7 @@
 
 #include <utility>
 #include <type_traits>
+#include <functional> // for std::less
 
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
@@ -58,9 +71,12 @@ namespace etude {
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
     
-    static bool const eq_comparable = etude::is_equality_comparable<T>::value;
-    static bool const lt_comparable = etude::is_less_than_comparable<T>::value;
-    static bool const le_comparable = etude::is_less_or_equal_comparable<T>::value;
+    static bool const eq_comparable = std::is_reference<T>::value ||
+      etude::is_equality_comparable<T>::value;
+    static bool const lt_comparable = std::is_reference<T>::value ||
+      etude::is_less_than_comparable<T>::value;
+    static bool const le_comparable = std::is_reference<T>::value ||
+      etude::is_less_or_equal_comparable<T>::value;
     
    public:
     typedef T_   value_type;  // value_type   は const が付かない
@@ -400,35 +416,84 @@ namespace etude {
     // <=, >= は etude::totally_ordered により自動定義される。
     
     // T const& との比較
+    // 非参照版
     template< bool EqualityComparable = eq_comparable,
-      class = typename std::enable_if<EqualityComparable>::type
+      class = typename std::enable_if<
+        EqualityComparable &&
+        !std::is_reference<T>::value
+      >::type
     >
     friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs == rhs ) : false;
     }
     template< bool LessThanComparable = lt_comparable,
-      class = typename std::enable_if<LessThanComparable>::type
+      class = typename std::enable_if<
+        LessThanComparable &&
+        !std::is_reference<T>::value
+      >::type
     >
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <  rhs ) : true;
     }
     template< bool LessThanComparable = lt_comparable,
-      class = typename std::enable_if<LessThanComparable>::type
+      class = typename std::enable_if<
+        LessThanComparable &&
+        !std::is_reference<T>::value
+      >::type
     >
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs < *lhs ) : false;
     }
     template< bool LessOrEqualComparable = le_comparable,
-      class = typename std::enable_if<LessOrEqualComparable>::type
+      class = typename std::enable_if<
+        LessOrEqualComparable &&
+        !std::is_reference<T>::value
+      >::type
     >
     friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool( *lhs <=  rhs ) : true;
     }
     template< bool LessOrEqualComparable = le_comparable,
-      class = typename std::enable_if<LessOrEqualComparable>::type
+      class = typename std::enable_if<
+        LessOrEqualComparable &&
+        !std::is_reference<T>::value
+      >::type
     >
     friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
       return lhs ? bool(  rhs <= *lhs ) : false;
+    }
+    // 向きを反転したものは etude::partially_ordered により自動定義される。
+    
+    // 参照版
+    template< class U = T,
+      class = typename std::enable_if<std::is_reference<U>::value>::type
+    >
+    friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs.get_ptr() == boost::addressof(rhs);
+    }
+    template< class U = T,
+      class = typename std::enable_if<std::is_reference<U>::value>::type
+    >
+    friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? std::less<pointer>()( lhs.get_ptr(), boost::addressof(rhs) ) : true;
+    }
+    template< class U = T,
+      class = typename std::enable_if<std::is_reference<U>::value>::type
+    >
+    friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return lhs ? std::less<pointer>()( boost::addressof(rhs), lhs.get_ptr() ) : false;
+    }
+    template< class U = T,
+      class = typename std::enable_if<std::is_reference<U>::value>::type
+    >
+    friend bool operator<=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !( lhs > rhs );
+    }
+    template< class U = T,
+      class = typename std::enable_if<std::is_reference<U>::value>::type
+    >
+    friend bool operator>=( self_type const& lhs, T const& rhs ) /*noexcept*/ {
+      return !( lhs < rhs );
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
