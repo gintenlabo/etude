@@ -53,6 +53,7 @@
 #include "types/is_less_than_comparable.hpp"
 #include "types/is_less_or_equal_comparable.hpp"
 #include "types/is_assignable_or_convertible.hpp"
+#include "utility/less_pointer.hpp"
 
 #include "types/decay_and_strip.hpp"
 
@@ -475,13 +476,13 @@ namespace etude {
       class = typename std::enable_if<std::is_reference<U>::value>::type
     >
     friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? std::less<pointer>()( lhs.get_ptr(), boost::addressof(rhs) ) : true;
+      return lhs ? etude::less_pointer( lhs.get_ptr(), boost::addressof(rhs) ) : true;
     }
     template< class U = T,
       class = typename std::enable_if<std::is_reference<U>::value>::type
     >
     friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? std::less<pointer>()( boost::addressof(rhs), lhs.get_ptr() ) : false;
+      return lhs ? etude::less_pointer( boost::addressof(rhs), lhs.get_ptr() ) : false;
     }
     template< class U = T,
       class = typename std::enable_if<std::is_reference<U>::value>::type
