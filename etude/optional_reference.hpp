@@ -30,6 +30,10 @@ namespace etude {
   class optional_reference
     : boost::totally_ordered< optional_reference<T> >
   {
+    static_assert(
+      !std::is_void<T>::value && !std::is_reference<T>::value,
+      "T must be object type or function type."
+    );
     typedef optional_reference<T> self_type;
     
    public:

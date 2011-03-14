@@ -49,6 +49,7 @@
 #include "operators/totally_ordered.hpp"
 #include "operators/partially_ordered.hpp"
 
+#include "types/is_array_of_unknown_bound.hpp"
 #include "types/is_equality_comparable.hpp"
 #include "types/is_less_than_comparable.hpp"
 #include "types/is_less_or_equal_comparable.hpp"
@@ -68,6 +69,12 @@ namespace etude {
         >
       >
   {
+    static_assert(
+      !std::is_void<T>::value && !std::is_function<T>::value &&
+      !etude::is_array_of_unknown_bound<T>::value,
+      "T must be complete type."
+    );
+    
     typedef optional<T> self_type;
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
