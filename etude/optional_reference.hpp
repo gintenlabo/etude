@@ -58,7 +58,7 @@ namespace etude {
     // 型変換
     template< class U,
       class = typename std::enable_if<
-        std::is_convertible<U&, T&>::value
+        std::is_convertible<U*, T*>::value
       >::type
     >
     optional_reference( optional_reference<U> const& src ) /*noexcept*/
