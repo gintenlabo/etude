@@ -7,6 +7,7 @@
 //
 
 #include "../etude/optional_reference.hpp"
+#include "../etude/types/is_equality_comparable.hpp"
 
 #include <type_traits>
 #include <boost/test/minimal.hpp>
@@ -20,16 +21,21 @@ inline bool is_same_object( T& x, T& y )
   return boost::addressof(x) == boost::addressof(y);
 }
 
-template<class T>
-inline void check_comparison
-  ( etude::optional_reference<T> const& x, etude::optional_reference<T> const& y )
+template<class T, class U>
+inline void check_comparison (
+  etude::optional_reference<T> const& x, etude::optional_reference<U> const& y,
+  bool equal_expected, bool less_expected
+)
 {
-  BOOST_CHECK( ( x == y ) == ( x.get() == y.get() ) );
-  BOOST_CHECK( ( x != y ) == ( x.get() != y.get() ) );
-  BOOST_CHECK( ( x <  y ) == ( x.get() <  y.get() ) );
-  BOOST_CHECK( ( x <= y ) == ( x.get() <= y.get() ) );
-  BOOST_CHECK( ( x >  y ) == ( x.get() >  y.get() ) );
-  BOOST_CHECK( ( x >= y ) == ( x.get() >= y.get() ) );
+  bool const less_or_equal_expected = less_expected || equal_expected;
+  
+  BOOST_CHECK( ( x == y ) ==  equal_expected );
+  BOOST_CHECK( ( x != y ) == !equal_expected );
+  BOOST_CHECK( ( x <  y ) ==  less_expected );
+  BOOST_CHECK( ( x <= y ) ==  less_or_equal_expected );
+  BOOST_CHECK( ( x >  y ) == !less_or_equal_expected );
+  BOOST_CHECK( ( x >= y ) == !less_expected );
+  
 }
 struct hoge
 {
@@ -141,16 +147,35 @@ int test_main( int, char** )
   
   // 比較
   {
-    int i = 0, j = 1;
+    int i = 0, j = 0;
     etude::optional_reference<int> p0, p1, p2 = i, p3 = i, p4 = j;
     
-    check_comparison( p0, p0 );  // 同じオブジェクト（NULL）
-    check_comparison( p0, p1 );  // 違うオブジェクト（どちらもNULL）
-    check_comparison( p0, p2 );  // 違うオブジェクト（左がNULL, 右が非NULL）
-    check_comparison( p2, p0 );  // 違うオブジェクト（左が非NULL, 右がNULL）
-    check_comparison( p2, p2 );  // 同じオブジェクト（非NULL）
-    check_comparison( p2, p3 );  // 違うオブジェクト（どちらも非NULLの同じ値）
-    check_comparison( p2, p4 );  // 違うオブジェクト（非NULLの異なる値）
+    bool const less_0i = std::less<int*>()(  0, &i );
+    bool const less_ij = std::less<int*>()( &i, &j );
+    
+    check_comparison( p0, p0, true, false );  // 同じオブジェクト（NULL）
+    check_comparison( p0, p1, true, false );  // 違うオブジェクト（どちらもNULL）
+    check_comparison( p0, p2, false, less_0i );  // 違うオブジェクト（左がNULL, 右が非NULL）
+    check_comparison( p2, p0, false, !less_0i );  // 違うオブジェクト（左が非NULL, 右がNULL）
+    check_comparison( p2, p2, true, false );  // 同じオブジェクト（非NULL）
+    check_comparison( p2, p3, true, false );  // 違うオブジェクト（どちらも非NULLの同じ値）
+    check_comparison( p2, p4, false, less_ij );  // 違うオブジェクト（非NULLの異なる値）
+    
+    // 型変換
+    etude::optional_reference<int const> p5, p6 = i;
+    check_comparison( p0, p5, true, false );  // どちらもNULL
+    check_comparison( p0, p6, false, less_0i );  // 左がNULL, 右が非NULL
+    check_comparison( p2, p5, false, !less_0i );  // 左が非NULL, 右がNULL
+    check_comparison( p2, p6, true, false );  // どちらも非NULLの同じ値
+    check_comparison( p4, p6, false, !less_ij );  // 非NULLの異なる値
+    
+    // 無関係の型は比較できない
+    STATIC_ASSERT((
+      !etude::is_equality_comparable<
+        etude::optional_reference<int>,
+        etude::optional_reference<char>
+      >::value
+    ));
   }
   
   {
