@@ -50,6 +50,10 @@ namespace etude {
     optional_reference( bool cond, T& x ) /*noexcept*/
       : p_( cond ? boost::addressof(x) : 0 ) {}
     
+    // rvalue からは構築できないよう
+    optional_reference( T && x ) = delete;
+    optional_reference( bool cond, T && x ) = delete;
+    
     
     // 型変換
     template< class U,

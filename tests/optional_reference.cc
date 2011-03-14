@@ -71,8 +71,7 @@ int test_main( int, char** )
   // 代入と make_optional_reference
   {
     int i = 0;
-    etude::optional_reference<int> p = 0;
-    BOOST_CHECK( p == 0 );
+    etude::optional_reference<int> p = boost::none;
     BOOST_CHECK( p == boost::none );
     
     // 直接代入
