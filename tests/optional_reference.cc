@@ -7,7 +7,9 @@
 //
 
 #include "../etude/optional_reference.hpp"
+
 #include "../etude/types/is_equality_comparable.hpp"
+#include "../etude/utility/less_pointer.hpp"
 
 #include <type_traits>
 #include <boost/test/minimal.hpp>
@@ -27,6 +29,10 @@ inline void check_comparison (
   bool equal_expected, bool less_expected
 )
 {
+  // 引数チェック
+  BOOST_CHECK( equal_expected == ( x.get() == y.get() ) );
+  BOOST_CHECK( less_expected == etude::less_pointer( x.get(), y.get() ) );
+  
   bool const less_or_equal_expected = less_expected || equal_expected;
   
   BOOST_CHECK( ( x == y ) ==  equal_expected );

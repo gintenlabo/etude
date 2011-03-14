@@ -22,6 +22,7 @@
 #include <boost/utility/addressof.hpp>
 
 #include "types/has_common_type.hpp"
+#include "utility/less_pointer.hpp"
 
 namespace etude {
 
@@ -133,7 +134,7 @@ namespace etude {
       return lhs.p_ == rhs.p_;
     }
     friend bool operator<( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return std::less<T*>()( lhs.p_, rhs.p_ );
+      return etude::less_pointer( lhs.p_, rhs.p_ );
     }
     // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
@@ -177,8 +178,7 @@ namespace etude {
     optional_reference<T> const& lhs, optional_reference<U> const& rhs
   ) /*noexcept*/
   {
-    typedef typename std::common_type<T*, U*>::type pointer;
-    return std::less<pointer>()( lhs.get(), rhs.get() );
+    return etude::less_pointer( lhs.get(), rhs.get() );
   }
   template<class T, class U,
     class = typename std::enable_if<
