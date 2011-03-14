@@ -66,6 +66,9 @@ int main()
   STATIC_ASSERT(( !etude::is_less_or_equal_comparable<int*, char*>::value ));
   STATIC_ASSERT(( !etude::is_less_or_equal_comparable<char*, int*>::value ));
   
+  STATIC_ASSERT((  etude::is_less_or_equal_comparable<int const*, void*>::value ));
+  STATIC_ASSERT(( !etude::is_less_or_equal_comparable<char const*, int*>::value ));
+  
   // 参照を渡した場合、組み込み型の場合は結果は変わらない
   STATIC_ASSERT((  etude::is_less_or_equal_comparable<int&>::value ));
   STATIC_ASSERT((  etude::is_less_or_equal_comparable<void*&>::value ));

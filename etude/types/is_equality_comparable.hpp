@@ -16,6 +16,7 @@
 
 #include <type_traits>
 #include <utility>
+#include "has_common_type.hpp"
 
 namespace etude {
 
@@ -49,7 +50,7 @@ namespace etude {
     typedef typename std::decay<U>::type U_;
     
     typedef std::integral_constant< bool,
-      std::is_convertible<T_, U_>::value || std::is_convertible<U_, T_>::value
+      etude::has_common_type<U_, T_>::value
     > type;
     
   };
