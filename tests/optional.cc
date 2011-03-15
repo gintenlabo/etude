@@ -357,11 +357,18 @@ int test_main( int, char** )
     etude::optional<Y> x = Y(1);
     BOOST_CHECK( x && x->x == 1 );
     
-    etude::optional<Y> y = std::move(x);
+    etude::optional<Y const> y = std::move(x);
     BOOST_CHECK( x->x == 0 && y && y->x == 1 );
     
     x = std::move(y);
     BOOST_CHECK( x->x == 1 && y->x == 0 );
+    
+    auto z = x.move_value_or( Y(2) );
+    BOOST_CHECK( x->x == 0 && z.x == 1 );
+    
+    y = 0;
+    z = etude::get_optional_value_or( std::move(y), Y(2) );
+    BOOST_CHECK( z.x == 2 );
     
     basic_check<Y>( Y(0) );
     basic_check<Y const>( Y(0) );

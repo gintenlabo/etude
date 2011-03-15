@@ -56,6 +56,7 @@
 #include "types/is_assignable_or_convertible.hpp"
 #include "utility/less_pointer.hpp"
 
+#include "types/identity.hpp"
 #include "types/decay_and_strip.hpp"
 
 namespace etude {
@@ -407,7 +408,13 @@ namespace etude {
     T const& get_value_or( T const& default_ ) const {
       return *this ? **this : default_;
     }
-    
+    // move 版
+    T_&& move_value_or( T_ && default_ ) {
+      if( *this ) {
+        return this->move();
+      }
+      return std::forward<T_>( default_ );
+    }
     
     // 比較
     
@@ -534,9 +541,21 @@ namespace etude {
   
   
   // 取得
+  
+  // get_value_or
   template<class T>
   inline T const& get_optional_value_or( optional<T> const& x, T const& default_ ) {
     return x.get_value_or( default_ );
+  }
+  // rvalue reference 版
+  template<class T>
+  inline typename std::remove_const<T>::type &&
+    get_optional_value_or( optional<T> && x,
+      typename std::remove_const<T>::type && default_ )
+  {
+    return x.move_value_or(
+      std::forward<typename std::remove_const<T>::type>(default_)
+    );
   }
   
   
