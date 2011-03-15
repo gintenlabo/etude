@@ -456,6 +456,18 @@ int test_main( int, char** )
     STATIC_ASSERT((
       !etude::is_equality_comparable<etude::optional<int>, etude::optional<int&>>::value
     ));
+    STATIC_ASSERT((
+      etude::is_equality_comparable<etude::optional<int const*>, etude::optional<void*>>::value
+    ));
+    STATIC_ASSERT((
+      !etude::is_equality_comparable<etude::optional<int const*>, etude::optional<char*>>::value
+    ));
+    STATIC_ASSERT((
+      etude::is_equality_comparable<etude::optional<int const&>, etude::optional<int volatile&>>::value
+    ));
+    STATIC_ASSERT((
+      !etude::is_equality_comparable<etude::optional<int const&>, etude::optional<char&>>::value
+    ));
   }
   
   return 0;

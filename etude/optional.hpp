@@ -64,9 +64,7 @@ namespace etude {
   template<class T>
   class optional
     : etude::totally_ordered< optional<T>, boost::none_t,
-        etude::partially_ordered< optional<T>, T,
-          etude::partially_ordered< optional<T> >
-        >
+        etude::partially_ordered< optional<T>, T >
       >
   {
     static_assert(
@@ -466,29 +464,8 @@ namespace etude {
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
+    
     // optional 同士の相互比較
-    template< bool EqualityComparable = is_eq_comp_,
-      class = typename std::enable_if<EqualityComparable>::type
-    >
-    friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
-    }
-    template< bool LessThanComparable = is_lt_comp_,
-      class = typename std::enable_if<LessThanComparable>::type
-    >
-    friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
-    }
-    template< bool LessOrEqualComparable = is_le_comp_,
-      class = typename std::enable_if<LessOrEqualComparable>::type
-    >
-    friend bool operator<=( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
-    }
-    // 向きを反転したものは etude::partially_ordered により自動定義される。
-    
-    
-    // 型の違う optional 同士の相互比較
     
     // 実装補助、 U 型と指定のタイプの演算が可能か
     template<
@@ -697,6 +674,52 @@ namespace etude {
   inline Result make_optional( bool cond, T && x ) {
     return Result( cond, std::forward<T>(x) );
   }
+
+
+  // 参照と参照以外を比較する場合は明示的に delete する
+  // delete された friend 関数をクラス内に定義するのは無理みたいなので外に定義
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator==( optional<T> const&, optional<U> const& ) = delete;
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator!=( optional<T> const&, optional<U> const& ) = delete;
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator< ( optional<T> const&, optional<U> const& ) = delete;
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator> ( optional<T> const&, optional<U> const& ) = delete;
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator<=( optional<T> const&, optional<U> const& ) = delete;
+  
+  template<class T, class U,
+    class = typename std::enable_if<
+      std::is_reference<T>::value != std::is_reference<U>::value
+    >::type
+  >
+  void operator>=( optional<T> const&, optional<U> const& ) = delete;
 
 
 } // namespace etude
