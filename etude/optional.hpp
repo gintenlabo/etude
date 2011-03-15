@@ -56,12 +56,11 @@
 #include "types/is_assignable_or_convertible.hpp"
 #include "utility/less_pointer.hpp"
 
-#include "types/identity.hpp"
 #include "types/decay_and_strip.hpp"
 
 namespace etude {
 
-  // 実装本体
+
   template<class T>
   class optional
     : etude::totally_ordered< optional<T>, boost::none_t,
@@ -439,129 +438,33 @@ namespace etude {
       class = typename std::enable_if<EqualityComparable>::type
     >
     friend bool operator==( self_type const& lhs, T const& rhs ) {
-      return lhs.equal_(rhs);
+      return lhs.eq_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator< ( self_type const& lhs, T const& rhs ) {
-      return lhs.less_(rhs);
+      return lhs.lt_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator> ( self_type const& lhs, T const& rhs ) {
-      return lhs.greater_(rhs);
+      return lhs.gt_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
     friend bool operator<=( self_type const& lhs, T const& rhs ) {
-      return lhs.less_eq_(rhs);
+      return lhs.le_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
     friend bool operator>=( self_type const& lhs, T const& rhs ) {
-      return lhs.greater_eq_(rhs);
+      return lhs.ge_(rhs);
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
-    
-    // 実装
-    // 非参照
-    template< class U,
-      class = typename std::enable_if<
-        !std::is_reference<T>::value &&
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
-    bool equal_( U const& x ) const {
-      return *this ? ( this->get() == x ) : false;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        !std::is_reference<T>::value &&
-        etude::is_less_than_comparable<T, U>::value
-      >::type
-    >
-    bool less_( U const& x ) const {
-      return *this ? ( this->get() < x ) : true;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        !std::is_reference<T>::value &&
-        etude::is_less_than_comparable<U, T>::value
-      >::type
-    >
-    bool greater_( U const& x ) const {
-      return *this ? ( x < this->get() ) : false;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        !std::is_reference<T>::value &&
-        etude::is_less_or_equal_comparable<T, U>::value
-      >::type
-    >
-    bool less_eq_( U const& x ) const {
-      return *this ? ( this->get() <= x ) : true;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        !std::is_reference<T>::value &&
-        etude::is_less_or_equal_comparable<U, T>::value
-      >::type
-    >
-    bool greater_eq_( U const& x ) const {
-      return *this ? ( x <= this->get() ) : false;
-    }
-    // 参照
-    template< class U,
-      class = typename std::enable_if<
-        std::is_reference<T>::value &&
-        etude::has_common_type<pointer, U*>::value
-      >::type
-    >
-    bool equal_( U& x ) const {
-      return this->get_ptr() == boost::addressof(x);
-    }
-    template< class U,
-      class = typename std::enable_if<
-        std::is_reference<T>::value &&
-        etude::has_common_type<pointer, U*>::value
-      >::type
-    >
-    bool less_( U& x ) const {
-      // 単に return etude::less_pointer( this->get_ptr(), boost::addressof(x) );
-      // としないのは、無効状態の比較との整合性を取るため
-      return *this ? etude::less_pointer( this->get_ptr(), boost::addressof(x) ) : true;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        std::is_reference<T>::value &&
-        etude::has_common_type<pointer, U*>::value
-      >::type
-    >
-    bool greater_( U& x ) const {
-      return *this ? etude::less_pointer( boost::addressof(x), this->get_ptr() ) : false;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        std::is_reference<T>::value &&
-        etude::has_common_type<pointer, U*>::value
-      >::type
-    >
-    bool less_eq_( U& x ) const {
-      return !greater_(x);
-    }
-    template< class U,
-      class = typename std::enable_if<
-        std::is_reference<T>::value &&
-        etude::has_common_type<pointer, U*>::value
-      >::type
-    >
-    bool greater_eq_( U& x ) const {
-      return !less_(x);
-    }
     
     // optional 同士の相互比較
     template< bool EqualityComparable = is_eq_comp_,
@@ -583,6 +486,181 @@ namespace etude {
       return rhs ? ( lhs <= *rhs ) : ( lhs <= boost::none );
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
+    
+    
+    // 型の違う optional 同士の相互比較
+    
+    // 実装補助、 U 型と指定のタイプの演算が可能か
+    template<
+      template<class, class> class is_xxx_comparable,
+      class U, class = void
+    >
+    struct is_comparable_with_
+      : std::false_type {};
+    // 非参照版
+    template< template<class, class> class is_xxx_comparable, class U >
+    struct is_comparable_with_< is_xxx_comparable, U,
+      typename std::enable_if<
+        !std::is_reference<T>::value && !std::is_reference<U>::value
+      >::type
+    >
+      : is_xxx_comparable<T, U>::type
+    {};
+    // 参照版
+    template< template<class, class> class is_xxx_comparable, class U >
+    struct is_comparable_with_< is_xxx_comparable, U,
+      typename std::enable_if<
+        std::is_reference<T>::value && std::is_reference<U>::value
+      >::type
+    > :
+      etude::has_common_type<
+        typename std::add_pointer<T>::type,
+        typename std::add_pointer<U>::type
+      >::type
+    {};
+    
+    // 本体
+    template< class U,
+      class = typename std::enable_if<
+        is_comparable_with_<etude::is_equality_comparable, U>::value
+      >::type
+    >
+    friend bool operator==( self_type const& lhs, optional<U> const& rhs ) {
+      return rhs ? lhs.eq_(*rhs) : ( lhs == boost::none );
+    }
+    template< class U,
+      class = typename std::enable_if<
+        is_comparable_with_<etude::is_equality_comparable, U>::value
+      >::type
+    >
+    friend bool operator!=( self_type const& lhs, optional<U> const& rhs ) {
+      return !( lhs == rhs );
+    }
+    template< class U,
+      class = typename std::enable_if<
+        is_comparable_with_<etude::is_less_than_comparable, U>::value
+      >::type
+    >
+    friend bool operator< ( self_type const& lhs, optional<U> const& rhs ) {
+      return rhs ? lhs.lt_(*rhs) : ( lhs < boost::none );
+    }
+    template< class U,
+      class = decltype( std::declval<optional<U>>() < std::declval<self_type>() )
+    >
+    friend bool operator> ( self_type const& lhs, optional<U> const& rhs ) {
+      return rhs < lhs;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        is_comparable_with_<etude::is_less_or_equal_comparable, U>::value
+      >::type
+    >
+    friend bool operator<=( self_type const& lhs, optional<U> const& rhs ) {
+      return rhs ? lhs.le_(*rhs) : ( lhs <= boost::none );
+    }
+    template< class U,
+      class = decltype( std::declval<optional<U>>() <= std::declval<self_type>() )
+    >
+    friend bool operator>=( self_type const& lhs, optional<U> const& rhs ) {
+      return rhs <= lhs;
+    }
+    
+    
+    // eq_, lt_, le_, gt_, ge_ の実装
+    // 非参照
+    template< class U,
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        etude::is_equality_comparable<T, U>::value
+      >::type
+    >
+    bool eq_( U const& x ) const {
+      return *this ? ( this->get() == x ) : false;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        etude::is_less_than_comparable<T, U>::value
+      >::type
+    >
+    bool lt_( U const& x ) const {
+      return *this ? ( this->get() < x ) : true;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        etude::is_less_than_comparable<U, T>::value
+      >::type
+    >
+    bool gt_( U const& x ) const {
+      return *this ? ( x < this->get() ) : false;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        etude::is_less_or_equal_comparable<T, U>::value
+      >::type
+    >
+    bool le_( U const& x ) const {
+      return *this ? ( this->get() <= x ) : true;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        etude::is_less_or_equal_comparable<U, T>::value
+      >::type
+    >
+    bool ge_( U const& x ) const {
+      return *this ? ( x <= this->get() ) : false;
+    }
+    // 参照
+    template< class U,
+      class = typename std::enable_if<
+        std::is_reference<T>::value &&
+        etude::has_common_type<pointer, U*>::value
+      >::type
+    >
+    bool eq_( U& x ) const {
+      return this->get_ptr() == boost::addressof(x);
+    }
+    template< class U,
+      class = typename std::enable_if<
+        std::is_reference<T>::value &&
+        etude::has_common_type<pointer, U*>::value
+      >::type
+    >
+    bool lt_( U& x ) const {
+      // 単に return etude::less_pointer( this->get_ptr(), boost::addressof(x) );
+      // としないのは、無効状態の比較との整合性を取るため
+      return *this ? etude::less_pointer( this->get_ptr(), boost::addressof(x) ) : true;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        std::is_reference<T>::value &&
+        etude::has_common_type<pointer, U*>::value
+      >::type
+    >
+    bool gt_( U& x ) const {
+      return *this ? etude::less_pointer( boost::addressof(x), this->get_ptr() ) : false;
+    }
+    template< class U,
+      class = typename std::enable_if<
+        std::is_reference<T>::value &&
+        etude::has_common_type<pointer, U*>::value
+      >::type
+    >
+    bool le_( U& x ) const {
+      return !gt_(x);
+    }
+    template< class U,
+      class = typename std::enable_if<
+        std::is_reference<T>::value &&
+        etude::has_common_type<pointer, U*>::value
+      >::type
+    >
+    bool ge_( U& x ) const {
+      return !lt_(x);
+    }
     
   };
   
@@ -619,6 +697,7 @@ namespace etude {
   inline Result make_optional( bool cond, T && x ) {
     return Result( cond, std::forward<T>(x) );
   }
+
 
 } // namespace etude
 

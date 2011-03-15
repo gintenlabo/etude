@@ -452,6 +452,10 @@ int test_main( int, char** )
     BOOST_CHECK( !checked_less( p, q ) );
     BOOST_CHECK( !checked_less( q, p ) );
     
+    // 参照の optional と非参照の optional を相互比較することは出来ない
+    STATIC_ASSERT((
+      !etude::is_equality_comparable<etude::optional<int>, etude::optional<int&>>::value
+    ));
   }
   
   return 0;
