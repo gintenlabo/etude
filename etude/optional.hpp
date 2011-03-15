@@ -161,7 +161,8 @@ namespace etude {
     }
     template< class U,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U, T>::value &&
+        !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
       >::type
     >
     optional( optional<U> && src ) {
