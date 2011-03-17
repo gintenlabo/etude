@@ -77,14 +77,6 @@ namespace etude {
       return etude::less_pointer( lhs, rhs );
     }
     
-    // 比較できない場合には明示的に delete
-    template< class T, class U,
-      class = typename std::enable_if<
-        !etude::is_less_than_comparable<T, U>::value
-      >::type
-    >
-    void operator()( T const& lhs, U const& rhs ) const = delete;
-    
   };
   
   

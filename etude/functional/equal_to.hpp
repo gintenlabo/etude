@@ -58,14 +58,6 @@ namespace etude {
       return bool( lhs == rhs );
     }
     
-    // 比較できない場合には明示的に delete
-    template< class T, class U,
-      class = typename std::enable_if<
-        !etude::is_equality_comparable<T, U>::value
-      >::type
-    >
-    void operator()( T const& lhs, U const& rhs ) const = delete;
-    
   };
   
   
