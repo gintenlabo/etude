@@ -344,6 +344,32 @@ int test_main( int, char** )
   }
   
   {
+    // make_optional
+    int const i = 0;
+    
+    auto x = etude::make_optional(i);
+    STATIC_ASSERT(( std::is_same<decltype(x), etude::optional<int>>::value ));
+    BOOST_CHECK( x && *x == i );
+    
+    x = etude::make_optional( false, i );
+    BOOST_CHECK( !x );
+    
+    int const* p = &i;
+    auto y = etude::make_optional_if( p );
+    STATIC_ASSERT(( std::is_same<decltype(y), etude::optional<int>>::value ));
+    BOOST_CHECK( y && *y == *p );
+    
+    p = 0;
+    y = etude::make_optional_if( p );
+    BOOST_CHECK( !y );
+    
+    auto z = etude::make_optional_if<int const&>( &i );
+    STATIC_ASSERT(( std::is_same<decltype(z), etude::optional<int const&>>::value ));
+    BOOST_CHECK( z == i );
+    
+  }
+  
+  {
     etude::optional<X> x( etude::emplace_construct, 0 );
     BOOST_CHECK( x && x->x == 0 );
     

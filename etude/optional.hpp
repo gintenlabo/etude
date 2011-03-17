@@ -661,18 +661,45 @@ namespace etude {
   }
   
   
-  // ヘルパ関数
+  // 構築ヘルパ関数
+  
+  // 引数から型推論させる
   template<class T,
     class Result = optional<typename decay_and_strip<T>::type>
   >
   inline Result make_optional( T && x ) {
-    return Result( std::forward<T>(x) );
+    return { std::forward<T>(x) };
   }
   template<class T,
     class Result = optional<typename decay_and_strip<T>::type>
   >
   inline Result make_optional( bool cond, T && x ) {
-    return Result( cond, std::forward<T>(x) );
+    return { cond, std::forward<T>(x) };
+  }
+  
+  // 他の Maybe から構築する
+  template< class Maybe,
+    class T = typename decay_and_strip<typename pointee<Maybe>::type>::type
+  >
+  inline optional<T> make_optional_if( Maybe && x )
+  {
+    if( x ) {
+      return { *std::forward<Maybe>(x) };
+    }
+    return {};
+  }
+  // 明示的に型を指定
+  template< class T, class Maybe,
+    class = typename std::enable_if<
+      std::is_convertible<typename pointee<Maybe>::type, T>::value
+    >::type
+  >
+  inline optional<T> make_optional_if( Maybe && x )
+  {
+    if( x ) {
+      return { *std::forward<Maybe>(x) };
+    }
+    return {};
   }
 
 
