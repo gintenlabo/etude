@@ -54,6 +54,7 @@
 #include "types/is_less_than_comparable.hpp"
 #include "types/is_less_or_equal_comparable.hpp"
 #include "types/is_assignable_or_convertible.hpp"
+#include "types/pointee.hpp"
 #include "utility/less_pointer.hpp"
 
 #include "types/decay_and_strip.hpp"
@@ -258,10 +259,8 @@ namespace etude {
     
     // assign_if
     template< class P,
-      class = decltype( bool( std::declval<P>() ) ),
-      class U = decltype( *std::declval<P>() ),
       class = typename std::enable_if<
-        is_assignable_or_convertible<T_, U>::value
+        is_assignable_or_convertible<T_, typename etude::pointee<P>::type>::value
       >::type
     >
     void assign_if( P && p )

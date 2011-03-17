@@ -59,6 +59,11 @@ inline void basic_check( Args&&... args )
   STATIC_ASSERT(( !std::is_const<typename optional_t::value_type>::value ));
   
   // 特性
+  // optional<T> は Maybe コンセプトを満たす
+  STATIC_ASSERT(( etude::is_maybe<optional_t>::value ));
+  STATIC_ASSERT(( etude::is_maybe<optional_t const>::value ));
+  STATIC_ASSERT(( etude::is_maybe<optional_t&>::value ));
+  STATIC_ASSERT(( etude::is_maybe<optional_t const&>::value ));
   // optional<T> は standard layout class
   STATIC_ASSERT(( std::is_standard_layout<optional_t>::value ));
   // sizeof( etude::optional<T> ) <= sizeof(T) + alignof(T)
