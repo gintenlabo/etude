@@ -10,8 +10,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_GET_NTH_HPP_
-#define ETUDE_UTILITY_INCLUDED_GET_NTH_HPP_
+#ifndef ETUDE_FUNTIONAL_INCLUDED_GET_NTH_HPP_
+#define ETUDE_FUNTIONAL_INCLUDED_GET_NTH_HPP_
 
 #include "../types/nth_type.hpp"
 #include <utility>
@@ -69,4 +69,4 @@ namespace etude {
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_UTILITY_INCLUDED_GET_NTH_HPP_
+#endif  // #ifndef ETUDE_FUNTIONAL_INCLUDED_GET_NTH_HPP_

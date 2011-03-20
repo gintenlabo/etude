@@ -6,7 +6,7 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/utility/unpacked_tuple.hpp"
+#include "../../etude/functional/unpacked_tuple.hpp"
 
 #include "../../etude/types/tuple_size.hpp"
 #include <boost/utility/addressof.hpp>

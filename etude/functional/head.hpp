@@ -9,8 +9,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_HEAD_HPP_
-#define ETUDE_UTILITY_INCLUDED_HEAD_HPP_
+#ifndef ETUDE_FUNCTIONAL_INCLUDED_HEAD_HPP_
+#define ETUDE_FUNCTIONAL_INCLUDED_HEAD_HPP_
 
 #include <utility>
 #include <type_traits>
@@ -47,4 +47,4 @@ namespace etude {
 
 } // namespace etude
 
-#endif  // #ifndef ETUDE_UTILITY_INCLUDED_HEAD_HPP_
+#endif  // #ifndef ETUDE_FUNCTIONAL_INCLUDED_HEAD_HPP_

@@ -6,7 +6,7 @@
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/utility/unpack.hpp"
+#include "../../etude/functional/unpack.hpp"
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
