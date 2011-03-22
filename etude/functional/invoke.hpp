@@ -30,33 +30,12 @@
 #include <type_traits>
 #include <functional>
 
+#include "wrap_if_mem_fn.hpp"
 #include "unpacked_tuple.hpp"
 
 namespace etude {
   
-  // 補助関数。メンバ関数／変数ポインタならば std::mem_fn でラップする
-  template<class F,
-    class = typename std::enable_if<
-      std::is_member_pointer<F>::value
-    >::type
-  >
-  inline auto wrap_if_mem_fn( F f )
-    -> decltype( std::mem_fn(f) )
-  {
-    return std::mem_fn(f);
-  }
-  
-  template<class F,
-    class = typename std::enable_if<
-      !std::is_member_pointer<typename std::decay<F>::type>::value
-    >::type
-  >
-  inline F&& wrap_if_mem_fn( F && f )
-  {
-    return std::forward<F>(f);
-  }
-  
-  // 本体。 規格 20.8.2 Requirements [func.require] で定義される INVOKE の処理を行う
+  // 規格 20.8.2 Requirements [func.require] で定義される INVOKE の処理を行う
   template<class F, class... Args,
     class R = decltype(
       etude::wrap_if_mem_fn( std::declval<F>() )( std::declval<Args>()... )
