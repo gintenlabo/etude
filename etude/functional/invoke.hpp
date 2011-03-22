@@ -33,6 +33,9 @@
 #include "wrap_if_mem_fn.hpp"
 #include "../unpacked_tuple.hpp"
 
+#include <boost/preprocessor/empty.hpp>
+#include "../types/identity.hpp"
+
 namespace etude {
   
   // 規格 20.8.2 Requirements [func.require] で定義される INVOKE の処理を行う
@@ -90,6 +93,56 @@ namespace etude {
       etude::invoke( std::forward<F>(f), std::forward<Args>(args)... )
     );
   }
+  
+  
+  // 引数が関数ポインタの場合に型推論を補助
+  template<class R, class... Args>
+  inline R invoke( R (*f)( Args... ), typename etude::identity<Args>::type... args )
+  {
+    return f( std::forward<Args>(args)... );
+  }
+  // 型指定版
+  template< class R, class R_, class... Args,
+    class = typename std::enable_if<
+      std::is_void<R>::value || std::is_convertible<R_, R>::value
+    >::type
+  >
+  inline R invoke( R_ (*f)( Args... ), typename etude::identity<Args>::type... args )
+  {
+    return static_cast<R>( f( std::forward<Args>(args)... ) );
+  }
+  
+  
+  // メンバ関数ポインタの場合に型推論補助
+  #define ETUDE_GEN_( qualifier )                                               \
+    template<class R, class X, class T, class... Args>                          \
+    inline R invoke( R ( X::*f )( Args... ) qualifier,                          \
+      T && x, typename etude::identity<Args>::type... args )                    \
+    {                                                                           \
+      return std::mem_fn(f)( std::forward<T>(x), std::forward<Args>(args)... ); \
+    }                                                                           \
+    template< class R, class R_, class X, class T, class... Args,               \
+      class = typename std::enable_if<                                          \
+        std::is_void<R>::value || std::is_convertible<R_, R>::value             \
+      >::type                                                                   \
+    >                                                                           \
+    inline R invoke( R_ ( X::*f )( Args... ) qualifier,                         \
+      T && x, typename etude::identity<Args>::type... args )                    \
+    {                                                                           \
+      return static_cast<R>(                                                    \
+        std::mem_fn(f)( std::forward<T>(x), std::forward<Args>(args)... )       \
+      );                                                                        \
+    }                                                                           \
+    /* ETUDE_GEN_( qual ) */
+    
+    ETUDE_GEN_( BOOST_PP_EMPTY() )
+    ETUDE_GEN_( const )
+    ETUDE_GEN_( volatile )
+    ETUDE_GEN_( const volatile )
+    
+    // 本来はここに & や && 系列も用意する
+    
+  #undef ETUDE_GEN_
   
 } // namespace etude
 
