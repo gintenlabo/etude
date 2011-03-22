@@ -13,6 +13,8 @@
 
 #include "function_base.hpp"
 #include <utility>
+#include <type_traits>
+#include <functional>
 
 namespace etude {
   
@@ -90,6 +92,18 @@ namespace etude {
   template<class R, class... Args>
   inline pointer_to_function<R (Args..., ...)> ptr_fn( R (*f)(Args..., ...) ) {
     return f;
+  }
+  
+  // メンバポインタの場合は std::mem_fn に転送する
+  template<class F,
+    class = typename std::enable_if<
+      std::is_member_pointer<F>::value
+    >::type
+  >
+  inline auto ptr_fn( F f )
+    -> decltype( std::mem_fn(f) )
+  {
+    return std::mem_fn(f);
   }
   
 } // namespace etude
