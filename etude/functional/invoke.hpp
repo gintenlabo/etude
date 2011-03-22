@@ -95,8 +95,13 @@ namespace etude {
   }
   
   
+  // 型推論補助はコンパイラが対応してないみたい
+  // コンパイラの対応待ち。
+  /*
   // 引数が関数ポインタの場合に型推論を補助
-  template<class R, class... Args>
+  template<class R, class... Args,
+    class = typename std::enable_if<( sizeof...(Args) > 0 )>::type
+  >
   inline R invoke( R (*f)( Args... ), typename etude::identity<Args>::type... args )
   {
     return f( std::forward<Args>(args)... );
@@ -104,6 +109,7 @@ namespace etude {
   // 型指定版
   template< class R, class R_, class... Args,
     class = typename std::enable_if<
+      ( sizeof...(Args) > 0 ) &&
       std::is_void<R>::value || std::is_convertible<R_, R>::value
     >::type
   >
@@ -115,7 +121,9 @@ namespace etude {
   
   // メンバ関数ポインタの場合に型推論補助
   #define ETUDE_GEN_( qualifier )                                               \
-    template<class R, class X, class T, class... Args>                          \
+    template<class R, class X, class T, class... Args,                          \
+      class = typename std::enable_if<( sizeof...(Args) > 0 )>::type            \
+    >                                                                           \
     inline R invoke( R ( X::*f )( Args... ) qualifier,                          \
       T && x, typename etude::identity<Args>::type... args )                    \
     {                                                                           \
@@ -123,6 +131,7 @@ namespace etude {
     }                                                                           \
     template< class R, class R_, class X, class T, class... Args,               \
       class = typename std::enable_if<                                          \
+        ( sizeof...(Args) > 0 ) &&                                              \
         std::is_void<R>::value || std::is_convertible<R_, R>::value             \
       >::type                                                                   \
     >                                                                           \
@@ -133,7 +142,7 @@ namespace etude {
         std::mem_fn(f)( std::forward<T>(x), std::forward<Args>(args)... )       \
       );                                                                        \
     }                                                                           \
-    /* ETUDE_GEN_( qual ) */
+    // ETUDE_GEN_( qual )
     
     ETUDE_GEN_( BOOST_PP_EMPTY() )
     ETUDE_GEN_( const )
@@ -143,6 +152,7 @@ namespace etude {
     // 本来はここに & や && 系列も用意する
     
   #undef ETUDE_GEN_
+  */
   
 } // namespace etude
 
