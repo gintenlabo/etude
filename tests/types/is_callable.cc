@@ -32,6 +32,9 @@ struct counter
   int count_;
 };
 
+#include "../../etude/unpack.hpp"
+#include <tuple>
+
 int main()
 {
   // 引数なしの場合
@@ -84,4 +87,19 @@ int main()
   STATIC_ASSERT(( !etude::is_callable<decltype(&X::g), void ()>::value ));
   STATIC_ASSERT(( !etude::is_callable<decltype(&X::g), void ( X& )>::value ));
   STATIC_ASSERT(( !etude::is_callable<decltype(&X::g), void ( X&, int, double )>::value ));
+  
+  // unpack
+  STATIC_ASSERT((
+    etude::is_callable<
+      void (*)(),
+      void ( decltype( etude::unpack( std::make_tuple() ) ) )
+    >::value
+  ));
+  STATIC_ASSERT((
+    etude::is_callable<
+      int (*)( int ),
+      void ( decltype( etude::unpack( std::make_tuple(0) ) ) )
+    >::value
+  ));
+  
 }

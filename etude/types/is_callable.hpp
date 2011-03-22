@@ -17,35 +17,32 @@
 #include <utility>
 #include <type_traits>
 #include "../functional/invoke.hpp"
-#include "identity.hpp"
 
 namespace etude {
 
-  template<class R, class... Args>
-  struct is_callable_
+  template<class T, class R, class... Args>
+  class is_callable_
   {
-    template< class T,
-      typename = decltype(
-        etude::invoke<R>( std::declval<T>(), std::declval<Args>()... )
+    template< class T_ = T,
+      class = decltype(
+        etude::invoke<R>( std::declval<T_>(), std::declval<Args>()... )
       )
     >
     static std::true_type test( int );
     
-    template<class T>
     static std::false_type test( ... );
+    
+   public:
+    typedef decltype( test(0) ) type;
     
   };
   
   template<class T, class Singature>
-  class is_callable;
+  class is_callable {};
   
   template<class T, class R, class... Args>
-  struct is_callable<T, R (Args...)> :
-    etude::identity<
-      decltype( is_callable_<R, Args...>::template test<T>(0) )
-    >::type
-  {
-  };
+  struct is_callable<T, R (Args...)>
+    : is_callable_<T, R, Args...>::type {};
 
 } // namespace etude
 
