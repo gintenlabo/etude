@@ -3,10 +3,8 @@
 //    標準ライブラリ <functional> における INVOKE をシミュレートする関数
 // 
 //    etude::invoke( f, t1, t2, ..., tN ) は、
-//    N == 1 かつ t1 が etude::unpacked_tuple<T, Indices...> ならば
-//      INVOKE( f, etude::move<Indices>(t1)... )
-//    を、 f がメンバ関数ポインタで N == 2 かつ t2 が etude::unpacked_tuple<T, Indices...> ならば
-//      INVOKE( f, t1, etude::move<Indices>(t2)... )
+//    tN が etude::unpacked_tuple<T, Indices...> ならば
+//      INVOKE( f, t1, t2, ..., etude::move<Indices>(tN)... )
 //    を、それ以外の場合には
 //      INVOKE( f, t1, t2, ..., tN )
 //    を呼び出します。
@@ -31,7 +29,10 @@
 #include <functional>
 
 #include "wrap_if_mem_fn.hpp"
+
+#include "../types/is_unpacked_tuple.hpp"
 #include "unpacked_tuple.hpp"
+#include "group.hpp"
 
 #include <boost/preprocessor/empty.hpp>
 #include "../types/identity.hpp"
@@ -42,7 +43,8 @@ namespace etude {
   template<class F, class... Args,
     class R = decltype(
       etude::wrap_if_mem_fn( std::declval<F>() )( std::declval<Args>()... )
-    )
+    ),
+    class = typename std::enable_if<!etude::is_unpacked_tuple<Args...>::value>::type
   >
   inline R invoke( F && f, Args&&... args )
   {
@@ -61,21 +63,20 @@ namespace etude {
     (void)t;  // 警告避け
     return etude::wrap_if_mem_fn( std::forward<F>(f) )( etude::move<Indices>(t)... );
   }
-  // 更にメンバ関数ポインタかつ第三引数が unpack の結果なら、それも unpack する
-  template<class F, class T1, class Tuple, std::size_t... Indices,
+  // 更に最後の引数が unpacked_tuple の時にも
+  template<class F, class T, class... Args,
     class R = decltype(
-      std::mem_fn( std::declval<F>() )( std::declval<T1>(),
-        etude::move<Indices>( std::declval<unpacked_tuple<Tuple, Indices...>>() )...
+      etude::invoke(
+        std::declval<F>(), etude::group( std::declval<T>(), std::declval<Args>()... )
       )
     ),
-    class = typename std::enable_if<
-      std::is_member_function_pointer<F>::value
-    >::type
+    class = typename std::enable_if<etude::is_unpacked_tuple<Args...>::value>::type
   >
-  inline R invoke( F f, T1 && t1, unpacked_tuple<Tuple, Indices...> t )
+  inline R invoke( F && f, T && t, Args&&... args )
   {
-    (void)t;  // 警告避け
-    return std::mem_fn(f)( std::forward<T1>(t1), etude::move<Indices>(t)... );
+    return etude::invoke(
+      std::forward<F>(f), etude::group( std::forward<T>(t), std::forward<Args>(args)... )
+    );
   }
   
   // 型指定版。戻り値を R に暗黙変換する。 R が void ならば単純に捨てる

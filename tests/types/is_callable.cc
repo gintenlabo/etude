@@ -101,5 +101,11 @@ int main()
       void ( decltype( etude::unpack( std::make_tuple(0) ) ) )
     >::value
   ));
+  STATIC_ASSERT((
+    etude::is_callable<
+      void (*)( int, void*, char ),
+      void ( int, decltype( etude::unpack( std::make_tuple( (int*)0, 'a' ) ) ) )
+    >::value
+  ));
   
 }
