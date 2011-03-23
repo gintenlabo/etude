@@ -16,6 +16,7 @@
 
 #include "../types/indices.hpp"
 #include "../types/tuple_indices.hpp"
+#include "../types/get_type_or.hpp"
 
 #include <utility>
 
@@ -31,9 +32,9 @@ namespace etude {
     typedef unpacked_tuple<Tuple, Indices...> type;
   };
   
-  template<class T>
+  template< class T, class Indices = etude::tuple_indices<T> >
   struct unpacked
-    : unpacked_< T, typename etude::tuple_indices<T>::type >
+    : unpacked_< T, typename etude::get_type_or<Indices>::type >
   {
   };
   

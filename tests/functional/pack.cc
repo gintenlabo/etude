@@ -75,5 +75,20 @@ int test_main( int, char** )
     boost::addressof( std::get<2>(t) ) == boost::addressof( std::get<2>(t2) )
   );
   
+  // 拡張 unpack （ pack( a, b, unpack(t) ) の形）のチェック
+  auto t3 = etude::pack( i, etude::unpack( std::move(t) ) );
+  BOOST_CHECK(
+    boost::addressof( i ) == boost::addressof( std::get<0>(t3) )
+  );
+  BOOST_CHECK(
+    boost::addressof( std::get<0>(t) ) == boost::addressof( std::get<1>(t3) )
+  );
+  BOOST_CHECK(
+    boost::addressof( std::get<1>(t) ) == boost::addressof( std::get<2>(t3) )
+  );
+  BOOST_CHECK(
+    boost::addressof( std::get<2>(t) ) == boost::addressof( std::get<3>(t3) )
+  );
+  
   return 0;
 }

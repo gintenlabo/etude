@@ -18,14 +18,7 @@
 #include "unpacked_tuple.hpp"
 #include "unpack.hpp"
 #include "pack.hpp"
-
 #include "../types/is_unpacked_tuple.hpp"
-#include "../types/tuple_element.hpp"
-#include "../types/last_type.hpp"
-#include "../utility/forward_as_tuple.hpp"
-#include "../utility/tuple_init.hpp"
-#include "../utility/tuple_last.hpp"
-#include "../utility/tuple_cat.hpp"
 
 namespace etude {
 
@@ -43,25 +36,18 @@ namespace etude {
     }
     
     // 与えられた引数リストが unpack で終わる場合
-    template< class... Args,
-      class Tuple1 = std::tuple<Args&&...>,
-      class Init   = decltype( etude::tuple_init( std::declval<Tuple1>() ) ),
-      class Last   = decltype( etude::tuple_last( std::declval<Tuple1>() ) ),
-      class Last_  = decltype( etude::pack( std::declval<Last>() ) ),
-      class Tuple2 = decltype(
-        etude::tuple_cat( std::declval<Init>(), std::declval<Last_>() )
-      ),
-      class Result = typename etude::unpacked<Tuple2>::type,
+    template< class T, class... Args,
       class = typename std::enable_if<
-        etude::is_unpacked_tuple<Args...>::value
-      >::type
+        etude::is_unpacked_tuple<T, Args...>::value
+      >::type,
+      class Tuple = decltype(
+        etude::pack( std::declval<T>(), std::declval<Args>()... )
+      ),
+      class Result = typename etude::unpacked<Tuple>::type
     >
-    Result operator()( Args&&... args ) const {
-      auto t = etude::forward_as_tuple( std::forward<Args>(args)... );
-      auto init = etude::tuple_init( std::move(t) );
-      auto last = etude::pack( etude::tuple_last( std::move(t) ) );
+    Result operator()( T && t, Args&&... args ) const {
       return Result(
-        etude::tuple_cat( std::move(init), std::move(last) )
+        etude::pack( std::forward<T>(t), std::forward<Args>(args)... )
       );
     }
     
