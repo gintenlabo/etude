@@ -429,63 +429,66 @@ int test_main( int, char** )
       !std::is_constructible<etude::optional<int const&>, int &&>::value
     ));
     
-    int i = 0, j = 0; // 同じ値を保持する
-    bool less_ij = etude::less_pointer( &i, &j );
+    int i = 0, j = 1;
     
     etude::optional<int&> p = i;
     // ちゃんと参照先が i になってるか
     BOOST_CHECK( is_same_object( *p, i ) );
-    BOOST_CHECK( p == i );
+    BOOST_CHECK( p.get_ptr() == &i );
+    BOOST_CHECK( p.get_ptr() != &j );
     // 比較の詳しいチェック
     // オーバーロード解決を助けるため ref でくるむ
-    BOOST_CHECK(  checked_equal( p, std::ref(i) ) );
-    BOOST_CHECK( !checked_equal( p, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( p, std::ref(i) ) );
-    BOOST_CHECK( !checked_less( std::ref(i), p ) );
-    BOOST_CHECK(  checked_less( p, std::ref(j) ) == less_ij );
-    BOOST_CHECK( !checked_less( std::ref(j), p ) == less_ij );
+    BOOST_CHECK(  checked_equal( p, i ) );
+    BOOST_CHECK( !checked_equal( p, j ) );
+    BOOST_CHECK( !checked_less( p, i ) );
+    BOOST_CHECK( !checked_less( i, p ) );
+    BOOST_CHECK(  checked_less( p, j ) );
+    BOOST_CHECK( !checked_less( i, p ) );
     
     p = j;
     // ちゃんと参照先が j に変化しているか
     BOOST_CHECK( is_same_object( *p, j ) );
-    BOOST_CHECK( p == j );
+    BOOST_CHECK( p.get_ptr() != &i );
+    BOOST_CHECK( p.get_ptr() == &j );
     // 比較の詳しいチェック
-    BOOST_CHECK( !checked_equal( p, std::ref(i) ) );
-    BOOST_CHECK(  checked_equal( p, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( p, std::ref(i) ) == less_ij );
-    BOOST_CHECK(  checked_less( std::ref(i), p ) == less_ij );
-    BOOST_CHECK( !checked_less( p, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( std::ref(j), p ) );
+    BOOST_CHECK( !checked_equal( p, i ) );
+    BOOST_CHECK(  checked_equal( p, j ) );
+    BOOST_CHECK( !checked_less( p, i ) );
+    BOOST_CHECK(  checked_less( i, p ) );
+    BOOST_CHECK( !checked_less( p, j ) );
+    BOOST_CHECK( !checked_less( j, p ) );
     
     etude::optional<int const&> q = i;
     BOOST_CHECK( is_same_object( *q, i ) );
-    BOOST_CHECK( q == i );
-    BOOST_CHECK(  checked_equal( q, std::ref(i) ) );
-    BOOST_CHECK( !checked_equal( q, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( q, std::ref(i) ) );
-    BOOST_CHECK( !checked_less( std::ref(i), q ) );
-    BOOST_CHECK(  checked_less( q, std::ref(j) ) == less_ij );
-    BOOST_CHECK( !checked_less( std::ref(j), q ) == less_ij );
+    BOOST_CHECK( q.get_ptr() == &i );
+    BOOST_CHECK( q.get_ptr() != &j );
+    BOOST_CHECK(  checked_equal( q, i ) );
+    BOOST_CHECK( !checked_equal( q, j ) );
+    BOOST_CHECK( !checked_less( q, i ) );
+    BOOST_CHECK( !checked_less( i, q ) );
+    BOOST_CHECK(  checked_less( q, j ) );
+    BOOST_CHECK( !checked_less( j, q ) );
     BOOST_CHECK( !checked_equal( p, q ) );
-    BOOST_CHECK( !checked_less( p, q ) == less_ij );
-    BOOST_CHECK(  checked_less( q, p ) == less_ij );
+    BOOST_CHECK( !checked_less( p, q ) );
+    BOOST_CHECK(  checked_less( q, p ) );
     
     q = j;
     BOOST_CHECK( is_same_object( *q, j ) );
-    BOOST_CHECK( q == j );
-    BOOST_CHECK( !checked_equal( q, std::ref(i) ) );
-    BOOST_CHECK(  checked_equal( q, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( q, std::ref(i) ) == less_ij );
-    BOOST_CHECK(  checked_less( std::ref(i), q ) == less_ij );
-    BOOST_CHECK( !checked_less( q, std::ref(j) ) );
-    BOOST_CHECK( !checked_less( std::ref(j), q ) );
+    BOOST_CHECK( q.get_ptr() != &i );
+    BOOST_CHECK( q.get_ptr() == &j );
+    BOOST_CHECK( !checked_equal( q, i ) );
+    BOOST_CHECK(  checked_equal( q, j ) );
+    BOOST_CHECK( !checked_less( q, i ) );
+    BOOST_CHECK(  checked_less( i, q ) );
+    BOOST_CHECK( !checked_less( q, j ) );
+    BOOST_CHECK( !checked_less( j, q ) );
     BOOST_CHECK(  checked_equal( p, q ) );
     BOOST_CHECK( !checked_less( p, q ) );
     BOOST_CHECK( !checked_less( q, p ) );
     
-    // 参照の optional と非参照の optional を相互比較することは出来ない
+    // 様々な相互比較
     STATIC_ASSERT((
-      !etude::is_equality_comparable<etude::optional<int>, etude::optional<int&>>::value
+      etude::is_equality_comparable<etude::optional<int>, etude::optional<int&>>::value
     ));
     STATIC_ASSERT((
       etude::is_equality_comparable<etude::optional<int const*>, etude::optional<void*>>::value
@@ -497,7 +500,7 @@ int test_main( int, char** )
       etude::is_equality_comparable<etude::optional<int const&>, etude::optional<int volatile&>>::value
     ));
     STATIC_ASSERT((
-      !etude::is_equality_comparable<etude::optional<int const&>, etude::optional<char&>>::value
+      etude::is_equality_comparable<etude::optional<int const&>, etude::optional<char&>>::value
     ));
   }
   
