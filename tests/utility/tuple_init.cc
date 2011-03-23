@@ -20,7 +20,7 @@
 int test_main( int, char** )
 {
   // ill-formed
-  // etude::tuple_tail( std::make_tuple() );
+  // etude::tuple_init( std::make_tuple() );
   
   {
     int i = 0;
@@ -28,10 +28,10 @@ int test_main( int, char** )
     typedef std::tuple<int, int&, int const&> tuple_type;
     
     STATIC_ASSERT((
-      std::is_same< decltype( etude::tuple_tail(p) ), tuple_type >::value
+      std::is_same< decltype( etude::tuple_init(p) ), tuple_type >::value
     ));
     
-    auto t = etude::tuple_tail( std::move(p) );
+    auto t = etude::tuple_init( std::move(p) );
     STATIC_ASSERT((
       std::is_same< decltype(t), tuple_type >::value
     ));
@@ -46,10 +46,10 @@ int test_main( int, char** )
     typedef std::tuple<int> tuple_type;
     
     STATIC_ASSERT((
-      std::is_same< decltype( etude::tuple_tail(p) ), tuple_type >::value
+      std::is_same< decltype( etude::tuple_init(p) ), tuple_type >::value
     ));
     
-    auto t = etude::tuple_tail( std::move(p) );
+    auto t = etude::tuple_init( std::move(p) );
     STATIC_ASSERT((
       std::is_same< decltype(t), tuple_type >::value
     ));
@@ -62,10 +62,10 @@ int test_main( int, char** )
     typedef std::tuple<int const, int const> tuple_type;
     
     STATIC_ASSERT((
-      std::is_same< decltype( etude::tuple_tail(a) ), tuple_type >::value
+      std::is_same< decltype( etude::tuple_init(a) ), tuple_type >::value
     ));
     
-    auto t = etude::tuple_tail( std::move(a) );
+    auto t = etude::tuple_init( std::move(a) );
     STATIC_ASSERT((
       std::is_same< decltype(t), tuple_type >::value
     ));

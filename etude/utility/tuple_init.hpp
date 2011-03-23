@@ -41,7 +41,7 @@ namespace etude {
       etude::tuple_init_( std::declval<Tuple>(), etude::tuple_indices<Tuple>() )
     )
   >
-  inline Result tuple_tail( Tuple && t ) {
+  inline Result tuple_init( Tuple && t ) {
     return etude::tuple_init_( std::forward<Tuple>(t), etude::tuple_indices<Tuple>() );
   }
 
