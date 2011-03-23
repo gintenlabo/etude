@@ -29,6 +29,7 @@ namespace etude {
     >
   >
   inline Result to_tuple( Tuple && t, etude::indices<Indices...> ) {
+    (void)t; // 警告避け
     return Result( etude::tuple_forward<Indices, Tuple>(t)... );
   }
 

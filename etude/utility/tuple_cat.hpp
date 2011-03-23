@@ -37,6 +37,7 @@ namespace etude {
   inline Result tuple_cat_(
     unpacked_tuple<Tuple1, Indices1...> && t1, unpacked_tuple<Tuple2, Indices2...> && t2
   ){
+    (void)t1, (void)t2;  // 警告避け
     return Result( etude::move<Indices1>(t1)..., etude::move<Indices2>(t2)... );
   }
 

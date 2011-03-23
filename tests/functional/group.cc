@@ -60,10 +60,10 @@ int test_main( int, char** )
   check( 1, i, j );
   
   // 値のチェック
-  BOOST_CHECK( sum( etude::pack( etude::group( 1, i, j ) ) ) == 1 + i + j );
+  BOOST_CHECK( sum( etude::pack( etude::group( 1, etude::group(i, j) ) ) ) == 1+i+j );
   
   auto t = std::make_tuple( 1, std::ref(i), std::ref(j) );
-  BOOST_CHECK( sum( etude::pack( etude::group( etude::unpack(t) ) ) ) == 1 + i + j );
+  BOOST_CHECK( sum( etude::pack( etude::group( etude::unpack(t) ) ) ) == 1+i+j );
   
   // アドレスのチェック
   auto t2 = etude::pack( etude::group( etude::unpack(t) ) );
