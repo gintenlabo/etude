@@ -14,9 +14,9 @@
 //    ほぼオーバーヘッドなく扱えるクラスになっています。
 //    
 //    現行の Boost.Optional との差異ですが、
-//    参照に対する etude::optional の比較演算子は、 T そのものではなく、
-//    参照先のアドレスを比較するものとなっています。
-//    これにより、 T が比較できない型であっても、 etude::optional<T&> は比較できます。
+//    まず比較演算子が Boost.Optional のそれに比べて、より効率的に実装されています。
+//    特に異なる型の optional 同士は Boost.Optional では比較できませんが、
+//    etude::optional では、元の型に対して比較が定義されていれば、きちんと比較できます。
 //    
 //    また、 T が再代入できない型の場合、 boost::optional<T> も再代入できませんでしたが、
 //    etude::optional<T> は再構築による再代入が可能になっています。
@@ -74,13 +74,14 @@ namespace etude {
     );
     
     typedef optional<T> self_type;
-    typedef typename std::remove_const<T>::type T_;
+    typedef typename std::remove_cv<T>::type T_;
     typedef optional_impl_<T_> impl_type;
     impl_type impl_;
     
    public:
-    typedef T_   value_type;  // value_type   は const が付かない
-    typedef T  element_type;  // element_type は const が付くかも
+    // 型定義
+    typedef T element_type;
+    typedef typename std::remove_reference<T_>::type value_type;
     
     typedef T&             reference;
     typedef T const& const_reference;
@@ -89,7 +90,8 @@ namespace etude {
     typedef typename std::add_pointer<T>::type             pointer;
     typedef typename std::add_pointer<T const>::type const_pointer;
     
-    // 無効値
+    
+    // 無効値から構築
     optional() {}
     optional( boost::none_t ) {}
     
@@ -405,6 +407,13 @@ namespace etude {
       }
       return std::forward<T_>( default_ );
     }
+    // friend 版
+    friend T const& get_optional_value_or( self_type const& x, T const& default_ ) {
+      return x.get_value_or( default_ );
+    }
+    friend T_ && get_optional_value_or( self_type && x, T_ && default_ ) {
+      return x.move_value_or( std::forward<T_>(default_) );
+    }
     
     
    private:
@@ -427,37 +436,36 @@ namespace etude {
     }
     // <=, >= は etude::totally_ordered により自動定義される。
     
-    // 比較される型
-    typedef typename std::remove_reference<T>::type const& compared_;
-    // T const& との比較
+    // value_type const& との比較
+    // T const& でないのは、 T が参照の場合にもきちんと比較できるようにするため
     template< bool EqualityComparable = is_eq_comp_,
       class = typename std::enable_if<EqualityComparable>::type
     >
-    friend bool operator==( self_type const& lhs, compared_ rhs ) {
+    friend bool operator==( self_type const& lhs, value_type const& rhs ) {
       return lhs.eq_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator< ( self_type const& lhs, compared_ rhs ) {
+    friend bool operator< ( self_type const& lhs, value_type const& rhs ) {
       return lhs.lt_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator> ( self_type const& lhs, compared_ rhs ) {
+    friend bool operator> ( self_type const& lhs, value_type const& rhs ) {
       return lhs.gt_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
-    friend bool operator<=( self_type const& lhs, compared_ rhs ) {
+    friend bool operator<=( self_type const& lhs, value_type const& rhs ) {
       return lhs.le_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
-    friend bool operator>=( self_type const& lhs, compared_ rhs ) {
+    friend bool operator>=( self_type const& lhs, value_type const& rhs ) {
       return lhs.ge_(rhs);
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
@@ -515,67 +523,28 @@ namespace etude {
     
     
     // eq_, lt_, le_, gt_, ge_ の実装
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool eq_( U const& x ) const {
       return *this ? ( this->get() == x ) : false;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool lt_( U const& x ) const {
-      return *this ? ( this->get() < x ) : true;
+      return *this ? ( this->get() <  x ) : true;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<U, T>::value
-      >::type
-    >
+    template<class U>
     bool gt_( U const& x ) const {
-      return *this ? ( x < this->get() ) : false;
+      return *this ? ( x <  this->get() ) : false;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool le_( U const& x ) const {
       return *this ? ( this->get() <= x ) : true;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<U, T>::value
-      >::type
-    >
+    template<class U>
     bool ge_( U const& x ) const {
       return *this ? ( x <= this->get() ) : false;
     }
     
   };
-  
-  
-  // 取得
-  
-  // get_value_or
-  template<class T>
-  inline T const& get_optional_value_or( optional<T> const& x, T const& default_ ) {
-    return x.get_value_or( default_ );
-  }
-  // rvalue reference 版
-  template<class T>
-  inline typename std::remove_const<T>::type &&
-    get_optional_value_or( optional<T> && x,
-      typename std::remove_const<T>::type && default_ )
-  {
-    return x.move_value_or(
-      std::forward<typename std::remove_const<T>::type>(default_)
-    );
-  }
   
   
   // 構築ヘルパ関数

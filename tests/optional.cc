@@ -56,7 +56,7 @@ inline void basic_check( Args&&... args )
   
   // typedef
   STATIC_ASSERT(( std::is_same<typename optional_t::element_type, T>::value ));
-  STATIC_ASSERT(( !std::is_const<typename optional_t::value_type>::value ));
+  STATIC_ASSERT(( !std::is_reference<typename optional_t::value_type>::value ));
   
   // 特性
   // optional<T> は Maybe コンセプトを満たす
@@ -398,7 +398,7 @@ int test_main( int, char** )
     BOOST_CHECK( x->x == 0 && z.x == 1 );
     
     y = 0;
-    z = etude::get_optional_value_or( std::move(y), Y(2) );
+    z = get_optional_value_or( std::move(y), Y(2) );
     BOOST_CHECK( z.x == 2 );
     
     basic_check<Y>( Y(0) );
