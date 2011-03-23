@@ -14,9 +14,9 @@
 //    ほぼオーバーヘッドなく扱えるクラスになっています。
 //    
 //    現行の Boost.Optional との差異ですが、
-//    参照に対する etude::optional の比較演算子は、 T そのものではなく、
-//    参照先のアドレスを比較するものとなっています。
-//    これにより、 T が比較できない型であっても、 etude::optional<T&> は比較できます。
+//    まず比較演算子が Boost.Optional のそれに比べて、より効率的に実装されています。
+//    特に異なる型の optional 同士は Boost.Optional では比較できませんが、
+//    etude::optional では、元の型に対して比較が定義されていれば、きちんと比較できます。
 //    
 //    また、 T が再代入できない型の場合、 boost::optional<T> も再代入できませんでしたが、
 //    etude::optional<T> は再構築による再代入が可能になっています。
@@ -74,13 +74,14 @@ namespace etude {
     );
     
     typedef optional<T> self_type;
-    typedef typename std::remove_const<T>::type T_;
+    typedef typename std::remove_cv<T>::type T_;
     typedef optional_impl_<T_> impl_type;
     impl_type impl_;
     
    public:
-    typedef T_   value_type;  // value_type   は const が付かない
-    typedef T  element_type;  // element_type は const が付くかも
+    // 型定義
+    typedef T element_type;
+    typedef typename std::remove_reference<T_>::type value_type;
     
     typedef T&             reference;
     typedef T const& const_reference;
@@ -89,7 +90,8 @@ namespace etude {
     typedef typename std::add_pointer<T>::type             pointer;
     typedef typename std::add_pointer<T const>::type const_pointer;
     
-    // 無効値
+    
+    // 無効値から構築
     optional() {}
     optional( boost::none_t ) {}
     
@@ -427,37 +429,36 @@ namespace etude {
     }
     // <=, >= は etude::totally_ordered により自動定義される。
     
-    // 比較される型
-    typedef typename std::remove_reference<T>::type const& compared_;
-    // T const& との比較
+    // value_type const& との比較
+    // T const& でないのは、 T が参照の場合にもきちんと比較できるようにするため
     template< bool EqualityComparable = is_eq_comp_,
       class = typename std::enable_if<EqualityComparable>::type
     >
-    friend bool operator==( self_type const& lhs, compared_ rhs ) {
+    friend bool operator==( self_type const& lhs, value_type const& rhs ) {
       return lhs.eq_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator< ( self_type const& lhs, compared_ rhs ) {
+    friend bool operator< ( self_type const& lhs, value_type const& rhs ) {
       return lhs.lt_(rhs);
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator> ( self_type const& lhs, compared_ rhs ) {
+    friend bool operator> ( self_type const& lhs, value_type const& rhs ) {
       return lhs.gt_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
-    friend bool operator<=( self_type const& lhs, compared_ rhs ) {
+    friend bool operator<=( self_type const& lhs, value_type const& rhs ) {
       return lhs.le_(rhs);
     }
     template< bool LessOrEqualComparable = is_le_comp_,
       class = typename std::enable_if<LessOrEqualComparable>::type
     >
-    friend bool operator>=( self_type const& lhs, compared_ rhs ) {
+    friend bool operator>=( self_type const& lhs, value_type const& rhs ) {
       return lhs.ge_(rhs);
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
