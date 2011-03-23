@@ -407,6 +407,13 @@ namespace etude {
       }
       return std::forward<T_>( default_ );
     }
+    // friend 版
+    friend T const& get_optional_value_or( self_type const& x, T const& default_ ) {
+      return x.get_value_or( default_ );
+    }
+    friend T_ && get_optional_value_or( self_type && x, T_ && default_ ) {
+      return x.move_value_or( std::forward<T_>(default_) );
+    }
     
     
    private:
@@ -516,67 +523,28 @@ namespace etude {
     
     
     // eq_, lt_, le_, gt_, ge_ の実装
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool eq_( U const& x ) const {
       return *this ? ( this->get() == x ) : false;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool lt_( U const& x ) const {
-      return *this ? ( this->get() < x ) : true;
+      return *this ? ( this->get() <  x ) : true;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<U, T>::value
-      >::type
-    >
+    template<class U>
     bool gt_( U const& x ) const {
-      return *this ? ( x < this->get() ) : false;
+      return *this ? ( x <  this->get() ) : false;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T, U>::value
-      >::type
-    >
+    template<class U>
     bool le_( U const& x ) const {
       return *this ? ( this->get() <= x ) : true;
     }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<U, T>::value
-      >::type
-    >
+    template<class U>
     bool ge_( U const& x ) const {
       return *this ? ( x <= this->get() ) : false;
     }
     
   };
-  
-  
-  // 取得
-  
-  // get_value_or
-  template<class T>
-  inline T const& get_optional_value_or( optional<T> const& x, T const& default_ ) {
-    return x.get_value_or( default_ );
-  }
-  // rvalue reference 版
-  template<class T>
-  inline typename std::remove_const<T>::type &&
-    get_optional_value_or( optional<T> && x,
-      typename std::remove_const<T>::type && default_ )
-  {
-    return x.move_value_or(
-      std::forward<typename std::remove_const<T>::type>(default_)
-    );
-  }
   
   
   // 構築ヘルパ関数
