@@ -27,59 +27,12 @@
 
 #include <type_traits>
 #include "../types/is_less_than_comparable.hpp"
-#include "../utility/less_pointer.hpp"
+#include "../types/is_simply_callable.hpp"
+#include "../utility/compare_less.hpp"
 
 namespace etude {
   
-  template<class T = void, class U = T>
-  class less;
-  
-  template<>
-  struct less<>
-  {
-    typedef bool result_type;
-    
-    // 一般の場合、左右で同じ型を取る場合には
-    template< class T,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T>::value &&
-        !std::is_pointer<T>::value
-      >::type
-    >
-    bool operator()( T const& lhs, T const& rhs ) const {
-      return bool( lhs < rhs );
-    }
-    
-    // 左右で異なる型を取る場合
-    template< class T, class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T, U>::value &&
-        !std::is_pointer<T>::value && !std::is_pointer<U>::value
-      >::type
-    >
-    bool operator()( T const& lhs, U const& rhs ) const {
-      return bool( lhs < rhs );
-    }
-    
-    // ポインタ版（同型）
-    template< class T >
-    bool operator()( T* lhs, T* rhs ) const {
-      return etude::less_pointer( lhs, rhs );
-    }
-    
-    // ポインタ版（異型）
-    template< class T, class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T*, U*>::value
-      >::type
-    >
-    bool operator()( T* lhs, U* rhs ) const {
-      return etude::less_pointer( lhs, rhs );
-    }
-    
-  };
-  
-  
+  // 実装
   template<class T, class U, class = void>
   struct less_ {};
   
@@ -95,14 +48,50 @@ namespace etude {
     typedef U   second_argument_type;
     
     bool operator()( T const& lhs, U const& rhs ) const {
-      return etude::less<>()( lhs, rhs );
+      return etude::compare_less( lhs, rhs );
     }
     
   };
   
-  template<class T, class U>
+  
+  // 本体（一般の場合）
+  template<class T = void, class U = T>
   struct less
     : less_<T, U> {};
+  
+  // 型指定無しの場合
+  template<>
+  struct less<>
+  {
+    typedef bool result_type;
+    
+    // 左右で同じ型を取る場合
+    template< class T,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::less<T>, bool ( T const&, T const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, T const& rhs ) const {
+      return etude::less<T>()( lhs, rhs );
+    }
+    
+    // 左右で異なる型を取る場合
+    template< class T, class U,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::less<T, U>, bool ( T const&, U const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, U const& rhs ) const {
+      return etude::less<T, U>()( lhs, rhs );
+    }
+    
+  };
+  
+  
   
 } // namespace etude
 

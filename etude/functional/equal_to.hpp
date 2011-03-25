@@ -27,40 +27,11 @@
 
 #include <type_traits>
 #include "../types/is_equality_comparable.hpp"
+#include "../types/is_simply_callable.hpp"
 
 namespace etude {
   
-  template<class T = void, class U = T>
-  class equal_to;
-  
-  template<>
-  struct equal_to<>
-  {
-    typedef bool result_type;
-    
-    // 左右で同じ型を取る場合
-    template< class T,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T>::value
-      >::type
-    >
-    bool operator()( T const& lhs, T const& rhs ) const {
-      return bool( lhs == rhs );
-    }
-    
-    // 左右で異なる型を取る場合
-    template< class T, class U,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
-    bool operator()( T const& lhs, U const& rhs ) const {
-      return bool( lhs == rhs );
-    }
-    
-  };
-  
-  
+  // 実装用
   template<class T, class U, class = void>
   struct equal_to_ {};
   
@@ -76,14 +47,48 @@ namespace etude {
     typedef U   second_argument_type;
     
     bool operator()( T const& lhs, U const& rhs ) const {
-      return etude::equal_to<>()( lhs, rhs );
+      return bool( lhs == rhs );
     }
     
   };
   
-  template<class T, class U>
+  // 本体（一般の場合）
+  template<class T = void, class U = T>
   struct equal_to
     : equal_to_<T, U> {};
+  
+  // 型指定無しの場合
+  template<>
+  struct equal_to<>
+  {
+    typedef bool result_type;
+    
+    // 左右で同じ型を取る場合
+    template< class T,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::equal_to<T>, bool ( T const&, T const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, T const& rhs ) const {
+      return etude::equal_to<T>()( lhs, rhs );
+    }
+    
+    // 左右で異なる型を取る場合
+    template< class T, class U,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::equal_to<T, U>, bool ( T const&, U const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, U const& rhs ) const {
+      return etude::equal_to<T, U>()( lhs, rhs );
+    }
+    
+  };
+  
   
 } // namespace etude
 

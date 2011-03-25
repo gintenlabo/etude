@@ -25,68 +25,25 @@
 #ifndef ETUDE_FUNCTINAL_INCLUDED_LESS_EQUAL_HPP_
 #define ETUDE_FUNCTINAL_INCLUDED_LESS_EQUAL_HPP_
 
+#include <utility>
 #include <type_traits>
-#include "../types/is_less_or_equal_comparable.hpp"
-#include "../utility/less_pointer.hpp"
+#include "../types/is_simply_callable.hpp"
+#include "../utility/compare_less_equal.hpp"
 
 namespace etude {
   
-  template<class T = void, class U = T>
-  class less_equal;
-  
-  template<>
-  struct less_equal<>
-  {
-    typedef bool result_type;
-    
-    // 一般の場合、左右で同じ型を取る場合には
-    template< class T,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T>::value &&
-        !std::is_pointer<T>::value
-      >::type
-    >
-    bool operator()( T const& lhs, T const& rhs ) const {
-      return bool( lhs <= rhs );
-    }
-    
-    // 左右で異なる型を取る場合
-    template< class T, class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T, U>::value &&
-        !std::is_pointer<T>::value && !std::is_pointer<U>::value
-      >::type
-    >
-    bool operator()( T const& lhs, U const& rhs ) const {
-      return bool( lhs <= rhs );
-    }
-    
-    // ポインタ版（同型）
-    template< class T >
-    bool operator()( T* lhs, T* rhs ) const {
-      return !etude::less_pointer( rhs, lhs );
-    }
-    
-    // ポインタ版（異型）
-    template< class T, class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T*, U*>::value
-      >::type
-    >
-    bool operator()( T* lhs, U* rhs ) const {
-      return !etude::less_pointer( rhs, lhs );
-    }
-    
-  };
-  
-  
+  // 実装
   template<class T, class U, class = void>
   struct less_equal_ {};
   
   template<class T, class U>
   struct less_equal_< T, U,
     typename std::enable_if<
-      etude::is_less_or_equal_comparable<T const&, U const&>::value
+      std::is_convertible<
+        decltype(
+          etude::compare_less_equal( std::declval<T const&>(), std::declval<U const&>() )
+        ), bool
+      >::value
     >::type
   >
   {
@@ -95,14 +52,46 @@ namespace etude {
     typedef U   second_argument_type;
     
     bool operator()( T const& lhs, U const& rhs ) const {
-      return etude::less_equal<>()( lhs, rhs );
+      return etude::compare_less_equal( lhs, rhs );
     }
     
   };
   
-  template<class T, class U>
+  
+  template<class T = void, class U = T>
   struct less_equal
     : less_equal_<T, U> {};
+  
+  template<>
+  struct less_equal<>
+  {
+    typedef bool result_type;
+    
+    // 左右で同じ型を取る場合
+    template< class T,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::less_equal<T>, bool ( T const&, T const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, T const& rhs ) const {
+      return etude::less_equal<T>()( lhs, rhs );
+    }
+    
+    // 左右で異なる型を取る場合
+    template< class T, class U,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::less_equal<T, U>, bool ( T const&, U const& )
+        >::value
+      >::type
+    >
+    bool operator()( T const& lhs, U const& rhs ) const {
+      return etude::less_equal<T, U>()( lhs, rhs );
+    }
+    
+  };
   
 } // namespace etude
 
