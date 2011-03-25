@@ -16,7 +16,7 @@
 
 #include <type_traits>
 #include <utility>
-#include "has_common_type.hpp"
+#include "../utility/compare_equal_to.hpp"
 
 namespace etude {
 
@@ -25,8 +25,10 @@ namespace etude {
   class is_equality_comparable_
   {
     template< class T_ = T, class U_ = U,
-      class R = decltype( std::declval<T_>() == std::declval<U_>() ),
-      class = typename std::enable_if<std::is_constructible<bool, R>::value>::type
+      class R = decltype(
+        etude::compare_equal_to( std::declval<T_>(), std::declval<U_>() )
+      ),
+      class = typename std::enable_if< std::is_convertible<R, bool>::value >::type
     >
     static std::true_type test_( int );
     
@@ -34,24 +36,6 @@ namespace etude {
     
    public:
     typedef decltype( test_(0) ) type;
-    
-  };
-  
-  // gcc-4.5.0 では何故か比較できないポインタ同士が上記の SFINAE にひっかからない
-  template<class T, class U>
-  struct is_equality_comparable_<T, U,
-    typename std::enable_if<
-      std::is_pointer<typename std::decay<T>::type>::value &&
-      std::is_pointer<typename std::decay<U>::type>::value
-    >::type
-  >
-  {
-    typedef typename std::decay<T>::type T_;
-    typedef typename std::decay<U>::type U_;
-    
-    typedef std::integral_constant< bool,
-      etude::has_common_type<U_, T_>::value
-    > type;
     
   };
 
