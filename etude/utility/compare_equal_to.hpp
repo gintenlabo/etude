@@ -14,43 +14,81 @@
 
 #include <utility>
 #include <type_traits>
-#include "../types/is_equality_comparable.hpp"
+#include "../types/has_common_type.hpp"
 
 namespace etude {
 
+  // 実装
+  
+  // ポインタ（ gcc-4.5.x だと、ポインタに対する == の SFINAE が上手く効かないので）
+  template< class T >
+  inline bool compare_equal_to_impl_( T* lhs, T* rhs, int ) {
+    return lhs == rhs;
+  }
+  // 異なる型のポインタ
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::has_common_type<T*, U*>::value
+    >::type
+  >
+  inline bool compare_equal_to_impl_( T* lhs, U* rhs, int ) {
+    return lhs == rhs;
+  }
+  
+  // ポインタ以外
+  template< class T, class U,
+    class = typename std::enable_if<
+      !( std::is_pointer<typename std::decay<T>::type>::value &&
+         std::is_pointer<typename std::decay<U>::type>::value )
+    >::type,
+    class R = decltype(
+      std::declval<T>() == std::declval<U>()
+    ),
+    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+  >
+  inline R compare_equal_to_impl_( T && lhs, U && rhs, ... ) {
+    return std::forward<T>(lhs) == std::forward<U>(rhs);
+  }
+  
+  
+  // 本体
+  
+  
   // 戻り値を bool にキャストしない版
   template< class T, class U,
     class R = decltype(
-      std::declval<T const&>() == std::declval<U const&>()
+      etude::compare_equal_to_impl_( std::declval<T>(), std::declval<U>(), 0 )
     ),
-    class = typename std::enable_if<
-      etude::is_equality_comparable<T, U>::value
-    >::type
+    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_equal_to_( T const& lhs, U const& rhs ) {
-    return lhs == rhs;
+  inline R compare_equal_to_( T && lhs, U && rhs ) {
+    return etude::compare_equal_to_impl_(
+      std::forward<T>(lhs), std::forward<U>(rhs), 0
+    );
   }
 
 
   // 戻り値を bool にキャストする版
   
   // 同じ型の場合
-  template< class T,
-    class = typename std::enable_if<
-      etude::is_equality_comparable<T>::value
-    >::type
+  template< class T, class U = T const&,
+    class = decltype(
+      etude::compare_equal_to_( std::declval<U>(), std::declval<U>() )
+    )
   >
   inline bool compare_equal_to( T const& lhs, T const& rhs ) {
-    return bool( lhs == rhs );
+    return bool( etude::compare_equal_to_( lhs, rhs ) );
   }
   // 異なる型の場合
   template< class T, class U,
-    class = typename std::enable_if<
-      etude::is_equality_comparable<T, U>::value
-    >::type
+    class = decltype(
+      etude::compare_equal_to_( std::declval<T>(), std::declval<U>() )
+    )
   >
-  inline bool compare_equal_to( T const& lhs, U const& rhs ) {
-    return bool( lhs == rhs );
+  inline bool compare_equal_to( T && lhs, U && rhs ) {
+    return bool(
+      etude::compare_equal_to_( std::forward<T>(lhs), std::forward<U>(rhs) )
+    );
   }
 
 } // namespace etude

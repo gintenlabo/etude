@@ -25,25 +25,26 @@ namespace etude {
   // ポインタ
   template< class T, class U,
     class R = decltype(
-      etude::less_pointer( std::declval<T const&>(), std::declval<U const&>() )
+      etude::less_pointer( std::declval<T>(), std::declval<U>() )
     )
   >
-  inline R compare_less_impl_( T const& lhs, U const& rhs, int ) {
-    return etude::less_pointer( lhs, rhs );
+  inline R compare_less_impl_( T && lhs, U && rhs, int ) {
+    return etude::less_pointer( std::forward<T>(lhs), std::forward<U>(rhs) );
   }
   
   // ポインタ以外
   template< class T, class U,
     class = typename std::enable_if<
-      !( std::is_pointer<T>::value && std::is_pointer<U>::value )
+      !( std::is_pointer<typename std::decay<T>::type>::value &&
+         std::is_pointer<typename std::decay<U>::type>::value )
     >::type,
     class R = decltype(
-      std::declval<T const&>() < std::declval<U const&>()
+      std::declval<T>() < std::declval<U>()
     ),
     class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_less_impl_( T const& lhs, U const& rhs, ... ) {
-    return lhs < rhs;
+  inline R compare_less_impl_( T && lhs, U && rhs, ... ) {
+    return std::forward<T>(lhs) < std::forward<U>(rhs);
   }
   
   
@@ -54,35 +55,37 @@ namespace etude {
   template< class T, class U,
     class R = decltype(
       etude::compare_less_impl_(
-        std::declval<T const&>(), std::declval<U const&>(), 0
+        std::declval<T>(), std::declval<U>(), 0
       )
     ),
     class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_less_( T const& lhs, U const& rhs ) {
-    return compare_less_impl_( lhs, rhs, 0 );
+  inline R compare_less_( T && lhs, U && rhs ) {
+    return etude::compare_less_impl_( std::forward<T>(lhs), std::forward<U>(rhs), 0 );
   }
   
   
   // 戻り値を bool にキャストする版
   
   // 同じ型の場合
-  template< class T,
+  template< class T, class U = T const&,
     class = decltype(
-      etude::compare_less_( std::declval<T const&>(), std::declval<T const&>() )
+      etude::compare_less_( std::declval<U>(), std::declval<U>() )
     )
   >
   inline bool compare_less( T const& lhs, T const& rhs ) {
-    return bool( compare_less_( lhs, rhs ) );
+    return bool( etude::compare_less_( lhs, rhs ) );
   }
   // 異なる型の場合
   template< class T, class U,
     class = decltype(
-      etude::compare_less_( std::declval<T const&>(), std::declval<U const&>() )
+      etude::compare_less_( std::declval<T>(), std::declval<U>() )
     )
   >
-  inline bool compare_less( T const& lhs, U const& rhs ) {
-    return bool( compare_less_( lhs, rhs ) );
+  inline bool compare_less( T && lhs, U && rhs ) {
+    return bool(
+      etude::compare_less_( std::forward<T>(lhs), std::forward<U>(rhs) )
+    );
   }
 
 

@@ -26,38 +26,39 @@ namespace etude {
   // ポインタ以外で、 != による比較が可能な場合
   template< class T, class U,
     class = typename std::enable_if<
-      !( std::is_pointer<T>::value && std::is_pointer<U>::value )
+      !( std::is_pointer<typename std::decay<T>::type>::value &&
+         std::is_pointer<typename std::decay<U>::type>::value )
     >::type,
-    class R = decltype( std::declval<T const&>() != std::declval<U const&>() ),
+    class R = decltype( std::declval<T>() != std::declval<U>() ),
     class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_not_equal_to_impl_( T const& lhs, U const& rhs, int ) {
-    return lhs != rhs;
+  inline R compare_not_equal_to_impl_( T && lhs, U && rhs, int ) {
+    return std::forward<T>(lhs) != std::forward<U>(rhs);
   }
   
   // compare_equal_to による比較が可能な場合
   template< class T, class U,
     class R = decltype(
-      !etude::compare_equal_to_( std::declval<T const&>(), std::declval<U const&>() )
+      !etude::compare_equal_to_( std::declval<T>(), std::declval<U>() )
     ),
     class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_not_equal_to_impl_( T const& lhs, U const& rhs, ... ) {
-    return !etude::compare_equal_to_( lhs, rhs );
+  inline R compare_not_equal_to_impl_( T && lhs, U && rhs, ... ) {
+    return !etude::compare_equal_to_( std::forward<T>(lhs), std::forward<U>(rhs) );
   }
   
   
   // 戻り値を bool にキャストしない版
   template< class T, class U,
     class R = decltype(
-      etude::compare_not_equal_to_impl_(
-        std::declval<T const&>(), std::declval<U const&>(), 0
-      )
+      etude::compare_not_equal_to_impl_( std::declval<T>(), std::declval<U>(), 0 )
     ),
     class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
   >
-  inline R compare_not_equal_to_( T const& lhs, U const& rhs ) {
-    return compare_not_equal_to_impl_( lhs, rhs, 0 );
+  inline R compare_not_equal_to_( T && lhs, U && rhs ) {
+    return etude::compare_not_equal_to_impl_(
+      std::forward<T>(lhs), std::forward<U>(rhs), 0
+    );
   }
   
   
@@ -70,16 +71,18 @@ namespace etude {
     )
   >
   inline bool compare_not_equal_to( T const& lhs, T const& rhs ) {
-    return bool( compare_not_equal_to_( lhs, rhs ) );
+    return bool( etude::compare_not_equal_to_( lhs, rhs ) );
   }
   // 異なる型の場合
   template< class T, class U,
     class = decltype(
-      etude::compare_not_equal_to_( std::declval<T const&>(), std::declval<U const&>() )
+      etude::compare_not_equal_to_( std::declval<T>(), std::declval<U>() )
     )
   >
-  inline bool compare_not_equal_to( T const& lhs, U const& rhs ) {
-    return bool( compare_not_equal_to_( lhs, rhs ) );
+  inline bool compare_not_equal_to( T && lhs, U && rhs ) {
+    return bool(
+      etude::compare_not_equal_to_( std::forward<T>(lhs), std::forward<U>(rhs) )
+    );
   }
 
 
