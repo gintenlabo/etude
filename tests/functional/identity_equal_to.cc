@@ -13,7 +13,7 @@
 #include <boost/test/minimal.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
-// etude::equal_to<> の特性
+// etude::identity_equal_to<> の特性
 template<class Tested>
 void check_basic_traits()
 {

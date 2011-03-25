@@ -25,30 +25,11 @@
 #include <type_traits>
 #include <utility>
 #include "../utility/identity_before.hpp"
+#include "../types/is_simply_callable.hpp"
 
 namespace etude {
   
-  template<class T = void, class U = T>
-  class identity_less;
-  
-  template<>
-  struct identity_less<>
-  {
-    typedef bool result_type;
-    
-    // etude::identity_before に転送
-    template< class T, class U,
-      class = decltype(
-        etude::identity_before( std::declval<T&>(), std::declval<U&>() )
-      )
-    >
-    bool operator()( T& lhs, U& rhs ) const {
-      return etude::identity_before( lhs, rhs );
-    }
-    
-  };
-  
-  
+  // 実装
   template<class T, class U, class = void>
   struct identity_less_ {};
   
@@ -80,9 +61,31 @@ namespace etude {
     
   };
   
-  template<class T, class U>
+  
+  // 本体（一般の場合）
+  template<class T = void, class U = T>
   struct identity_less
     : identity_less_<T const volatile&, U const volatile&> {};
+  
+  // 型指定無しの場合
+  template<>
+  struct identity_less<>
+  {
+    typedef bool result_type;
+    
+    // etude::identity_less<T&, U&> に転送
+    template< class T, class U,
+      class = typename std::enable_if<
+        etude::is_simply_callable<
+          etude::identity_less<T&, U&>, bool ( T&, U& )
+        >::value
+      >::type
+    >
+    bool operator()( T& lhs, U& rhs ) const {
+      return etude::identity_less<T&, U&>()( lhs, rhs );
+    }
+    
+  };
   
 } // namespace etude
 

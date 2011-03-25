@@ -1,11 +1,11 @@
 //
-//  identity_less のテストです。
+//  identity_greater のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#include "../../etude/functional/identity_less.hpp"
+#include "../../etude/functional/identity_greater.hpp"
 
 #include "../../etude/types/is_simply_callable.hpp"
 #include "../../etude/types/is_less_than_comparable.hpp"
@@ -14,7 +14,7 @@
 #include <boost/test/minimal.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
-// etude::identity_less<> の特性
+// etude::identity_greater<> の特性
 template<class Tested>
 void check_basic_traits()
 {
@@ -27,77 +27,77 @@ template<class T, class U>
 void check( T& t, U& u, bool expected1, bool expected2 )
 {
   // 型特性
-  check_basic_traits<etude::identity_less<T, U>>();
-  check_basic_traits<etude::identity_less<U, T>>();
-  check_basic_traits<etude::identity_less<T&, U&>>();
-  check_basic_traits<etude::identity_less<U&, T&>>();
+  check_basic_traits<etude::identity_greater<T, U>>();
+  check_basic_traits<etude::identity_greater<U, T>>();
+  check_basic_traits<etude::identity_greater<T&, U&>>();
+  check_basic_traits<etude::identity_greater<U&, T&>>();
   
   // typedef
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<T, U>::first_argument_type, T const volatile&
+      typename etude::identity_greater<T, U>::first_argument_type, T const volatile&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<T, U>::second_argument_type, U const volatile&
+      typename etude::identity_greater<T, U>::second_argument_type, U const volatile&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<U, T>::first_argument_type, U const volatile&
+      typename etude::identity_greater<U, T>::first_argument_type, U const volatile&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<U, T>::second_argument_type, T const volatile&
+      typename etude::identity_greater<U, T>::second_argument_type, T const volatile&
     >::value
   ));
   // T&
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<T&, U&>::first_argument_type, T&
+      typename etude::identity_greater<T&, U&>::first_argument_type, T&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<T&, U&>::second_argument_type, U&
+      typename etude::identity_greater<T&, U&>::second_argument_type, U&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<U&, T&>::first_argument_type, U&
+      typename etude::identity_greater<U&, T&>::first_argument_type, U&
     >::value
   ));
   STATIC_ASSERT((
     std::is_same<
-      typename etude::identity_less<U&, T&>::second_argument_type, T&
+      typename etude::identity_greater<U&, T&>::second_argument_type, T&
     >::value
   ));
   
   // 実際に比較する
-  etude::identity_less<>     const less0 = {};
-  etude::identity_less<T, U> const less1 = {};
-  etude::identity_less<U, T> const less2 = {};
-  etude::identity_less<T&, U&> const less1_ = {};
-  etude::identity_less<U&, T&> const less2_ = {};
+  etude::identity_greater<>     const greater0 = {};
+  etude::identity_greater<T, U> const greater1 = {};
+  etude::identity_greater<U, T> const greater2 = {};
+  etude::identity_greater<T&, U&> const greater1_ = {};
+  etude::identity_greater<U&, T&> const greater2_ = {};
   
-  BOOST_CHECK( less0( t, u ) == expected1 );
-  BOOST_CHECK( less0( u, t ) == expected2 );
-  BOOST_CHECK( less1( t, u ) == expected1 );
-  BOOST_CHECK( less2( u, t ) == expected2 );
-  BOOST_CHECK( less1_( t, u ) == expected1 );
-  BOOST_CHECK( less2_( u, t ) == expected2 );
+  BOOST_CHECK( greater0( t, u ) == expected1 );
+  BOOST_CHECK( greater0( u, t ) == expected2 );
+  BOOST_CHECK( greater1( t, u ) == expected1 );
+  BOOST_CHECK( greater2( u, t ) == expected2 );
+  BOOST_CHECK( greater1_( t, u ) == expected1 );
+  BOOST_CHECK( greater2_( u, t ) == expected2 );
   
   // rvalue は束縛できない
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<>, bool(T&&, U&&)>::value
+    !etude::is_simply_callable<etude::identity_greater<>, bool(T&&, U&&)>::value
   ));
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<T, U>, bool(T&&, U&&)>::value
+    !etude::is_simply_callable<etude::identity_greater<T, U>, bool(T&&, U&&)>::value
   ));
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<T&, U&>, bool(T&&, U&&)>::value
+    !etude::is_simply_callable<etude::identity_greater<T&, U&>, bool(T&&, U&&)>::value
   ));
   
 }
@@ -116,17 +116,17 @@ void check_not_comparable( T&, U& )
   typedef bool signature2( U const&, T const& );
   
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<>, signature1>::value
+    !etude::is_simply_callable<etude::identity_greater<>, signature1>::value
   ));
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<T, U>, signature1>::value
+    !etude::is_simply_callable<etude::identity_greater<T, U>, signature1>::value
   ));
   
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<>, signature2>::value
+    !etude::is_simply_callable<etude::identity_greater<>, signature2>::value
   ));
   STATIC_ASSERT((
-    !etude::is_simply_callable<etude::identity_less<U, T>, signature2>::value
+    !etude::is_simply_callable<etude::identity_greater<U, T>, signature2>::value
   ));
   
 }
@@ -136,7 +136,7 @@ struct Derived : Base {};
 
 int test_main( int, char** )
 {
-  check_basic_traits<etude::identity_less<>>();
+  check_basic_traits<etude::identity_greater<>>();
   
   int i = 0;
   int const j = 0;
@@ -146,7 +146,7 @@ int test_main( int, char** )
   bool const less_ij = etude::less_pointer( &i, &j );
   
   check( i, i, false, false );
-  check( i, j, less_ij, !less_ij );
+  check( i, j, !less_ij, less_ij );
   check( i, r, false, false );
   check_not_comparable( i, d );
   
@@ -154,9 +154,9 @@ int test_main( int, char** )
   Base& b = x;
   bool const less_xy = etude::less_pointer( &x, &y );
   check( x, x, false, false );
-  check( x, y, less_xy, !less_xy );
+  check( x, y, !less_xy, less_xy );
   check( b, x, false, false );
-  check( b, y, less_xy, !less_xy );
+  check( b, y, !less_xy, less_xy );
   
   return 0;
 }
