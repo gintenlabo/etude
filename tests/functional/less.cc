@@ -8,6 +8,7 @@
 #include "../../etude/functional/less.hpp"
 
 #include "../../etude/types/is_simply_callable.hpp"
+#include "../../etude/types/is_less_than_comparable.hpp"
 #include <type_traits>
 #include <boost/test/minimal.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )

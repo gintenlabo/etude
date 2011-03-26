@@ -7,6 +7,7 @@
 //
 #include "../../etude/functional/equal_to.hpp"
 
+#include "../../etude/types/is_equality_comparable.hpp"
 #include "../../etude/types/is_simply_callable.hpp"
 #include <type_traits>
 #include <boost/test/minimal.hpp>

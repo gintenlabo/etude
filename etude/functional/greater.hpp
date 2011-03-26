@@ -32,15 +32,19 @@
 namespace etude {
   
   // 実装
-  template<class T, class U, class = void>
+  template< class T, class U,
+    class T_ = typename std::conditional<std::is_reference<T>::value, T, T const&>::type,
+    class U_ = typename std::conditional<std::is_reference<U>::value, U, U const&>::type,
+    class = void
+  >
   struct greater_ {};
   
-  template<class T, class U>
-  struct greater_< T, U,
+  template<class T, class U, class T_, class U_>
+  struct greater_< T, U, T_, U_,
     typename std::enable_if<
       std::is_convertible<
         decltype(
-          etude::compare_greater( std::declval<T const&>(), std::declval<U const&>() )
+          etude::compare_greater( std::declval<T_>(), std::declval<U_>() )
         ), bool
       >::value
     >::type
@@ -50,8 +54,8 @@ namespace etude {
     typedef T    first_argument_type;
     typedef U   second_argument_type;
     
-    bool operator()( T const& lhs, U const& rhs ) const {
-      return etude::compare_greater( lhs, rhs );
+    bool operator()( T_ lhs, U_ rhs ) const {
+      return etude::compare_greater( std::forward<T_>(lhs), std::forward<U_>(rhs) );
     }
     
   };
