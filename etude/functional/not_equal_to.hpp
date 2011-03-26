@@ -33,40 +33,43 @@
 
 namespace etude {
   
-  // 実装
-  template< class T, class U,
-    class T_ = typename std::conditional<std::is_reference<T>::value, T, T const&>::type,
-    class U_ = typename std::conditional<std::is_reference<U>::value, U, U const&>::type,
-    class = void
-  >
+  // 実装用
+  template< class T, class U, class = void >
   struct not_equal_to_ {};
   
-  template<class T, class U, class T_, class U_>
-  struct not_equal_to_< T, U, T_, U_,
+  template< class T, class U >
+  struct not_equal_to_< T, U,
     typename std::enable_if<
       std::is_convertible<
         decltype(
-          etude::compare_not_equal_to( std::declval<T_>(), std::declval<U_>() )
+          etude::compare_not_equal_to( std::declval<T>(), std::declval<U>() )
         ), bool
       >::value
     >::type
   >
   {
-    typedef bool         result_type;
-    typedef T    first_argument_type;
-    typedef U   second_argument_type;
+    typedef bool result_type;
     
-    bool operator()( T_ lhs, U_ rhs ) const {
-      return etude::compare_not_equal_to( std::forward<T_>(lhs), std::forward<U_>(rhs) );
+    bool operator()( T && lhs, U && rhs ) const {
+      return etude::compare_not_equal_to( std::forward<T>(lhs), std::forward<U>(rhs) );
     }
     
   };
   
-  
   // 本体（一般の場合）
   template<class T = void, class U = T>
-  struct not_equal_to
-    : not_equal_to_<T, U> {};
+  struct not_equal_to :
+    not_equal_to_<
+      typename std::conditional<std::is_reference<T>::value, T, T const&>::type,
+      typename std::conditional<std::is_reference<U>::value, U, U const&>::type
+    >
+  {
+    typedef T   first_argument_type;
+    typedef U  second_argument_type;
+    
+    // result_type, operator() は比較可能なときのみ定義される
+    
+  };
   
   // 型指定無しの場合
   template<>
@@ -90,12 +93,14 @@ namespace etude {
     template< class T, class U,
       class = typename std::enable_if<
         etude::is_simply_callable<
-          etude::not_equal_to<T, U>, bool ( T const&, U const& )
+          etude::not_equal_to<T&&, U&&>, bool ( T&&, U&& )
         >::value
       >::type
     >
-    bool operator()( T const& lhs, U const& rhs ) const {
-      return etude::not_equal_to<T, U>()( lhs, rhs );
+    bool operator()( T && lhs, U && rhs ) const {
+      return etude::not_equal_to<T&&, U&&>()(
+        std::forward<T>(lhs), std::forward<U>(rhs)
+      );
     }
     
   };
