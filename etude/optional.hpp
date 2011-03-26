@@ -50,11 +50,18 @@
 #include "operators/partially_ordered.hpp"
 
 #include "types/is_array_of_unknown_bound.hpp"
+#include "types/is_assignable_or_convertible.hpp"
+#include "types/pointee.hpp"
+
 #include "types/is_equality_comparable.hpp"
 #include "types/is_less_than_comparable.hpp"
 #include "types/is_less_or_equal_comparable.hpp"
-#include "types/is_assignable_or_convertible.hpp"
-#include "types/pointee.hpp"
+#include "functional/equal_to.hpp"
+#include "functional/less.hpp"
+#include "functional/less_equal.hpp"
+#include "utility/pointee_equal.hpp"
+#include "utility/pointee_before.hpp"
+#include "utility/pointee_less_or_equal.hpp"
 
 #include "types/decay_and_strip.hpp"
 
@@ -420,9 +427,8 @@ namespace etude {
     // 演算子多重定義（ friend なので private でよい）
     
     // 元々の T が比較可能か否か
-    static bool const is_eq_comp_ = etude::is_equality_comparable<T>::value;
-    static bool const is_lt_comp_ = etude::is_less_than_comparable<T>::value;
-    static bool const is_le_comp_ = etude::is_less_or_equal_comparable<T>::value;
+    static bool const is_eq_comp_ = etude::is_equality_comparable<value_type>::value;
+    static bool const is_lt_comp_ = etude::is_less_than_comparable<value_type>::value;
     
     // none_t との比較
     friend bool operator==( self_type const& lhs, boost::none_t ) /*noexcept*/ {
@@ -442,109 +448,87 @@ namespace etude {
       class = typename std::enable_if<EqualityComparable>::type
     >
     friend bool operator==( self_type const& lhs, value_type const& rhs ) {
-      return lhs.eq_(rhs);
+      return lhs ? etude::equal_to<value_type>()( lhs.get(), rhs ) : false;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator< ( self_type const& lhs, value_type const& rhs ) {
-      return lhs.lt_(rhs);
+      return lhs ? etude::less<value_type>()( lhs.get(), rhs ) : true;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator> ( self_type const& lhs, value_type const& rhs ) {
-      return lhs.gt_(rhs);
+      return lhs ? etude::less<value_type>()( rhs, lhs.get() ) : false;
     }
-    template< bool LessOrEqualComparable = is_le_comp_,
-      class = typename std::enable_if<LessOrEqualComparable>::type
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator<=( self_type const& lhs, value_type const& rhs ) {
-      return lhs.le_(rhs);
+      return lhs ? etude::less_equal<value_type>()( lhs.get(), rhs ) : true;
     }
-    template< bool LessOrEqualComparable = is_le_comp_,
-      class = typename std::enable_if<LessOrEqualComparable>::type
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
     >
     friend bool operator>=( self_type const& lhs, value_type const& rhs ) {
-      return lhs.ge_(rhs);
+      return lhs ? etude::less_equal<value_type>()( rhs, lhs.get() ) : false;
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     
     
-    // optional 同士の相互比較
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
-    friend bool operator==( self_type const& lhs, optional<U> const& rhs ) {
-      return rhs ? lhs.eq_(*rhs) : ( lhs == boost::none );
-    }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_equality_comparable<T, U>::value
-      >::type
-    >
-    friend bool operator!=( self_type const& lhs, optional<U> const& rhs ) {
-      return !( lhs == rhs );
-    }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<T, U>::value
-      >::type
-    >
-    friend bool operator< ( self_type const& lhs, optional<U> const& rhs ) {
-      return rhs ? lhs.lt_(*rhs) : ( lhs < boost::none );
-    }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_than_comparable<U, T>::value
-      >::type
-    >
-    friend bool operator> ( self_type const& lhs, optional<U> const& rhs ) {
-      return rhs < lhs;
-    }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<T, U>::value
-      >::type
-    >
-    friend bool operator<=( self_type const& lhs, optional<U> const& rhs ) {
-      return rhs ? lhs.le_(*rhs) : ( lhs <= boost::none );
-    }
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_less_or_equal_comparable<U, T>::value
-      >::type
-    >
-    friend bool operator>=( self_type const& lhs, optional<U> const& rhs ) {
-      return rhs <= lhs;
-    }
-    
-    
-    // eq_, lt_, le_, gt_, ge_ の実装
-    template<class U>
-    bool eq_( U const& x ) const {
-      return *this ? ( this->get() == x ) : false;
-    }
-    template<class U>
-    bool lt_( U const& x ) const {
-      return *this ? ( this->get() <  x ) : true;
-    }
-    template<class U>
-    bool gt_( U const& x ) const {
-      return *this ? ( x <  this->get() ) : false;
-    }
-    template<class U>
-    bool le_( U const& x ) const {
-      return *this ? ( this->get() <= x ) : true;
-    }
-    template<class U>
-    bool ge_( U const& x ) const {
-      return *this ? ( x <= this->get() ) : false;
-    }
-    
   };
+  
+  // 二つの型の boost::optional 間での比較
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_equality_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator==( optional<T> const& lhs, optional<U> const& rhs )
+  {
+    return etude::pointee_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_equality_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator!=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return !etude::pointee_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_than_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator< ( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_than_comparable<U, T>::value
+    >::type
+  >
+  inline bool operator> ( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before( rhs, lhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_or_equal_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator<=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_less_or_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_or_equal_comparable<U, T>::value
+    >::type
+  >
+  inline bool operator>=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_less_or_equal( rhs, lhs );
+  }
   
   
   // 構築ヘルパ関数

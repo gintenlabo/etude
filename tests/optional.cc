@@ -293,6 +293,7 @@ struct Y
   
 };
 
+#include "../etude/utility/identity_before.hpp"
 // rebind 不能なクラス
 struct Z
   : public lifetime_check<Z>
@@ -304,6 +305,11 @@ struct Z
   
   // 明示的に delete しないと gcc4.5.0 ではダメなよう。
   void operator=( Z const& ) = delete;
+  
+  // less だけ定義されてる
+  friend bool operator<( Z const& x, Z const& y ) {
+    return etude::identity_before( x.x, y.x );
+  }
   
 };
 
@@ -417,6 +423,17 @@ int test_main( int, char** )
     BOOST_CHECK( is_same_object( x->x, i ) );
     
     basic_check<Z>( x );
+    
+    y = boost::none;
+    // Z の比較が <= や >= も定義されてるか
+    // BOOST_CHECK( !checked_equal( x, y ) ); // == は無理
+    BOOST_CHECK( !checked_less( x, y ) );
+    BOOST_CHECK(  checked_less( y, x ) );
+    BOOST_CHECK( !checked_less( x, x ) );
+    BOOST_CHECK( x <= x );
+    BOOST_CHECK( x >= x );
+    BOOST_CHECK( y <= x );
+    BOOST_CHECK( x >= y );
   }
   
   {
