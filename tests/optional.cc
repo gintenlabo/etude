@@ -26,9 +26,7 @@ template class etude::optional<int&&>;
 // etude::optional<int> は trivially destructible
 STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int> >::value ));
 // etude::optional<T&> は trivially copyable かつ standard layout
-STATIC_ASSERT(( std::has_trivial_copy_constructor< etude::optional<int&> >::value ));
-STATIC_ASSERT(( std::has_trivial_assign< etude::optional<int&> >::value ));
-STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int&> >::value ));
+STATIC_ASSERT(( is_trivially_copyable< etude::optional<int&> >::value ));
 STATIC_ASSERT(( std::is_standard_layout< etude::optional<int&> >::value ));
 
 #include <boost/utility/addressof.hpp>

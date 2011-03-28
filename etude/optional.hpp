@@ -159,8 +159,9 @@ namespace etude {
     
     // 型変換
     template< class U,
+      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U const&, T>::value
+        std::is_convertible<U_ const&, T_>::value
       >::type
     >
     optional( optional<U> const& src ) {
@@ -169,8 +170,9 @@ namespace etude {
       }
     }
     template< class U,
+      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value &&
+        std::is_convertible<U_, T_>::value &&
         !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
       >::type
     >
@@ -290,8 +292,9 @@ namespace etude {
     // copy/move は基底クラスのを使う
     // 型変換
     template<class U,
+      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        is_assignable_or_convertible<T_, U>::value
+        is_assignable_or_convertible<T_, U_ const&>::value
       >::type
     >
     self_type& operator=( optional<U> const& rhs ) {
@@ -299,8 +302,10 @@ namespace etude {
       return *this;
     }
     template<class U,
+      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        is_assignable_or_convertible<T_, U>::value
+        is_assignable_or_convertible<T_, U_>::value &&
+        !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
       >::type
     >
     self_type& operator=( optional<U> && rhs ) {
