@@ -23,15 +23,21 @@
 namespace etude {
 
   // 実装
-  template< class Tuple, std::size_t Head, std::size_t... Tails,
-    class Result = std::tuple<
+  template< class Tuple, std::size_t Head, std::size_t... Tails >
+  inline std::tuple<
+    typename etude::tuple_element< Tails,
+      typename std::decay<Tuple>::type
+    >::type...
+  >
+  tuple_tail_( Tuple && t, etude::indices<Head, Tails...> )
+  {
+    typedef std::tuple<
       typename etude::tuple_element< Tails,
         typename std::decay<Tuple>::type
       >::type...
-    >
-  >
-  inline Result tuple_tail_( Tuple && t, etude::indices<Head, Tails...> ) {
-    return Result( etude::tuple_forward<Tails, Tuple>(t)... );
+    > result_type;
+    
+    return result_type( etude::tuple_forward<Tails, Tuple>(t)... );
   }
 
   // t の先頭要素以外を詰めた tuple を得る
