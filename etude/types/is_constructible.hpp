@@ -4,7 +4,7 @@
 //    
 //    gcc-4.6.0 の std::is_constructible のバグに対応。
 //
-//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
+//  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
