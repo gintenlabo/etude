@@ -17,6 +17,7 @@
 #include <utility>
 #include <type_traits>
 #include "less_pointer.hpp"
+#include "../types/is_constructible.hpp"
 
 namespace etude {
 
@@ -41,7 +42,7 @@ namespace etude {
     class R = decltype(
       std::declval<T>() < std::declval<U>()
     ),
-    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_less_impl_( T && lhs, U && rhs, ... ) {
     return std::forward<T>(lhs) < std::forward<U>(rhs);
@@ -58,7 +59,7 @@ namespace etude {
         std::declval<T>(), std::declval<U>(), 0
       )
     ),
-    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_less_( T && lhs, U && rhs ) {
     return etude::compare_less_impl_( std::forward<T>(lhs), std::forward<U>(rhs), 0 );

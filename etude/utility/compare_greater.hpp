@@ -18,6 +18,7 @@
 #include <utility>
 #include <type_traits>
 #include "compare_less.hpp"
+#include "../types/is_constructible.hpp"
 
 namespace etude {
 
@@ -32,7 +33,7 @@ namespace etude {
     class R = decltype(
       std::declval<T>() > std::declval<U>()
     ),
-    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_greater_impl_( T && lhs, U && rhs, int ) {
     return std::forward<T>(lhs) > std::forward<U>(rhs);
@@ -43,7 +44,7 @@ namespace etude {
     class R = decltype(
       etude::compare_less_( std::declval<U>(), std::declval<T>() )
     ),
-    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_greater_impl_( T && lhs, U && rhs, ... ) {
     return etude::compare_less_( std::forward<U>(rhs), std::forward<T>(lhs) );
@@ -57,7 +58,7 @@ namespace etude {
     class R = decltype(
       etude::compare_greater_impl_( std::declval<T>(), std::declval<U>(), 0 )
     ),
-    class = typename std::enable_if< std::is_constructible<bool, R>::value >::type
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_greater_( T && lhs, U && rhs ) {
     return etude::compare_greater_impl_( std::forward<T>(lhs), std::forward<U>(rhs), 0 );

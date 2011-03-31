@@ -19,6 +19,7 @@
 #include "operator_arrow.hpp"
 #include "../types/is_derivable.hpp"
 #include "../types/decay_and_strip.hpp"
+#include "../types/is_constructible.hpp"
 
 namespace etude {
  namespace wrapper_ { // ADL 回避
@@ -62,7 +63,7 @@ namespace etude {
     // 構築のみ。 explicit
     template< class U = T,
       class = typename std::enable_if<
-        std::is_constructible<T, U&&>::value
+        etude::is_constructible<T, U&&>::value
       >::type
     >
     explicit wrapper( T && x )
@@ -70,7 +71,7 @@ namespace etude {
     
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     explicit wrapper( Args&&... args )

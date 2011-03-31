@@ -14,14 +14,16 @@
 
 // copyable 関連
 
+#include "../etude/types/is_copy_constructible.hpp"
+#include "../etude/types/is_move_constructible.hpp"
 // gcc 4.5.0 にないので自作する
 template<class T>
 struct is_copy_constructible
-  : std::is_constructible<T, T const&>::type {};
+  : etude::is_copy_constructible<T>::type {};
 
 template<class T>
 struct is_move_constructible
-  : std::is_constructible<T, T&&>::type {};
+  : etude::is_move_constructible<T>::type {};
 
 #include "../etude/types/is_assignable.hpp"
 

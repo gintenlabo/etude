@@ -15,6 +15,7 @@
 
 #include <utility>
 #include <type_traits>
+#include "is_constructible.hpp"
 
 namespace etude {
 
@@ -25,7 +26,7 @@ namespace etude {
   template<class T>
   class is_maybe_< T,
     typename std::enable_if<
-      std::is_constructible<bool, T&>::value
+      etude::is_constructible<bool, T&>::value
     >::type
   >
   {

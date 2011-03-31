@@ -50,6 +50,7 @@
 #include "operators/partially_ordered.hpp"
 
 #include "types/is_array_of_unknown_bound.hpp"
+#include "types/is_constructible.hpp"
 #include "types/is_assignable_or_convertible.hpp"
 #include "types/pointee.hpp"
 
@@ -104,7 +105,7 @@ namespace etude {
     
     // T_ からの構築
     template< class U = T_&&,
-      class = typename std::enable_if<std::is_constructible<T, U>::value>::type
+      class = typename std::enable_if<etude::is_constructible<T, U>::value>::type
     >
     optional( T_ && x ) {
       impl_.construct( std::forward<T_>(x) );
@@ -129,7 +130,7 @@ namespace etude {
     
     // 条件付き構築
     template< class U = T_&&,
-      class = typename std::enable_if<std::is_constructible<T, U>::value>::type
+      class = typename std::enable_if<etude::is_constructible<T, U>::value>::type
     >
     optional( bool cond, T_ && x ) {
       if( cond ) {
@@ -185,7 +186,7 @@ namespace etude {
     // emplace construct
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     optional( emplace_construct_t, Args&&... args ) {
@@ -193,7 +194,7 @@ namespace etude {
     }
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     optional( bool cond, emplace_construct_t, Args&&... args ) {
@@ -229,7 +230,7 @@ namespace etude {
     // 与えられた引数から直接構築し直す。自己代入チェックは行われない。
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     void emplace( Args&&... args ) {

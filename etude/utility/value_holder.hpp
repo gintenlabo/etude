@@ -25,6 +25,7 @@
 #include "../types/tuple_types.hpp"
 #include "../types/tuple_indices.hpp"
 #include "../types/is_convertible.hpp"
+#include "../types/is_constructible.hpp"
 
 namespace etude {
  namespace value_holder_ { // ADL 回避
@@ -97,7 +98,7 @@ namespace etude {
     // T からの構築
     template<class U = T_&&,
       class = typename std::enable_if<
-        std::is_constructible<T, U>::value
+        etude::is_constructible<T, U>::value
       >::type
     >
     value_holder( T_ && src )
@@ -123,7 +124,7 @@ namespace etude {
     // pack されてない引数から構築
     template<class... Args,
       class = typename std::enable_if<
-        std::is_constructible<holder<T>, Args...>::value
+        etude::is_constructible<holder<T>, Args...>::value
       >::type
     >
     value_holder( emplace_construct_t, Args&&... args )

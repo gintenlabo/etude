@@ -13,6 +13,7 @@
 
 #include "types.hpp"
 #include "bool_constant.hpp"
+#include "is_constructible.hpp"
 #include <type_traits>
 
 namespace etude {
@@ -47,7 +48,7 @@ namespace etude {
   // From が types で To が普通の型の場合は、 is_constructible に転送
   template<class To, class... Args>
   struct is_convertible< etude::types<Args...>, To >
-    : std::is_constructible<To, Args...> {};
+    : etude::is_constructible<To, Args...> {};
 
 } // namespace etude
 

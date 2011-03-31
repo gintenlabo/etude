@@ -15,6 +15,7 @@
 #include <utility>
 #include <boost/utility/addressof.hpp>
 #include "../types/is_strict_explicitly_convertible.hpp"
+#include "../types/is_constructible.hpp"
 #include "../types/is_assignable.hpp"
 #include "uninitialized.hpp"
 
@@ -166,7 +167,7 @@ namespace etude {
     // T が参照の場合もこれを使う（一時オブジェクトを防ぐため）
     template< class U = T_&&,
       class = typename std::enable_if<
-        std::is_constructible<T, U>::value
+        etude::is_constructible<T, U>::value
       >::type
     >
     holder( T_ && src )
@@ -210,7 +211,7 @@ namespace etude {
     template<class... Args,
       class = typename std::enable_if<
         sizeof...(Args) != 1 &&
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     holder( Args&&... args )

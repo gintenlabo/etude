@@ -18,6 +18,8 @@
 
 #include "../memory/storage.hpp"
 #include "../utility/compressed_pair.hpp"
+#include "../types/is_copy_constructible.hpp"
+#include "../types/is_move_constructible.hpp"
 #include "../types/is_assignable.hpp"
 #include "../memory/apply_in_place.hpp"
 
@@ -247,9 +249,9 @@ namespace etude {
     typedef optional_impl_base_<T> base;
     
     typedef typename std::conditional<
-      !std::is_constructible<T, T&&>::value,
+      !etude::is_move_constructible<T>::value,
       etude::immovable<base>, typename std::conditional<
-        !std::is_constructible<T, T const&>::value,
+        !etude::is_copy_constructible<T>::value,
         etude::noncopyable<base>, base
       >::type
     >::type type;

@@ -22,6 +22,7 @@ template class etude::optional<int&&>;
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 #include "test_utilities.hpp"
 #include "../etude/utility/less_pointer.hpp"
+#include "../etude/types/is_convertible.hpp"
 
 // etude::optional<int> は trivially destructible
 STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int> >::value ));
@@ -441,7 +442,7 @@ int test_main( int, char** )
     // 例え const 参照であっても
     STATIC_ASSERT((
       // is_convertible だとエラーになる…。
-      !std::is_constructible<etude::optional<int const&>, int &&>::value
+      !etude::is_constructible<etude::optional<int const&>, int &&>::value
     ));
     
     int i = 0, j = 1;

@@ -29,6 +29,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "../types/is_constructible.hpp"
 #include "../types/pointee.hpp"
 #include "../functional/less_equal.hpp"
 
@@ -38,7 +39,7 @@ namespace etude {
   template< class T, class Comp = etude::less_equal<>,
     class U = typename etude::pointee<T const&>::type,
     class = typename std::enable_if<
-      std::is_constructible< bool,
+      etude::is_constructible< bool,
         decltype( std::declval<Comp&>()( std::declval<U>(), std::declval<U>() ) )
       >::value
     >::type
@@ -50,7 +51,7 @@ namespace etude {
   // 違う型版
   template< class T, class U, class Comp = etude::less_equal<>,
     class = typename std::enable_if<
-      std::is_constructible< bool,
+      etude::is_constructible< bool,
         decltype(
           std::declval<Comp&>()(
             std::declval<typename etude::pointee<T const&>::type>(),

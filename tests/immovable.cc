@@ -9,6 +9,7 @@
 #include "../etude/immovable.hpp"
 
 #include <type_traits>
+#include "../etude/types/is_constructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 // for is_xxx_constructible/assignable
@@ -42,8 +43,8 @@ int main()
   
   // ctor “]‘—
   STATIC_ASSERT(( !std::is_convertible<X&&, etude::immovable<X>>::value ));
-  STATIC_ASSERT(( std::is_constructible<etude::immovable<X>, X&&>::value ));
-  STATIC_ASSERT(( !std::is_constructible<etude::immovable<X>, int>::value ));
+  STATIC_ASSERT(( etude::is_constructible<etude::immovable<X>, X&&>::value ));
+  STATIC_ASSERT(( !etude::is_constructible<etude::immovable<X>, int>::value ));
 
 
   // immovable wrapper
@@ -55,6 +56,6 @@ int main()
   
   // ctor “]‘—
   STATIC_ASSERT(( !std::is_convertible<int, etude::immovable<int>>::value ));
-  STATIC_ASSERT(( std::is_constructible<etude::immovable<int>, int>::value ));
-  STATIC_ASSERT(( !std::is_constructible<etude::immovable<int>, void*>::value ));
+  STATIC_ASSERT(( etude::is_constructible<etude::immovable<int>, int>::value ));
+  STATIC_ASSERT(( !etude::is_constructible<etude::immovable<int>, void*>::value ));
 }

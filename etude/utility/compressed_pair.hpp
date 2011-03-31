@@ -16,6 +16,7 @@
 #include "value_holder.hpp"
 #include "piecewise_construct.hpp"
 #include "emplace_construct.hpp"
+#include "../types/is_constructible.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -220,8 +221,8 @@ namespace etude {
     // piecewise construction
     template<class Tuple1, class Tuple2,
       class = typename std::enable_if<
-        std::is_constructible< value_holder<T1>, unpack_construct_t, Tuple1 >::value &&
-        std::is_constructible< value_holder<T2>, unpack_construct_t, Tuple2 >::value
+        etude::is_constructible< value_holder<T1>, unpack_construct_t, Tuple1 >::value &&
+        etude::is_constructible< value_holder<T2>, unpack_construct_t, Tuple2 >::value
       >::type
     >
     compressed_pair( piecewise_construct_t, Tuple1 && t1, Tuple2 && t2 )
@@ -230,8 +231,8 @@ namespace etude {
     // piecewise construction で tuple の要素が 1 の場合
     template<class U1, class U2,
       class = typename std::enable_if<
-        std::is_constructible< value_holder<T1>, emplace_construct_t, U1 >::value &&
-        std::is_constructible< value_holder<T2>, emplace_construct_t, U2 >::value
+        etude::is_constructible< value_holder<T1>, emplace_construct_t, U1 >::value &&
+        etude::is_constructible< value_holder<T2>, emplace_construct_t, U2 >::value
       >::type
     >
     compressed_pair( emplace_construct_t, U1 && x1, U2 && x2 )

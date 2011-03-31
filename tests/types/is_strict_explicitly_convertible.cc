@@ -11,11 +11,12 @@
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 #include <type_traits>
+#include "../../etude/types/is_convertible.hpp"
 
 template<class From, class To, bool expected>
 void check()
 {
-  bool const expected_ = std::is_constructible<To, From>::value &&
+  bool const expected_ = etude::is_constructible<To, From>::value &&
     !std::is_convertible<From, To>::value;
   
   STATIC_ASSERT(( expected_ == expected ));

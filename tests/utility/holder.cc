@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "../../etude/types/is_constructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 // チェック本体
@@ -126,10 +127,8 @@ void check_convertible( int )
   STATIC_ASSERT(( std::is_convertible<U, T>::value
     == std::is_convertible<etude::holder<U>, holder>::value ));
 }
-template<class T, class... Args,
-  class = typename std::enable_if<sizeof...(Args) != 1>::type
->
-void check_convertible( ... ) {}
+template<class T, class... Args>
+typename std::enable_if<sizeof...(Args) != 1>::type check_convertible( ... ) {}
 
 // 構築可能性
 template<class T, class... Args>
@@ -137,8 +136,8 @@ void check_constructible()
 {
   typedef etude::holder<T> holder;
   
-  STATIC_ASSERT(( std::is_constructible<T, Args...>::value
-    == std::is_constructible<holder, Args...>::value ));
+  STATIC_ASSERT(( etude::is_constructible<T, Args...>::value
+    == etude::is_constructible<holder, Args...>::value ));
   
   check_convertible<T, Args...>(0);
 }

@@ -9,6 +9,7 @@
 //
 
 #include "../../etude/utility/value_holder.hpp"
+#include "../../etude/types/is_constructible.hpp"
 #include "../../etude/unpack.hpp"
 #include <type_traits>
 #include <utility>
@@ -128,10 +129,8 @@ void check_convertible( int )
   STATIC_ASSERT(( std::is_convertible<U, T>::value
     == std::is_convertible<etude::value_holder<U>, holder>::value ));
 }
-template<class T, class... Args,
-  class = typename std::enable_if<sizeof...(Args) != 1>::type
->
-void check_convertible( ... ) {}
+template<class T, class... Args>
+typename std::enable_if<sizeof...(Args) != 1>::type check_convertible( ... ) {}
 
 // 構築可能性
 template<class T, class... Args>
@@ -139,20 +138,20 @@ void check_constructible()
 {
   typedef etude::value_holder<T> holder;
   
-  static bool const is_constructible = std::is_constructible<T, Args...>::value;
+  static bool const is_constructible = etude::is_constructible<T, Args...>::value;
   
   STATIC_ASSERT((
-    std::is_constructible<holder, etude::emplace_construct_t, Args...>::value
+    etude::is_constructible<holder, etude::emplace_construct_t, Args...>::value
       == is_constructible
   ));
   
   STATIC_ASSERT((
-    std::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
+    etude::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
       == is_constructible
   ));
   
   STATIC_ASSERT((
-    std::is_constructible<holder,
+    etude::is_constructible<holder,
       decltype(
         etude::unpack( std::declval<std::tuple<Args...>>() )
       )
