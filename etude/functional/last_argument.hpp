@@ -37,14 +37,15 @@ namespace etude {
     }
     
     // unpack
-    template< class Tuple, std::size_t... Indices,
-      std::size_t I = sizeof...(Indices) - 1,
-      class Result = typename nth_type< I,
-        typename tuple_element<Indices, Tuple>::type...
-      >::type
-    >
-    Result operator()( unpacked_tuple<Tuple, Indices...> t ) const {
-      return etude::get_nth_argument_<I>()( etude::move<Indices>(t)... );
+    template< class Tuple, std::size_t... Indices >
+    typename nth_type< sizeof...(Indices) - 1,
+      typename tuple_element<Indices, Tuple>::type...
+    >::type
+      operator()( unpacked_tuple<Tuple, Indices...> t ) const
+    {
+      return etude::get_nth_argument_<sizeof...(Indices) - 1>()(
+        etude::move<Indices>(t)...
+      );
     }
     // 拡張 unpack
     template< class T, class... Args,
