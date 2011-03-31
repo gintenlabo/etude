@@ -1,0 +1,90 @@
+//
+//  is_constructible :
+//    std::is_constructible のバグ修正版
+//    
+//    gcc-4.6.0 の std::is_constructible のバグに対応。
+//
+//  Copyright (C) 2010-11  Takaya Saito (SubaruG)
+//    Distributed under the Boost Software License, Version 1.0.
+//    http://www.boost.org/LICENSE_1_0.txt
+//
+#ifndef ETUDE_TYPES_INCLUDED_IS_CONSTRUCTIBLE_HPP_
+#define ETUDE_TYPES_INCLUDED_IS_CONSTRUCTIBLE_HPP_
+
+#include "is_default_constructible.hpp"
+#include "any_of_c.hpp"
+#include <type_traits>
+
+namespace etude {
+
+  // 実装の実装
+  
+  // 基本的には std::is_constructible に転送
+  template<class Void, class T, class... Args>
+  struct is_constructible_impl_
+    : std::is_constructible<T, Args...>::type {};
+  
+  // 引数の中に一つでも void があれば、 false に
+  template<class T, class... Args>
+  struct is_constructible_impl_<
+    typename std::enable_if<
+      etude::any_of_c<std::is_void<Args>::value...>::value
+    >::type, T, Args...
+  >
+    : std::false_type {};
+
+
+  // 実装用
+  
+  // 基本的には is_constructible_impl_（つまり std::is_constructible ） へと転送
+  template<class Void, class T, class... Args>
+  struct is_constructible_
+    : is_constructible_impl_<void, T, Args...>::type {};
+  
+  // T が void, 関数の場合は false
+  template<class T, class... Args>
+  struct is_constructible_<
+    typename std::enable_if<
+      !std::is_object<T>::value && !std::is_reference<T>::value
+    >::type,
+    T, Args...
+  >
+    : std::false_type {};
+  
+  // 二引数で T が scalar type および参照の場合は、 gcc の実装にバグがあるので
+  // std::is_convertible へと転送
+  template<class T, class U>
+  struct is_constructible_<
+    typename std::enable_if<
+      std::is_scalar<T>::value || std::is_reference<T>::value
+    >::type,
+    T, U
+  >
+    : std::is_convertible<U, T>::type {};
+  
+  // 二引数以上で T が scalar type や参照の場合にも、 gcc の実装にバグがあるので
+  // std::false_type に決め打ちする
+  template<class T, class... Args>
+  struct is_constructible_<
+    typename std::enable_if<
+      ( sizeof...(Args) > 1 ) &&
+      ( std::is_scalar<T>::value || std::is_reference<T>::value )
+    >::type,
+    T, Args...
+  >
+    : std::false_type {};
+
+
+  // 本体は、基本的には is_constructible_ に転送
+  template<class T, class... Args>
+  struct is_constructible
+    : is_constructible_<void, T, Args...>::type {};
+  
+  // ただし default constructible の場合はそっちに。
+  template<class T>
+  struct is_constructible<T>
+    : etude::is_default_constructible<T>::type {};
+
+} // namespace etude
+
+#endif  // #ifndef ETUDE_TYPES_INCLUDED_IS_CONSTRUCTIBLE_HPP_
