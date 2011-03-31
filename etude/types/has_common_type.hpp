@@ -37,13 +37,19 @@ namespace etude {
   {
     template< class T_ = T, class U_ = U,
       class R = decltype( true ? std::declval<T_>() : std::declval<U_>() ),
-      // なんか無関係なポインタ同士だと void* にフォールバックしてしまう場合がある
-      class = typename std::enable_if<!(
-        is_void_pointer<R>::value && !(
-          is_void_pointer<typename std::decay<T_>::type>::value ||
-          is_void_pointer<typename std::decay<U_>::type>::value
+      class = typename std::enable_if<
+        !(
+          // なんか無関係なポインタ同士だと void* にフォールバックしてしまう場合がある
+          is_void_pointer<R>::value && !(
+            is_void_pointer<typename std::decay<T_>::type>::value ||
+            is_void_pointer<typename std::decay<U_>::type>::value
+          )
+        ) && (
+          // なんか T** と U** から void** にフォールバックしてしまう場合もある
+          std::is_convertible<T_, R>::value &&
+          std::is_convertible<U_, R>::value
         )
-      )>::type
+      >::type
     >
     static std::true_type test_( int );
     
