@@ -16,6 +16,7 @@
 #define ETUDE_TYPES_INCLUDED_TUPLE_ELEMENT_HPP_
 
 #include <tuple>
+#include <type_traits>
 #include "tuple_size.hpp"
 
 namespace etude {
@@ -30,12 +31,15 @@ namespace etude {
   {
     typedef typename std::tuple_element<I, Tuple>::type type;
     
-    static type& get( Tuple& x ) {
+    typedef typename std::add_lvalue_reference<type>::type             reference;
+    typedef typename std::add_lvalue_reference<type const>::type const_reference;
+    
+    static reference get( Tuple& x ) {
       using std::get;
       return get<I>(x);
     }
     
-    static type const& get( Tuple const& x ) {
+    static const_reference get( Tuple const& x ) {
       using std::get;
       return get<I>(x);
     }
@@ -66,7 +70,9 @@ namespace etude {
   template< std::size_t I, class Tuple >
   struct tuple_element_impl_< I, Tuple& >
   {
-    typedef typename tuple_element<I, Tuple>::type& type;
+    typedef typename std::add_lvalue_reference<
+      typename tuple_element<I, Tuple>::type
+    >::type type;
     
     static type get( Tuple& x ) {
       return tuple_element<I, Tuple>::get(x);
@@ -76,7 +82,9 @@ namespace etude {
   template< std::size_t I, class Tuple >
   struct tuple_element_impl_< I, Tuple&& >
   {
-    typedef typename tuple_element<I, Tuple>::type&& type;
+    typedef typename std::add_rvalue_reference<
+      typename tuple_element<I, Tuple>::type
+    >::type type;
     
     static type get( Tuple && x ) {
       return std::forward<type>( tuple_element<I, Tuple>::get(x) );
