@@ -19,13 +19,16 @@
 #include "emplace_construct.hpp"
 #include "unpack_construct.hpp"
 #include "../unpacked_tuple.hpp"
+#include "../unpack.hpp"
+#include "../functional/pack.hpp"
+#include "../functional/group.hpp"
 
 #include "../types/indices.hpp"
 #include "tuple_get.hpp"
 #include "../types/tuple_types.hpp"
 #include "../types/tuple_indices.hpp"
-#include "../types/is_convertible.hpp"
 #include "../types/is_constructible.hpp"
+#include "../types/is_unpack_constructible.hpp"
 
 namespace etude {
  namespace value_holder_ { // ADL 回避
@@ -54,9 +57,9 @@ namespace etude {
       : base( std::forward<Args>(args)... ) {}
     
     // pack された引数から構築
-    template<class Tuple, std::size_t... Indices>
-    value_holder_( Tuple && t, etude::indices<Indices...> )
-      : base ( tuple_forward<Indices, Tuple>(t)... )
+    template< class Tuple, std::size_t... Indices >
+    value_holder_( unpacked_tuple<Tuple, Indices...> t )
+      : base ( etude::move<Indices>(t)... )
     {
       (void)t;  // unused variable 警告避け（ Tuple が空の場合に）
     }
@@ -133,24 +136,23 @@ namespace etude {
     // pack された引数から構築
     template<class Tuple,
       class = typename std::enable_if<
-        etude::is_convertible<
-          typename etude::tuple_types<Tuple>::type, holder<T>
-        >::value
+        etude::is_unpack_constructible< holder<T>, Tuple >::value
       >::type
     >
     value_holder( unpack_construct_t, Tuple && t )
-      : base( std::forward<Tuple>(t), etude::tuple_indices<Tuple>() ) {}
+      : base( etude::unpack( std::forward<Tuple>(t) ) ) {}
     
     // unpack された引数から構築
-    template<class Tuple, std::size_t... Indices,
+    template< class... Args,
       class = typename std::enable_if<
-        etude::is_convertible<
-          typename etude::tuple_types<Tuple>::type, holder<T>
+        etude::is_unpack_constructible<
+          holder<T>,
+          decltype( etude::pack( std::declval<Args>()... ) )
         >::value
       >::type
     >
-    explicit value_holder( unpacked_tuple<Tuple, Indices...> t )
-      : base( emplace_construct, etude::move<Indices>(t)... ) {}
+    explicit value_holder( Args&&... args )
+      : base( etude::group( std::forward<Args>(args)... ) ) {}
     
     // gcc4.5.0 では implicit move が（ｒｙ
     value_holder( self_type const& ) = default;

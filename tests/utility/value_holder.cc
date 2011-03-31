@@ -274,4 +274,9 @@ int main()
     etude::unpack( etude::forward_as_tuple( get( std::move(c) ) ) )
   );
   BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
+  
+  etude::value_holder<nontrivial_class> g(
+    0, etude::unpack( etude::forward_as_tuple( 0, (char*)0 ) )
+  );
+  BOOST_ASSERT( g.get().which_ctor_has_called == nontrivial_class::from_int_and_double_and_charptr );
 }
