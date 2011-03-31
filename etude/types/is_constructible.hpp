@@ -12,6 +12,7 @@
 #define ETUDE_TYPES_INCLUDED_IS_CONSTRUCTIBLE_HPP_
 
 #include "is_default_constructible.hpp"
+#include "is_object_or_reference.hpp"
 #include "any_of_c.hpp"
 #include <type_traits>
 
@@ -44,9 +45,7 @@ namespace etude {
   // T が void, 関数の場合は false
   template<class T, class... Args>
   struct is_constructible_<
-    typename std::enable_if<
-      !std::is_object<T>::value && !std::is_reference<T>::value
-    >::type,
+    typename std::enable_if< !etude::is_object_or_reference<T>::value >::type,
     T, Args...
   >
     : std::false_type {};
