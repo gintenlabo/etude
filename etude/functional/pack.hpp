@@ -42,19 +42,29 @@ namespace etude {
     
     // 与えられた引数リストが unpack で終わる場合
     // unpack 版
-    template< class Tuple, std::size_t... Indices,
-      class Result = std::tuple<typename etude::tuple_element<Indices, Tuple&&>::type...>
+    template< class Tuple, std::size_t... Indices>
+    std::tuple<
+      typename etude::tuple_element<Indices, Tuple&&>::type...
     >
-    Result operator()( unpacked_tuple<Tuple, Indices...> && t ) const {
+      operator()( unpacked_tuple<Tuple, Indices...> && t ) const
+    {
+      typedef std::tuple<
+        typename etude::tuple_element<Indices, Tuple&&>::type...
+      > result_type;
+      
       (void)t;  // 警告避け
-      return Result( etude::move<Indices>(t)... );
+      return result_type( etude::move<Indices>(t)... );
     }
-    template< class Tuple, std::size_t... Indices,
-      class Result = std::tuple<
-        typename etude::tuple_element<Indices, Tuple const&>::type...
-      >
+    template< class Tuple, std::size_t... Indices >
+    std::tuple<
+      typename etude::tuple_element<Indices, Tuple const&>::type...
     >
-    Result operator()( unpacked_tuple<Tuple, Indices...> const& t ) const {
+      operator()( unpacked_tuple<Tuple, Indices...> const& t ) const
+    {
+      typedef std::tuple<
+        typename etude::tuple_element<Indices, Tuple const&>::type...
+      > result_type;
+      
       (void)t;  // 警告避け
       return Result( etude::get<Indices>(t)... );
     }

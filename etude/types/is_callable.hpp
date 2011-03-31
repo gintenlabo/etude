@@ -24,9 +24,12 @@ namespace etude {
   class is_callable_
   {
     template< class T_ = T,
-      class = decltype(
-        etude::invoke<R>( std::declval<T_>(), std::declval<Args>()... )
-      )
+      class R_ = decltype(
+        etude::invoke( std::declval<T_>(), std::declval<Args>()... )
+      ),
+      class = typename std::enable_if<
+        std::is_void<R>::value || std::is_convertible<R_, R>::value
+      >::type
     >
     static std::true_type test( int );
     

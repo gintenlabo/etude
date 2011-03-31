@@ -28,7 +28,7 @@
 #include <type_traits>
 #include <functional>
 
-#include "wrap_if_mem_fn.hpp"
+#include "std_invoke.hpp"
 
 #include "../types/is_unpacked_tuple.hpp"
 #include "unpacked_tuple.hpp"
@@ -39,50 +39,85 @@
 
 namespace etude {
   
-  // 規格 20.8.2 Requirements [func.require] で定義される INVOKE の処理を行う
-  template<class F, class... Args,
+  // unpack して invoke する関数（実装用）
+  template<class F, class Tuple, std::size_t... Indices>
+  inline decltype(
+    etude::std_invoke( std::declval<F>(),
+      etude::move<Indices>( std::declval<unpacked_tuple<Tuple, Indices...>>() )...
+    )
+  )
+    invoke_unpacked( F && f, unpacked_tuple<Tuple, Indices...> t )
+  {
+    (void)t;  // 警告避け
+    return etude::std_invoke( std::forward<F>(f), etude::move<Indices>(t)... );
+  }
+  
+  // ファンクタ invoke_
+  struct invoke_t
+  {
+    // 規格 20.8.2 Requirements [func.require] で定義される INVOKE の処理を行う
+    template< class F, class... Args,
+      class R = decltype(
+        etude::std_invoke( std::declval<F>(), std::declval<Args>()... )
+      ),
+      class = typename std::enable_if<!etude::is_unpacked_tuple<Args...>::value>::type
+    >
+    R operator()( F && f, Args&&... args ) const
+    {
+      return etude::std_invoke( std::forward<F>(f), std::forward<Args>(args)... );
+    }
+    
+    // ただし引数が etude::unpack の結果なら、 invoke_unpacked を呼ぶ
+    template< class F, class Unpacked,
+      class R = decltype(
+        etude::invoke_unpacked( std::declval<F>(), std::declval<Unpacked>() )
+      ),
+      class = typename std::enable_if<etude::is_unpacked_tuple<Unpacked>::value>::type
+    >
+    R operator()( F && f, Unpacked && t ) const
+    {
+      return etude::invoke_unpacked( std::forward<F>(f), std::forward<Unpacked>(t) );
+    }
+    // 更に最後の引数が unpacked_tuple の時にも
+    template< class F, class T, class... Args,
+      class R = decltype(
+        etude::invoke_unpacked( std::declval<F>(),
+          etude::group( std::declval<T>(), std::declval<Args>()... )
+        )
+      ),
+      class = typename std::enable_if<etude::is_unpacked_tuple<Args...>::value>::type
+    >
+    R operator()( F && f, T && t, Args&&... args ) const
+    {
+      return etude::invoke_unpacked( std::forward<F>(f),
+        etude::group( std::forward<T>(t), std::forward<Args>(args)... )
+      );
+    }
+    
+  };  // struct invoke_t
+  
+  namespace {
+    invoke_t const invoke_ = {};
+  }
+  
+  
+  // 本体
+  
+  // 型指定なし版
+  template< class F, class... Args,
     class R = decltype(
-      etude::wrap_if_mem_fn( std::declval<F>() )( std::declval<Args>()... )
-    ),
-    class = typename std::enable_if<!etude::is_unpacked_tuple<Args...>::value>::type
+      etude::invoke_( std::declval<F>(), std::declval<Args>()... )
+    )
   >
   inline R invoke( F && f, Args&&... args )
   {
-    return etude::wrap_if_mem_fn( std::forward<F>(f) )( std::forward<Args>(args)... );
-  }
-  // ただし引数が etude::unpack の結果なら、 unpack して適用する
-  template<class F, class Tuple, std::size_t... Indices,
-    class R = decltype(
-      etude::wrap_if_mem_fn( std::declval<F>() )(
-        etude::move<Indices>( std::declval<unpacked_tuple<Tuple, Indices...>>() )...
-      )
-    )
-  >
-  inline R invoke( F && f, unpacked_tuple<Tuple, Indices...> t )
-  {
-    (void)t;  // 警告避け
-    return etude::wrap_if_mem_fn( std::forward<F>(f) )( etude::move<Indices>(t)... );
-  }
-  // 更に最後の引数が unpacked_tuple の時にも
-  template<class F, class T, class... Args,
-    class R = decltype(
-      etude::invoke(
-        std::declval<F>(), etude::group( std::declval<T>(), std::declval<Args>()... )
-      )
-    ),
-    class = typename std::enable_if<etude::is_unpacked_tuple<Args...>::value>::type
-  >
-  inline R invoke( F && f, T && t, Args&&... args )
-  {
-    return etude::invoke(
-      std::forward<F>(f), etude::group( std::forward<T>(t), std::forward<Args>(args)... )
-    );
+    return etude::invoke_( std::forward<F>(f), std::forward<Args>(args)... );
   }
   
   // 型指定版。戻り値を R に暗黙変換する。 R が void ならば単純に捨てる
-  template<class R, class F, class... Args,
+  template< class R, class F, class... Args,
     class R_ = decltype(
-      etude::invoke( std::declval<F>(), std::declval<Args>()... )
+      etude::invoke_( std::declval<F>(), std::declval<Args>()... )
     ),
     class = typename std::enable_if<
       std::is_void<R>::value || std::is_convertible<R_, R>::value
