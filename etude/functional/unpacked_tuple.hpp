@@ -20,6 +20,7 @@
 #define ETUDE_FUNCTIONAL_INCLUDED_UNPACKED_TUPLE_HPP_
 
 #include "../types/tuple_element.hpp"
+#include "../types/is_constructible.hpp"
 #include "../utility/tuple_get.hpp"
 
 #include <utility>
@@ -32,7 +33,7 @@ namespace etude {
   {
     typedef Tuple tuple_type;
     
-    unpacked_tuple() = default;
+    // unpacked_tuple() = default;
     
     unpacked_tuple( unpacked_tuple const& ) = default;
     unpacked_tuple( unpacked_tuple && ) = default;
@@ -50,7 +51,7 @@ namespace etude {
     
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<Tuple, Args...>::value
+        etude::is_constructible<Tuple, Args...>::value
       >::type
     >
     explicit unpacked_tuple( Args&&... args )
