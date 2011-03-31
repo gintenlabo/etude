@@ -169,6 +169,9 @@ int main()
     // in_place_factory -> typed_in_place_factory
     etude::typed_in_place_factory<hoge, double, float> in_place_5 = etude::in_place( 1, 1 );
     etude::typed_in_place_factory<hoge, std::unique_ptr<int>, unsigned int, double> in_place_6 = etude::in_place( std::unique_ptr<int>(), 1, 1 );
+    
+    // 警告避け
+    (void)in_place_2_, (void)in_place_3, (void)in_place_4, (void)in_place_5, (void)in_place_6;
   }
   
   // 型変換が出来ないことを確かめる

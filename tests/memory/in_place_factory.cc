@@ -155,6 +155,9 @@ int main()
     BOOST_ASSERT(( std::is_same<
       decltype(in_place_5), etude::in_place_factory<int, int>
     >::value ));
+    
+    // 警告避け
+    (void)in_place_3, (void)in_place_4, (void)in_place_5;
   }
   
   // 型変換が「できない」チェック
