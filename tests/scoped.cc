@@ -54,8 +54,12 @@ void type_check()
   }
   
   // 関数渡しても大丈夫なのん？
-  IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
-    etude::scoped( new int(), boost::checked_delete<int> ) );
+  STATIC_ASSERT((
+    std::is_same<
+      std::unique_ptr<int, void(*)(int*)>,
+      decltype( etude::scoped( new int(), boost::checked_delete<int> ) )
+    >::value
+  ));
   
   
   // "pointer" のあるデリータでテストするよー。
