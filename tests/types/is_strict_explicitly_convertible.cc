@@ -11,7 +11,6 @@
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 #include <type_traits>
-#include "../../etude/types/is_convertible.hpp"
 
 template<class From, class To, bool expected>
 void check()
