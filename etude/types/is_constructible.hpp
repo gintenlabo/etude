@@ -50,19 +50,28 @@ namespace etude {
   >
     : std::false_type {};
   
-  // 二引数で T が scalar type および参照の場合は、 gcc の実装にバグがあるので
-  // std::is_convertible へと転送
+  // gcc の実装バグへの対応
+  
+  // 二引数で T, U が共に scalar type の場合は std::is_convertible へと転送
   template<class T, class U>
   struct is_constructible_<
     typename std::enable_if<
-      std::is_scalar<T>::value || std::is_reference<T>::value
+      std::is_scalar<T>::value &&
+      std::is_scalar<typename std::decay<U>::type>::value
     >::type,
     T, U
   >
     : std::is_convertible<U, T>::type {};
   
-  // 二引数以上で T が scalar type や参照の場合にも、 gcc の実装にバグがあるので
-  // std::false_type に決め打ちする
+  // 二引数で T が参照の場合にも std::is_convertible へと転送
+  template<class T, class U>
+  struct is_constructible_<
+    typename std::enable_if< std::is_reference<T>::value >::type,
+    T, U
+  >
+    : std::is_convertible<U, T>::type {};
+  
+  // 二引数以上で T が scalar type や参照の場合には std::false_type に決め打ちする
   template<class T, class... Args>
   struct is_constructible_<
     typename std::enable_if<
