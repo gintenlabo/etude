@@ -41,9 +41,19 @@ struct is_move_assignable
 template<class T>
 struct is_trivially_copyable :
   etude::bool_constant<
+#if defined(__GNUC__)
     std::has_trivial_destructor<T>::value &&
     std::has_trivial_copy_constructor<T>::value &&
+  #if ( __GNUC__ == 4 ) && ( __GNUC_MINOR__ < 6 )
     std::has_trivial_assign<T>::value
+  #else
+    std::has_trivial_copy_assign<T>::value
+  #endif
+#else
+    std::is_trivially_destructible<T>::value &&
+    std::is_trivially_copy_constructible<T>::value &&
+    std::is_trivially_copy_assignable<T>::value
+#endif
   >::type
 {};
 
