@@ -204,6 +204,9 @@ int main()
     etude::compressed_pair<void*, int> p12(
       etude::emplace_construct, etude::uninitialized, etude::uninitialized
     );
+    
+    // 警告避け
+    (void)p7, (void)p8, (void)p9, (void)p10, (void)p11, (void)p12;
   }
   
   // 型変換チェック
