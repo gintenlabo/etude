@@ -3,7 +3,7 @@
 //    与えられた引数に対し == を適用する
 // 
 //    与えられた引数を == で比較し、その結果を bool に明示的に変換します。
-//  
+//    引数が比較できない場合は、左右を反転して比較を試みます。
 //  
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -19,6 +19,30 @@
 
 namespace etude {
 
+  // 実装の実装
+  
+  // T と U が、この順に比較可能な場合
+  template< class T, class U,
+    class R = decltype(
+      std::declval<T>() == std::declval<U>()
+    ),
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
+  >
+  inline R compare_equal_to_impl2_( T && lhs, U && rhs, int ) {
+    return std::forward<T>(lhs) == std::forward<U>(rhs);
+  }
+  // T と U が、順序を逆転すると比較可能になる場合は順序反転
+  template< class T, class U,
+    class R = decltype(
+      std::declval<U>() == std::declval<T>()
+    ),
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
+  >
+  inline R compare_equal_to_impl2_( T && lhs, U && rhs, ... ) {
+    return std::forward<U>(rhs) == std::forward<T>(lhs);
+  }
+  
+  
   // 実装
   
   // ポインタ（ gcc-4.5.x だと、ポインタに対する == の SFINAE が上手く効かないので）
@@ -43,12 +67,13 @@ namespace etude {
          std::is_pointer<typename std::decay<U>::type>::value )
     >::type,
     class R = decltype(
-      std::declval<T>() == std::declval<U>()
+      etude::compare_equal_to_impl2_( std::declval<T>(), std::declval<U>(), 0 )
     ),
     class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_equal_to_impl_( T && lhs, U && rhs, ... ) {
-    return std::forward<T>(lhs) == std::forward<U>(rhs);
+    return etude::compare_equal_to_impl2_(
+      std::forward<T>(lhs), std::forward<U>(rhs), 0 );
   }
   
   

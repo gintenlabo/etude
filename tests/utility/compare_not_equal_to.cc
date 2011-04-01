@@ -57,6 +57,29 @@ struct Y
   }
   
 };
+// 左右不対象な == ないし != を持ったクラス
+struct Z
+{
+  int value;
+  
+  explicit Z( int value_ )
+    : value( value_ ) {}
+  
+  // X に対しては operator== しか定義されない
+  friend convertible_to_bool operator==( Z const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value == rhs.value );
+  }
+  
+  // Y に対しては矛盾した operator== と operator!= の組
+  friend convertible_to_bool operator==( Z const& lhs, Y const& rhs ) {
+    return convertible_to_bool( lhs.value == rhs.value );
+  }
+  // != は常に true を返す
+  friend convertible_to_bool operator!=( Z const&, Y const& ) {
+    return convertible_to_bool( true );
+  }
+  
+};
 
 int test_main( int, char** )
 {
@@ -78,6 +101,16 @@ int test_main( int, char** )
   Y y1(1), y2(2);
   BOOST_CHECK( etude::compare_not_equal_to( y1, y1 ) );
   BOOST_CHECK( etude::compare_not_equal_to( y1, y2 ) );
+  
+  Z z(1);
+  BOOST_CHECK( !etude::compare_not_equal_to( z, x1 ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( z, x2 ) );
+  BOOST_CHECK( !etude::compare_not_equal_to( x1, z ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( x2, z ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( z, y1 ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( z, y2 ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( y1, z ) );
+  BOOST_CHECK(  etude::compare_not_equal_to( y2, z ) );
   
   return 0;
 }

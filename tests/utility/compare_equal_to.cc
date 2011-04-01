@@ -39,6 +39,20 @@ struct X
   
 };
 
+struct Y
+{
+  int value;
+  
+  explicit Y( int value_ )
+    : value( value_ ) {}
+  
+  // Y は X と、この順のみ比較可能
+  friend convertible_to_bool operator==( Y const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value == rhs.value );
+  }
+  
+};
+
 int test_main( int, char** )
 {
   BOOST_CHECK(  etude::compare_equal_to( 0, 0 ) );
@@ -49,15 +63,27 @@ int test_main( int, char** )
   BOOST_CHECK( !etude::compare_equal_to( &p, (void*)0 ) );
   // etude::compare_equal_to( &p, (int*)0 );  // no match function
   
-  X x(1), y(2);
+  X x1(1), x2(2);
   STATIC_ASSERT((
-    !std::is_convertible<decltype( x == y ), bool>::value
+    !std::is_convertible<decltype( x1 == x2 ), bool>::value
   ));
   STATIC_ASSERT((
-    std::is_same<decltype( etude::compare_equal_to( x, y ) ), bool>::value
+    std::is_same<decltype( etude::compare_equal_to( x1, x2 ) ), bool>::value
   ));
-  BOOST_CHECK(  etude::compare_equal_to( x, x ) );
-  BOOST_CHECK( !etude::compare_equal_to( x, y ) );
+  BOOST_CHECK(  etude::compare_equal_to( x1, x1 ) );
+  BOOST_CHECK( !etude::compare_equal_to( x1, x2 ) );
+  
+  Y y1(1), y2(2);
+  STATIC_ASSERT((
+    !std::is_convertible<decltype( y1 == x2 ), bool>::value
+  ));
+  STATIC_ASSERT((
+    std::is_same<decltype( etude::compare_equal_to( x1, y1 ) ), bool>::value
+  ));
+  BOOST_CHECK(  etude::compare_equal_to( x1, y1 ) );
+  BOOST_CHECK( !etude::compare_equal_to( x1, y2 ) );
+  BOOST_CHECK(  etude::compare_equal_to( y1, x1 ) );
+  BOOST_CHECK( !etude::compare_equal_to( y1, x2 ) );
   
   return 0;
 }

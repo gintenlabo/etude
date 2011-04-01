@@ -22,6 +22,31 @@
 
 namespace etude {
 
+
+  // 実装の実装
+  
+  // T と U が、この順に比較可能な場合
+  template< class T, class U,
+    class R = decltype(
+      std::declval<T>() <= std::declval<U>()
+    ),
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
+  >
+  inline R compare_less_equal_impl2_( T && lhs, U && rhs, int ) {
+    return std::forward<T>(lhs) <= std::forward<U>(rhs);
+  }
+  // T と U が、順序を逆転すると比較可能になる場合は順序反転
+  template< class T, class U,
+    class R = decltype(
+      std::declval<U>() >= std::declval<T>()
+    ),
+    class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
+  >
+  inline R compare_less_equal_impl2_( T && lhs, U && rhs, ... ) {
+    return std::forward<U>(rhs) >= std::forward<T>(lhs);
+  }
+  
+
   // 実装用
   
   // operator <= が定義されている、ただしポインタ以外の場合
@@ -31,12 +56,14 @@ namespace etude {
          std::is_pointer<typename std::decay<U>::type>::value )
     >::type,
     class R = decltype(
-      std::declval<T>() <= std::declval<U>()
+      etude::compare_less_equal_impl2_( std::declval<T>(), std::declval<U>(), 0 )
     ),
     class = typename std::enable_if< etude::is_constructible<bool, R>::value >::type
   >
   inline R compare_less_equal_impl_( T && lhs, U && rhs, int ) {
-    return std::forward<T>(lhs) <= std::forward<U>(rhs);
+    return etude::compare_less_equal_impl2_(
+      std::forward<T>(lhs), std::forward<U>(rhs), 0
+    );
   }
   
   // operator <= が存在しない場合には compare_less_ に転送

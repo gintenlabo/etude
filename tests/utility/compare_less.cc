@@ -39,6 +39,22 @@ struct X
   
 };
 
+struct Y
+{
+  int value;
+  
+  explicit Y( int value_ )
+    : value( value_ ) {}
+  
+  friend convertible_to_bool operator<( Y const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value < rhs.value );
+  }
+  friend convertible_to_bool operator>( Y const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value > rhs.value );
+  }
+  
+};
+
 int test_main( int, char** )
 {
   BOOST_CHECK( !etude::compare_less( 0, 0 ) );
@@ -53,16 +69,22 @@ int test_main( int, char** )
   );
   // etude::compare_less( &p, (int*)0 );  // no match function
   
-  X x(1), y(2);
+  X x1(1), x2(2);
   STATIC_ASSERT((
-    !std::is_convertible<decltype( x < y ), bool>::value
+    !std::is_convertible<decltype( x1 < x2 ), bool>::value
   ));
   STATIC_ASSERT((
-    std::is_same<decltype( etude::compare_less( x, y ) ), bool>::value
+    std::is_same<decltype( etude::compare_less( x1, x2 ) ), bool>::value
   ));
-  BOOST_CHECK( !etude::compare_less( x, x ) );
-  BOOST_CHECK(  etude::compare_less( x, y ) );
-  BOOST_CHECK( !etude::compare_less( y, x ) );
+  BOOST_CHECK( !etude::compare_less( x1, x1 ) );
+  BOOST_CHECK(  etude::compare_less( x1, x2 ) );
+  BOOST_CHECK( !etude::compare_less( x2, x1 ) );
+  
+  Y y(1);
+  BOOST_CHECK( !etude::compare_less( y, x1 ) );
+  BOOST_CHECK( !etude::compare_less( x1, y ) );
+  BOOST_CHECK(  etude::compare_less( y, x2 ) );
+  BOOST_CHECK( !etude::compare_less( x2, y ) );
   
   return 0;
 }

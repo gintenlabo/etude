@@ -55,6 +55,38 @@ struct Y
   }
   
 };
+// 左右不対象な < ないし <= を持ったクラス
+struct Z
+{
+  int value;
+  
+  explicit Z( int value_ )
+    : value( value_ ) {}
+  
+  // X に対しては operator< と operator> しか定義されない
+  friend convertible_to_bool operator<( Z const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value < rhs.value );
+  }
+  friend convertible_to_bool operator>( Z const& lhs, X const& rhs ) {
+    return convertible_to_bool( lhs.value > rhs.value );
+  }
+  
+  // Y に対しては矛盾した operator< と operator<= の組
+  friend convertible_to_bool operator<( Z const& lhs, Y const& rhs ) {
+    return convertible_to_bool( lhs.value < rhs.value );
+  }
+  friend convertible_to_bool operator>( Z const& lhs, Y const& rhs ) {
+    return convertible_to_bool( lhs.value > rhs.value );
+  }
+  // <= は常に true を返す
+  friend convertible_to_bool operator<=( Z const&, Y const& ) {
+    return convertible_to_bool( true );
+  }
+  friend convertible_to_bool operator>=( Z const&, Y const& ) {
+    return convertible_to_bool( true );
+  }
+  
+};
 
 int test_main( int, char** )
 {
@@ -83,6 +115,16 @@ int test_main( int, char** )
   BOOST_CHECK( etude::compare_less_equal( y1, y1 ) );
   BOOST_CHECK( etude::compare_less_equal( y1, y2 ) );
   BOOST_CHECK( etude::compare_less_equal( y2, y1 ) );
+  
+  Z z(1);
+  BOOST_CHECK(  etude::compare_less_equal( z, x1 ) );
+  BOOST_CHECK(  etude::compare_less_equal( x1, z ) );
+  BOOST_CHECK(  etude::compare_less_equal( z, x2 ) );
+  BOOST_CHECK( !etude::compare_less_equal( x2, z ) );
+  BOOST_CHECK(  etude::compare_less_equal( z, y1 ) );
+  BOOST_CHECK(  etude::compare_less_equal( y1, z ) );
+  BOOST_CHECK(  etude::compare_less_equal( z, y2 ) );
+  BOOST_CHECK(  etude::compare_less_equal( y2, z ) );
   
   return 0;
 }
