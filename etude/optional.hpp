@@ -62,7 +62,7 @@
 #include "functional/less_equal.hpp"
 #include "utility/pointee_equal.hpp"
 #include "utility/pointee_before.hpp"
-#include "utility/pointee_less_or_equal.hpp"
+#include "utility/pointee_before_or_equal.hpp"
 
 #include "types/decay_and_strip.hpp"
 
@@ -524,7 +524,7 @@ namespace etude {
     >::type
   >
   inline bool operator<=( optional<T> const& lhs, optional<U> const& rhs ) {
-    return etude::pointee_less_or_equal( lhs, rhs );
+    return etude::pointee_before_or_equal( lhs, rhs );
   }
   template< class T, class U,
     class = typename std::enable_if<
@@ -532,7 +532,7 @@ namespace etude {
     >::type
   >
   inline bool operator>=( optional<T> const& lhs, optional<U> const& rhs ) {
-    return etude::pointee_less_or_equal( rhs, lhs );
+    return etude::pointee_before_or_equal( rhs, lhs );
   }
   
   

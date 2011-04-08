@@ -1,8 +1,8 @@
 //
-//  pointee_less_or_equal:
+//  pointee_before_or_equal:
 //    ポインタ様のオブジェクトの内部を <= で比較する
 // 
-//    etude::pointee_less_or_equal( p, q ) は、
+//    etude::pointee_before_or_equal( p, q ) は、
 //    p および q が共に有効値である場合は bool( *p <= *q ) を、
 //    p が有効値で q が無効値の場合には false を、
 //    それ以外の場合には true を返します。
@@ -23,8 +23,8 @@
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
-#ifndef ETUDE_UTILITY_INCLUDED_POINTEE_LESS_OR_EQUAL_HPP_
-#define ETUDE_UTILITY_INCLUDED_POINTEE_LESS_OR_EQUAL_HPP_
+#ifndef ETUDE_UTILITY_INCLUDED_POINTEE_BEFORE_OR_EQUAL_HPP_
+#define ETUDE_UTILITY_INCLUDED_POINTEE_BEFORE_OR_EQUAL_HPP_
 
 #include <type_traits>
 #include <utility>
@@ -44,7 +44,9 @@ namespace etude {
       >::value
     >::type
   >
-  inline bool pointee_less_or_equal( T const& lhs, T const& rhs, Comp && comp = Comp() ){
+  inline bool pointee_before_or_equal(
+    T const& lhs, T const& rhs, Comp && comp = Comp() )
+  {
     return lhs ? ( rhs ? bool( comp( *lhs, *rhs ) ) : false ) : true;
   }
   
@@ -61,7 +63,9 @@ namespace etude {
       >::value
     >::type
   >
-  inline bool pointee_less_or_equal( T const& lhs, U const& rhs, Comp && comp = Comp() ){
+  inline bool pointee_before_or_equal(
+    T const& lhs, U const& rhs, Comp && comp = Comp() )
+  {
     return lhs ? ( rhs ? bool( comp( *lhs, *rhs ) ) : false ) : true;
   }
 

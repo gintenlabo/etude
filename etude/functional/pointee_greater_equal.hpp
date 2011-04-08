@@ -1,13 +1,13 @@
 //
 //  pointee_greater_equal:
-//    etude::pointee_less_or_equal を呼び出す関数オブジェクト
+//    etude::pointee_before_or_equal を呼び出す関数オブジェクト
 // 
 //    etude::pointee_greater_equal<T, U> は、
 //    T const& 型の t 及び U const& 型の u に対し
-//    etude::pointee_less_or_equal( u, t ) を呼び出す、
+//    etude::pointee_before_or_equal( u, t ) を呼び出す、
 //    空で trivial な関数オブジェクトです。
 //    
-//    この関数オブジェクトは、比較が etude::pointee_less_or_equal になる以外は、
+//    この関数オブジェクトは、比較が etude::pointee_before_or_equal になる以外は、
 //    etude::greater_equal と同様に定義されます。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
@@ -19,7 +19,7 @@
 
 #include <type_traits>
 #include <utility>
-#include "../utility/pointee_less_or_equal.hpp"
+#include "../utility/pointee_before_or_equal.hpp"
 #include "../types/is_simply_callable.hpp"
 
 namespace etude {
@@ -33,7 +33,7 @@ namespace etude {
     typename std::enable_if<
       std::is_convertible<
         decltype(
-          etude::pointee_less_or_equal( std::declval<U const&>(), std::declval<T const&>() )
+          etude::pointee_before_or_equal( std::declval<U const&>(), std::declval<T const&>() )
         ), bool
       >::value
     >::type
@@ -47,7 +47,7 @@ namespace etude {
     typedef typename std::remove_reference<U>::type U_;
     
     bool operator()( T_ const& lhs, U_ const& rhs ) const {
-      return etude::pointee_less_or_equal( rhs, lhs );
+      return etude::pointee_before_or_equal( rhs, lhs );
     }
     
   };

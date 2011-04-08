@@ -1,12 +1,12 @@
 //
-//  pointee_less_or_equal のテストです。
+//  pointee_before_or_equal のテストです。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
 //    http://www.boost.org/LICENSE_1_0.txt
 //
 
-#include "../../etude/utility/pointee_less_or_equal.hpp"
+#include "../../etude/utility/pointee_before_or_equal.hpp"
 
 #include <boost/test/minimal.hpp>
 #include <type_traits>
@@ -15,8 +15,8 @@
 template<class T, class U>
 void check_( T const& x, U const& y, bool less_eq, bool greater_eq )
 {
-  BOOST_CHECK( etude::pointee_less_or_equal( x, y ) == less_eq );
-  BOOST_CHECK( etude::pointee_less_or_equal( y, x ) == greater_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( x, y ) == less_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( y, x ) == greater_eq );
 }
 
 template<class T> inline T const* make_const( T* p ){ return p; }
@@ -30,10 +30,10 @@ void check( T* x, U* y, bool less, bool greater )
 template<class T, class U, class Comp>
 void check( T* x, U* y, Comp comp, bool less_eq, bool greater_eq )
 {
-  BOOST_CHECK( etude::pointee_less_or_equal( x, y, comp ) == less_eq );
-  BOOST_CHECK( etude::pointee_less_or_equal( y, x, comp ) == greater_eq );
-  BOOST_CHECK( etude::pointee_less_or_equal( x, make_const(y), comp ) == less_eq );
-  BOOST_CHECK( etude::pointee_less_or_equal( y, make_const(x), comp ) == greater_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( x, y, comp ) == less_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( y, x, comp ) == greater_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( x, make_const(y), comp ) == less_eq );
+  BOOST_CHECK( etude::pointee_before_or_equal( y, make_const(x), comp ) == greater_eq );
 }
 
 #include <boost/optional.hpp> // 手本
