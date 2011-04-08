@@ -68,7 +68,6 @@
 
 namespace etude {
 
-
   template<class T>
   class optional
     : etude::totally_ordered< optional<T>, boost::none_t,
@@ -91,7 +90,7 @@ namespace etude {
     typedef T element_type;
     typedef typename std::remove_reference<T_>::type value_type;
     
-    typedef T&             reference;
+    typedef T &            reference;
     typedef T const& const_reference;
     typedef T_&&    rvalue_reference;
     
