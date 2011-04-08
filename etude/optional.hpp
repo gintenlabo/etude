@@ -88,7 +88,9 @@ namespace etude {
    public:
     // 型定義
     typedef T element_type;
-    typedef typename std::remove_reference<T_>::type value_type;
+    
+    typedef typename std::remove_cv<T>::type         value_type;
+    typedef typename std::remove_reference<T>::type object_type;
     
     typedef T &            reference;
     typedef T const& const_reference;
@@ -432,8 +434,8 @@ namespace etude {
     // 演算子多重定義（ friend なので private でよい）
     
     // 元々の T が比較可能か否か
-    static bool const is_eq_comp_ = etude::is_equality_comparable<value_type>::value;
-    static bool const is_lt_comp_ = etude::is_less_than_comparable<value_type>::value;
+    static bool const is_eq_comp_ = etude::is_equality_comparable<object_type>::value;
+    static bool const is_lt_comp_ = etude::is_less_than_comparable<object_type>::value;
     
     // none_t との比較
     friend bool operator==( self_type const& lhs, boost::none_t ) /*noexcept*/ {
@@ -447,37 +449,37 @@ namespace etude {
     }
     // <=, >= は etude::totally_ordered により自動定義される。
     
-    // value_type const& との比較
+    // object_type const& との比較
     // T const& でないのは、 T が参照の場合にもきちんと比較できるようにするため
     template< bool EqualityComparable = is_eq_comp_,
       class = typename std::enable_if<EqualityComparable>::type
     >
-    friend bool operator==( self_type const& lhs, value_type const& rhs ) {
-      return lhs ? etude::equal_to<value_type>()( lhs.get(), rhs ) : false;
+    friend bool operator==( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::equal_to<object_type>()( lhs.get(), rhs ) : false;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator< ( self_type const& lhs, value_type const& rhs ) {
-      return lhs ? etude::less<value_type>()( lhs.get(), rhs ) : true;
+    friend bool operator< ( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less<object_type>()( lhs.get(), rhs ) : true;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator> ( self_type const& lhs, value_type const& rhs ) {
-      return lhs ? etude::less<value_type>()( rhs, lhs.get() ) : false;
+    friend bool operator> ( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less<object_type>()( rhs, lhs.get() ) : false;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator<=( self_type const& lhs, value_type const& rhs ) {
-      return lhs ? etude::less_equal<value_type>()( lhs.get(), rhs ) : true;
+    friend bool operator<=( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less_equal<object_type>()( lhs.get(), rhs ) : true;
     }
     template< bool LessThanComparable = is_lt_comp_,
       class = typename std::enable_if<LessThanComparable>::type
     >
-    friend bool operator>=( self_type const& lhs, value_type const& rhs ) {
-      return lhs ? etude::less_equal<value_type>()( rhs, lhs.get() ) : false;
+    friend bool operator>=( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less_equal<object_type>()( rhs, lhs.get() ) : false;
     }
     // 向きを反転したものは etude::partially_ordered により自動定義される。
     

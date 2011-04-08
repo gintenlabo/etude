@@ -54,7 +54,9 @@ inline void basic_check( Args&&... args )
   
   // typedef
   STATIC_ASSERT(( std::is_same<typename optional_t::element_type, T>::value ));
-  STATIC_ASSERT(( !std::is_reference<typename optional_t::value_type>::value ));
+  STATIC_ASSERT(( !std::is_const<typename optional_t::value_type>::value ));
+  STATIC_ASSERT(( !std::is_volatile<typename optional_t::value_type>::value ));
+  STATIC_ASSERT(( !std::is_reference<typename optional_t::object_type>::value ));
   
   // 特性
   // optional<T> は Maybe コンセプトを満たす
