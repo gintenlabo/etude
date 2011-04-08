@@ -97,4 +97,9 @@ int main()
   STATIC_ASSERT((  etude::is_less_or_equal_comparable<Y&>::value ));
   // rvalue reference にも対応（ Y の場合は無理だけど）
   STATIC_ASSERT(( !etude::is_less_or_equal_comparable<Y&&>::value ));
+  
+  // volatile 対応
+  STATIC_ASSERT((  etude::is_less_or_equal_comparable<int volatile>::value ));
+  STATIC_ASSERT(( !etude::is_less_or_equal_comparable<  X volatile>::value ));
+  
 }

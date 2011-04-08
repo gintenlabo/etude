@@ -24,7 +24,10 @@ namespace etude {
   template<class T, class U = T>
   struct is_less_than_comparable :
     etude::is_simply_callable<
-      etude::less<T, U>, bool ( T&&, U&& )
+      etude::less<T, U>, bool (
+        typename std::conditional<std::is_reference<T>::value, T, T const&>::type,
+        typename std::conditional<std::is_reference<U>::value, U, U const&>::type
+      )
     >::type
   {
   };
