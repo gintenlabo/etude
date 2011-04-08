@@ -161,9 +161,8 @@ namespace etude {
     
     // 型変換
     template< class U,
-      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U_ const&, T_>::value
+        std::is_convertible<U const&, T_>::value
       >::type
     >
     optional( optional<U> const& src ) {
@@ -294,9 +293,8 @@ namespace etude {
     // copy/move は基底クラスのを使う
     // 型変換
     template<class U,
-      class U_ = typename std::remove_cv<U>::type,
       class = typename std::enable_if<
-        is_assignable_or_convertible<T_, U_ const&>::value
+        is_assignable_or_convertible<T_, U const&>::value
       >::type
     >
     self_type& operator=( optional<U> const& rhs ) {
