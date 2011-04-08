@@ -81,7 +81,7 @@ namespace etude {
     );
     
     typedef optional<T> self_type;
-    typedef typename std::remove_cv<T>::type T_;
+    typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
     impl_type impl_;
     
@@ -171,7 +171,7 @@ namespace etude {
       }
     }
     template< class U,
-      class U_ = typename std::remove_cv<U>::type,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
         std::is_convertible<U_, T_>::value &&
         !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
@@ -302,7 +302,7 @@ namespace etude {
       return *this;
     }
     template<class U,
-      class U_ = typename std::remove_cv<U>::type,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
         is_assignable_or_convertible<T_, U_>::value &&
         !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
