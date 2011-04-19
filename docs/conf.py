@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'Etude C++ Libraries'
-copyright = u'2010, Takaya Saito (SubaruG)'
+copyright = u'2010-11, Takaya Saito (SubaruG)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
