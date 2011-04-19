@@ -16,13 +16,14 @@
 
 #include <type_traits>
 #include "bool_constant.hpp"
+#include "is_constructible.hpp"
 
 namespace etude {
 
   template<class From, class To>
   struct is_strict_explicitly_convertible :
     etude::bool_constant<
-      std::is_constructible<To, From>::value &&
+      etude::is_constructible<To, From>::value &&
       !std::is_convertible<From, To>::value
     >::type
   {

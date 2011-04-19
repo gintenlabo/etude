@@ -2,8 +2,14 @@
 //  is_swappable :
 //    swap 呼び出し出来れば true になる関数
 //    
-//    etude::is_assignable<T, U> は、
-//    std::is_assignable<T&, U> と同じです。
+//    etude::is_value_swappable<T, U> は、 T 型の変数 t と U 型の変数 u に対し
+//      using std::swap;
+//      swap( std::forward<T>(t), std::forward<U>(u) );
+//      swap( std::forward<U>(u), std::forward<T>(t) );
+//    という関数呼び出しの両方が可能ならば std::true_type を、
+//    そうでなければ std::false_type を継承します。
+//  
+//    etude::is_swappable<T> は、 etude::is_value_swappable<T&, T&>::type を継承します。
 //
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.

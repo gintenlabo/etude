@@ -11,7 +11,7 @@
 #include <tuple>
 
 #include <type_traits>
-#include <boost/assert.hpp>
+#include <boost/test/minimal.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 struct Base
@@ -44,38 +44,38 @@ void test1()
   auto bar = &Base::bar;
   
   // object of type T
-  BOOST_ASSERT( etude::invoke( bar, Base(), 2 ) == 4 );
+  BOOST_CHECK( etude::invoke( bar, Base(), 2 ) == 4 );
   {
     auto x = etude::invoke<double>( bar, Base(1), 2 );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 5 );
+    BOOST_CHECK( x == 5 );
   }
   
   // reference to an object of type T
   Base base(1);
-  BOOST_ASSERT( etude::invoke( foo, base ) == 2 );
-  BOOST_ASSERT( etude::invoke( bar, base, 2 ) == 6 );
+  BOOST_CHECK( etude::invoke( foo, base ) == 2 );
+  BOOST_CHECK( etude::invoke( bar, base, 2 ) == 6 );
   {
     etude::invoke<void>( foo, base );
-    BOOST_ASSERT( base.member == 4 );
+    BOOST_CHECK( base.member == 4 );
     
     auto t = std::make_tuple(0);
     auto x = etude::invoke<double>( bar, base, etude::unpack(t) );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 4 );
+    BOOST_CHECK( x == 4 );
   }
   
   // a reference to an object of a type derived from T
   Derived derived(2);
-  BOOST_ASSERT( etude::invoke( foo, derived ) == 4 );
-  BOOST_ASSERT( etude::invoke( bar, derived, 2 ) == 8 );
+  BOOST_CHECK( etude::invoke( foo, derived ) == 4 );
+  BOOST_CHECK( etude::invoke( bar, derived, 2 ) == 8 );
   {
     etude::invoke<void>( foo, derived );
-    BOOST_ASSERT( derived.member == 8 );
+    BOOST_CHECK( derived.member == 8 );
     
     auto x = etude::invoke<double>( bar, derived, 0 );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 8 );
+    BOOST_CHECK( x == 8 );
   }
 }
 
@@ -90,15 +90,15 @@ void test2()
   auto foo = &Base::foo;
   auto bar = &Base::bar;
   
-  BOOST_ASSERT( etude::invoke( foo, p ) == 6 );
-  BOOST_ASSERT( etude::invoke( bar, p, 2 ) == 10 );
+  BOOST_CHECK( etude::invoke( foo, p ) == 6 );
+  BOOST_CHECK( etude::invoke( bar, p, 2 ) == 10 );
   {
     etude::invoke<void>( foo, p );
-    BOOST_ASSERT( p->member == 12 );
+    BOOST_CHECK( p->member == 12 );
     
     auto x = etude::invoke<double>( bar, p, 0 );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 12 );
+    BOOST_CHECK( x == 12 );
   }
 }
 
@@ -112,33 +112,33 @@ void test3()
   auto mem = &Base::member;
   
   // object of type T
-  BOOST_ASSERT( etude::invoke( mem, Base() ) == 0 );
+  BOOST_CHECK( etude::invoke( mem, Base() ) == 0 );
   {
     auto x = etude::invoke<double>( mem, Base(1) );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 1 );
+    BOOST_CHECK( x == 1 );
   }
   
   // reference to an object of type T
   Base base(1);
-  BOOST_ASSERT( etude::invoke( mem, base ) == 1 );
+  BOOST_CHECK( etude::invoke( mem, base ) == 1 );
   {
     etude::invoke( mem, base ) = 2;
     
     auto x = etude::invoke<double>( mem, base );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 2 );
+    BOOST_CHECK( x == 2 );
   }
   
   // a reference to an object of a type derived from T
   Derived derived(2);
-  BOOST_ASSERT( etude::invoke( mem, derived ) == 2 );
+  BOOST_CHECK( etude::invoke( mem, derived ) == 2 );
   {
     etude::invoke( mem, derived ) *= 2;
     
     auto x = etude::invoke<double>( mem, derived );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 4 );
+    BOOST_CHECK( x == 4 );
   }
 }
 
@@ -151,11 +151,11 @@ void test4()
   std::unique_ptr<Derived> p( new Derived(3) );
   auto mem = &Base::member;
   
-  BOOST_ASSERT( etude::invoke( mem, p ) == 3 );
+  BOOST_CHECK( etude::invoke( mem, p ) == 3 );
   {
     auto x = etude::invoke<double>( mem, p );
     STATIC_ASSERT(( std::is_same<double, decltype(x)>::value ));
-    BOOST_ASSERT( x == 3 );
+    BOOST_CHECK( x == 3 );
   }
 }
 
@@ -165,29 +165,56 @@ void test5()
 {
   auto x = etude::invoke( f );
   STATIC_ASSERT(( std::is_same<int, decltype(x)>::value ));
-  BOOST_ASSERT( x == 42 );
+  BOOST_CHECK( x == 42 );
   
   auto t1 = std::make_tuple();
   auto x_ = etude::invoke( f, etude::unpack(t1) );
   STATIC_ASSERT(( std::is_same<decltype(x_), decltype(x)>::value ));
-  BOOST_ASSERT( x == x_ );
+  BOOST_CHECK( x == x_ );
   
   auto lambda = [&]( int i ){ return x += i; };
   
   auto y = etude::invoke<bool>( lambda, 13 );
   STATIC_ASSERT(( std::is_same<bool, decltype(y)>::value ));
-  BOOST_ASSERT( x == 55 && y == true );
+  BOOST_CHECK( x == 55 && y == true );
   
   auto y_ = etude::invoke<bool>( lambda, etude::unpack( std::make_tuple(0) ) );
   STATIC_ASSERT(( std::is_same<bool, decltype(y_)>::value ));
-  BOOST_ASSERT( x == 55 && y_ == true );
+  BOOST_CHECK( x == 55 && y_ == true );
 }
 
-int main()
+/*
+// 型推論補助のテスト
+bool g( void const volatile* p ){ return p == 0; }
+void test6()
+{
+  struct X
+  {
+    void const volatile* p;
+    explicit X( void const volatile* p_ ) : p(p_) {}
+    bool foo( void const volatile* p_ ) const { return p == p_; }
+    
+  };
+  auto pf = &X::foo;
+  X x(0), y( &x );
+  
+  auto b = etude::invoke( g, 0 );
+  STATIC_ASSERT(( std::is_same<bool, decltype(b)>::value ));
+  BOOST_CHECK( b );
+  BOOST_CHECK( etude::invoke( g, static_cast<void const volatile*>(0) ) );
+  
+  BOOST_CHECK( etude::invoke( pf, &x, 0 ) );
+}
+*/
+
+int test_main( int, char** )
 {
   test1();
   test2();
   test3();
   test4();
   test5();
+  // test6();
+  
+  return 0;
 }

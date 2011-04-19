@@ -11,6 +11,6 @@
 #ifndef ETUDE_INCLUDED_UNPACKED_TUPLE_HPP_
 #define ETUDE_INCLUDED_UNPACKED_TUPLE_HPP_
 
-#include "utility/unpacked_tuple.hpp"
+#include "functional/unpacked_tuple.hpp"
 
 #endif  // #ifndef ETUDE_INCLUDED_UNPACKED_TUPLE_HPP_

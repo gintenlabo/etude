@@ -59,6 +59,13 @@ namespace etude {
       >::value
     >::type
   > : std::true_type {};
+  // T が参照の場合には false_type
+  template<class InPlace, class T>
+  struct is_in_place_applyable_< InPlace, T,
+    typename std::enable_if<
+      std::is_reference<T>::value
+    >::type
+  > : std::false_type {};
   // 実装用メタ関数とインターフェイスは分けるのが僕の流儀
   template<class InPlace, class T>
   struct is_in_place_applyable : is_in_place_applyable_<InPlace, T> {};

@@ -39,4 +39,21 @@ int main()
   // Y <- X const& は NG
   STATIC_ASSERT(( !etude::is_assignable<Y, X const&>::value ));
   
+  
+  // 参照の場合は false
+  STATIC_ASSERT(( !etude::is_assignable<int&, int>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<int&, int&>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<int&, int&&>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<int&&, int>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<int&&, int&>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<int&&, int&&>::value ));
+  
+  // 参照でもオブジェクトでもない場合
+  STATIC_ASSERT(( !etude::is_assignable<void, void>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<void, int>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<void, int&>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<void(), void()>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<void(), void>::value ));
+  STATIC_ASSERT(( !etude::is_assignable<void(), int>::value ));
+  
 }

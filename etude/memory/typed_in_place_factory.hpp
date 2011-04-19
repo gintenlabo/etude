@@ -22,7 +22,7 @@
 #include <new>
 #include <type_traits>
 #include "../types/types.hpp"
-#include "../types/is_convertible.hpp"
+#include "../types/tuple_convertible.hpp"
 #include "../types/decay_and_strip.hpp"
 
 namespace etude {
@@ -43,12 +43,12 @@ namespace etude {
     typedef typename impl_t::tuple_type tuple_type;
     
     // 構築
-    template<class... Types,
+    template< class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
-    explicit typed_in_place_factory( Types&& ...args )
+    explicit typed_in_place_factory( Types&&... args )
       : impl_( std::forward<Types>(args)... ) {}
     
     // gcc 4.5.0 では implicit move は働いてくれないらしい…。
@@ -70,7 +70,7 @@ namespace etude {
     // in_place_factory と同じく、 SFINAE のはずがエラーになるので Types... に。
     template<class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
     typed_in_place_factory( typed_in_place_factory<T, Types...> const& x )
@@ -78,7 +78,7 @@ namespace etude {
     // move
     template<class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
     typed_in_place_factory( typed_in_place_factory<T, Types...> && x )

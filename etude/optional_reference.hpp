@@ -14,12 +14,15 @@
 
 #include <utility>
 #include <type_traits>
-#include <functional>
+#include <functional> // for std::less
 
 #include <boost/operators.hpp>
 #include <boost/none_t.hpp>
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
+
+#include "types/has_common_type.hpp"
+#include "utility/less_pointer.hpp"
 
 namespace etude {
 
@@ -27,6 +30,10 @@ namespace etude {
   class optional_reference
     : boost::totally_ordered< optional_reference<T> >
   {
+    static_assert(
+      !std::is_void<T>::value && !std::is_reference<T>::value,
+      "T must be object type or function type."
+    );
     typedef optional_reference<T> self_type;
     
    public:
@@ -48,11 +55,15 @@ namespace etude {
     optional_reference( bool cond, T& x ) /*noexcept*/
       : p_( cond ? boost::addressof(x) : 0 ) {}
     
+    // rvalue からは構築できないよう
+    optional_reference( T && x ) = delete;
+    optional_reference( bool cond, T && x ) = delete;
+    
     
     // 型変換
     template< class U,
       class = typename std::enable_if<
-        std::is_convertible<U&, T&>::value
+        std::is_convertible<U*, T*>::value
       >::type
     >
     optional_reference( optional_reference<U> const& src ) /*noexcept*/
@@ -127,11 +138,11 @@ namespace etude {
       return lhs.p_ == rhs.p_;
     }
     friend bool operator<( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return std::less<T*>()( lhs.p_, rhs.p_ );
+      return etude::less_pointer( lhs.p_, rhs.p_ );
     }
     // !=, >, <=, >= は boost::totally_ordered により自動定義される
     
-    // 他の型との比較
+    // 他の型との比較は外で定義する
     
    private:
     T* p_;
@@ -139,19 +150,72 @@ namespace etude {
   };
   
   // 違う型同士の比較
-  template<class T, class U>
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
   inline bool operator== (
     optional_reference<T> const& lhs, optional_reference<U> const& rhs
   ) /*noexcept*/
   {
     return lhs.get() == rhs.get();
   }
-  template<class T, class U>
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
   inline bool operator!= (
     optional_reference<T> const& lhs, optional_reference<U> const& rhs
   ) /*noexcept*/
   {
     return !( lhs == rhs );
+  }
+  // 順序比較も
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
+  inline bool operator< (
+    optional_reference<T> const& lhs, optional_reference<U> const& rhs
+  ) /*noexcept*/
+  {
+    return etude::less_pointer( lhs.get(), rhs.get() );
+  }
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
+  inline bool operator> (
+    optional_reference<T> const& lhs, optional_reference<U> const& rhs
+  ) /*noexcept*/
+  {
+    return rhs < lhs;
+  }
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
+  inline bool operator<= (
+    optional_reference<T> const& lhs, optional_reference<U> const& rhs
+  ) /*noexcept*/
+  {
+    return !( rhs < lhs );
+  }
+  template<class T, class U,
+    class = typename std::enable_if<
+      has_common_type<T*, U*>::value
+    >::type
+  >
+  inline bool operator>= (
+    optional_reference<T> const& lhs, optional_reference<U> const& rhs
+  ) /*noexcept*/
+  {
+    return !( lhs < rhs );
   }
   
   // 取得

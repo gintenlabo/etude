@@ -28,7 +28,7 @@
 #include "is_in_place_factory.hpp"
 #include "../types/indices.hpp"
 #include "../types/types.hpp"
-#include "../types/is_convertible.hpp"
+#include "../types/tuple_convertible.hpp"
 #include "../types/decay_and_strip.hpp"
 #include "../types/tuple_indices.hpp"
 #include "../utility/tuple_get.hpp"
@@ -47,12 +47,12 @@ namespace etude {
     typedef std::tuple<Args...> tuple_type;
     
     // 普通に構築
-    template<class... Types,
+    template< class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
-    explicit in_place_factory( Types&& ...args )
+    explicit in_place_factory( Types&&... args )
       : x( std::forward<Types>(args)... ) {}
     
     // gcc 4.5.0 では implicit move は実装されていない
@@ -72,7 +72,7 @@ namespace etude {
     // （Types const&...）だと SFINAE のはずがエラーになるので Types... に。
     template<class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
     in_place_factory( in_place_factory<Types...> const& src )
@@ -80,7 +80,7 @@ namespace etude {
     // move
     template<class... Types,
       class = typename std::enable_if<
-        etude::is_convertible<types<Types&&...>, types<Args...>>::value
+        etude::tuple_convertible<std::tuple<Types...>, tuple_type>::value
       >::type
     >
     in_place_factory( in_place_factory<Types...> && src )
@@ -194,16 +194,22 @@ namespace etude {
   // とりあえず詰め込んだ値を使ってオブジェクトを構築したい場合に。
   
   // 実装
-  template<class Tuple, std::size_t... Indices,
-    class Result = in_place_factory<
+  template<class Tuple, std::size_t... Indices>
+  inline in_place_factory<
+    typename etude::tuple_element<
+      Indices, typename std::decay<Tuple>::type
+    >::type...
+  >
+    in_place_from_tuple_( Tuple && t, etude::indices<Indices...> )
+  {
+    typedef in_place_factory<
       typename etude::tuple_element<
         Indices, typename std::decay<Tuple>::type
       >::type...
-    >
-  >
-  inline Result in_place_from_tuple_( Tuple && t, etude::indices<Indices...> ) {
+    > result_type;
+    
     (void)t;  // サイズ 0 のタプルに対する警告避け
-    return Result( etude::tuple_forward<Indices, Tuple>(t)... );
+    return result_type( etude::tuple_forward<Indices, Tuple>(t)... );
   }
   
   // 本体

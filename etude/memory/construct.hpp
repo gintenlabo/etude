@@ -16,14 +16,14 @@
 #include "pseudo_destructor_call.hpp"
 #include "default_deallocate.hpp"
 #include "../utility/holder.hpp"
-#include "../utility/unpacked_tuple.hpp"
+#include "../unpacked_tuple.hpp"
 
 #include "apply_in_place.hpp"
 
 namespace etude {
 
   // void* 版 construct
-  template<class T, class... Args, 
+  template< class T, class... Args, 
     class Result = std::unique_ptr< T, pseudo_destructor_call<T> >
   >
   inline Result construct( void* p, Args&&... args ) {
@@ -69,6 +69,9 @@ namespace etude {
     typedef etude::holder<Dealloc> dealloc_;
     
    public:
+    // holder<T>::pointer を隠すために必要
+    typedef T* pointer;
+   
     dispose_and_deallocate_() = default;
     dispose_and_deallocate_( dispose_and_deallocate_ const& ) = default;
     dispose_and_deallocate_( dispose_and_deallocate_ && )     = default;

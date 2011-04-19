@@ -9,6 +9,7 @@
 //
 
 #include "../../etude/utility/value_holder.hpp"
+#include "../../etude/types/is_constructible.hpp"
 #include "../../etude/unpack.hpp"
 #include <type_traits>
 #include <utility>
@@ -22,6 +23,8 @@ void check()
 {
   typedef etude::value_holder<T> holder;
   typedef typename std::remove_const<T>::type U;
+  typedef typename std::add_pointer<T>::type             pointer;
+  typedef typename std::add_pointer<T const>::type const_pointer;
   
   STATIC_ASSERT((  sizeof(T) ==  sizeof(holder) || std::is_reference<T>::value ));
   STATIC_ASSERT(( alignof(T) == alignof(holder) || std::is_reference<T>::value ));
@@ -48,14 +51,12 @@ void check()
     U &&, decltype( std::declval<holder&>().move() )
   >::value ));
   
+  // get_ptr
   STATIC_ASSERT(( std::is_same<
-    T &, decltype( get( std::declval<holder&>() ) )
+    pointer, decltype( std::declval<holder&>().get_ptr() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    T const&, decltype( get( std::declval<holder const&>() ) )
-  >::value ));
-  STATIC_ASSERT(( std::is_same<
-    U &&, decltype( get( std::declval<holder&&>() ) )
+    const_pointer, decltype( std::declval<holder const&>().get_ptr() )
   >::value ));
   
   // operator*
@@ -68,6 +69,42 @@ void check()
   STATIC_ASSERT(( std::is_same<
     U &&, decltype( *std::declval<holder&&>() )
   >::value ));
+  
+  // operator->
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( std::declval<holder&>().operator->() )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( std::declval<holder const&>().operator->() )
+  >::value ));
+  
+  // 自由関数 get は operator* と同じ
+  STATIC_ASSERT(( std::is_same<
+    T &, decltype( get( std::declval<holder&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    T const&, decltype( get( std::declval<holder const&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    U &&, decltype( get( std::declval<holder&&>() ) )
+  >::value ));
+  
+  // 自由関数 get のポインタ版
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( get( std::declval<holder*>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( get( std::declval<holder const*>() ) )
+  >::value ));
+  
+  // 自由関数 get_pointer
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( get_pointer( std::declval<holder&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( get_pointer( std::declval<holder const&>() ) )
+  >::value ));
+  
 }
 
 // （CVつきの）値と参照についてチェック
@@ -92,10 +129,8 @@ void check_convertible( int )
   STATIC_ASSERT(( std::is_convertible<U, T>::value
     == std::is_convertible<etude::value_holder<U>, holder>::value ));
 }
-template<class T, class... Args,
-  class = typename std::enable_if<sizeof...(Args) != 1>::type
->
-void check_convertible( ... ) {}
+template<class T, class... Args>
+typename std::enable_if<sizeof...(Args) != 1>::type check_convertible( ... ) {}
 
 // 構築可能性
 template<class T, class... Args>
@@ -103,20 +138,20 @@ void check_constructible()
 {
   typedef etude::value_holder<T> holder;
   
-  static bool const is_constructible = std::is_constructible<T, Args...>::value;
+  static bool const is_constructible = etude::is_constructible<T, Args...>::value;
   
   STATIC_ASSERT((
-    std::is_constructible<holder, etude::emplace_construct_t, Args...>::value
+    etude::is_constructible<holder, etude::emplace_construct_t, Args...>::value
       == is_constructible
   ));
   
   STATIC_ASSERT((
-    std::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
+    etude::is_constructible<holder, etude::unpack_construct_t, std::tuple<Args...>>::value
       == is_constructible
   ));
   
   STATIC_ASSERT((
-    std::is_constructible<holder,
+    etude::is_constructible<holder,
       decltype(
         etude::unpack( std::declval<std::tuple<Args...>>() )
       )
@@ -239,4 +274,9 @@ int main()
     etude::unpack( etude::forward_as_tuple( get( std::move(c) ) ) )
   );
   BOOST_ASSERT( e.get().which_ctor_has_called == nontrivial_class::move_ctor );
+  
+  etude::value_holder<nontrivial_class> g(
+    0, etude::unpack( etude::forward_as_tuple( 0, (char*)0 ) )
+  );
+  BOOST_ASSERT( g.get().which_ctor_has_called == nontrivial_class::from_int_and_double_and_charptr );
 }

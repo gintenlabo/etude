@@ -8,7 +8,7 @@
 #include "../../etude/functional/ptr_fn.hpp"
 
 #include <type_traits>
-#include <boost/assert.hpp>
+#include <boost/test/minimal.hpp>
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 template<class F>
@@ -31,7 +31,7 @@ inline void check_ptr_fn( F f )
   
   // F cv f; と宣言された f に対し、
   // reinterpret_cast<F::pointer cv&>( f ); は well-formed で、その値は f.get() に等しい
-  BOOST_ASSERT(( f.get() == reinterpret_cast<pointer&>(f) ));
+  BOOST_CHECK(( f.get() == reinterpret_cast<pointer&>(f) ));
 }
 
 #include <cstdio>
@@ -41,7 +41,7 @@ double half( int x ) {
   return x * 0.5;
 }
 
-int main()
+int test_main( int, char** )
 {
   // 通常の場合のテスト
   {
@@ -56,19 +56,19 @@ int main()
     // 呼び出しチェック
     
     // rvalue
-    BOOST_ASSERT(( f(2) == 1.0 ));
+    BOOST_CHECK(( f(2) == 1.0 ));
     // lvalues
-    int i = 3; BOOST_ASSERT(( f(i) == 1.5 ));
-    int const j = 23; BOOST_ASSERT(( f(j) == 11.5 ));
+    int i = 3; BOOST_CHECK(( f(i) == 1.5 ));
+    int const j = 23; BOOST_CHECK(( f(j) == 11.5 ));
     
     // conversion
     struct {
       operator int() const { return 42; }
     } x;
-    BOOST_ASSERT(( f(x) == 21 ));
+    BOOST_CHECK(( f(x) == 21 ));
     
     // aggregate
-    BOOST_ASSERT(( f({}) == 0 ));
+    BOOST_CHECK(( f({}) == 0 ));
   }
   
   // ... がある場合に対するテスト
@@ -79,10 +79,33 @@ int main()
     
     // 余計な引数がない場合
     f( buf, "hoge" );
-    BOOST_ASSERT( std::string(buf) == "hoge" );
+    BOOST_CHECK( std::string(buf) == "hoge" );
     
     // 余計な引数がある場合
     f( buf, "%d", 42 );
-    BOOST_ASSERT( std::string(buf) == "42" );
+    BOOST_CHECK( std::string(buf) == "42" );
   }
+  
+  // メンバポインタに対するテスト
+  {
+    struct X {
+      int i;
+      int f() const { return i * 2; }
+    };
+    auto pi = &X::i;
+    auto pf = &X::f;
+    
+    auto pi_ = etude::ptr_fn(pi);
+    auto pf_ = etude::ptr_fn(pf);
+    
+    STATIC_ASSERT(( std::is_same<decltype(pi_), decltype(std::mem_fn(pi))>::value ));
+    STATIC_ASSERT(( std::is_same<decltype(pf_), decltype(std::mem_fn(pf))>::value ));
+    
+    X x = {1};
+    BOOST_CHECK( pi_(x) == x.i );
+    BOOST_CHECK( pf_(x) == x.f() );
+    
+  }
+  
+  return 0;
 }

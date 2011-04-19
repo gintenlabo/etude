@@ -17,7 +17,7 @@
 #include <utility>
 #include <boost/preprocessor/empty.hpp>
 #include "../types/decay_and_strip.hpp"
-#include "../types/is_convertible.hpp"
+#include "../types/tuple_convertible.hpp"
 #include "../utility/holder.hpp"
 #include "../utility/compressed_pair.hpp"
 
@@ -89,7 +89,7 @@ namespace etude {
     // construct
     template< class F0_, class... Fs_,
       class = typename std::enable_if<
-        etude::is_convertible<etude::types<F0_, Fs_...>, etude::types<F0, Fs...>>::value
+        etude::tuple_convertible<std::tuple<F0_, Fs_...>, std::tuple<F0, Fs...>>::value
       >::type
     >
     explicit function_sequence( F0_ && f0, Fs_&&... fs )

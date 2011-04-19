@@ -2,9 +2,9 @@
 //  is_unpacked_tuple :
 //    unpacked_tuple なら true_type になるメタ関数
 //    
-//    is_unpacked_tuple<Types...> は、 sizeof...(Types) == 1 かつ
-//    Types が（ cv 修飾された） unpacked_tuple またはその参照ならば std::true_type を、
-//    そうでなければ std::false_type を継承します。
+//    is_unpacked_tuple<Types...> は、 sizeof...(Types) > 0 かつ
+//    typename etude::last_type<Types...>::type が（ cv 修飾された） unpacked_tuple か
+//    その参照ならば std::true_type を、そうでなければ std::false_type を継承します。
 //    
 //  Copyright (C) 2010  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -19,7 +19,14 @@
 namespace etude {
 
   template<class... Types>
-  struct is_unpacked_tuple
+  struct is_unpacked_tuple;
+  
+  template<>
+  struct is_unpacked_tuple<>
+    : std::false_type {};
+  
+  template<class T>
+  struct is_unpacked_tuple<T>
     : std::false_type {};
   
   template<class Tuple, std::size_t... Indices>
@@ -42,6 +49,12 @@ namespace etude {
   template<class T>
   struct is_unpacked_tuple<T&&>
     : is_unpacked_tuple<T>::type {};
+  
+  
+  template<class T, class... Types>
+  struct is_unpacked_tuple<T, Types...>
+    : is_unpacked_tuple<Types...>::type {};
+
 
 } // namespace etude
 

@@ -29,6 +29,11 @@ namespace etude {
     storage_() = default;
     storage_( etude::uninitialized_t ) {}
     
+    // get address
+    // strict aliasing rule があるので、一応 union のアドレスを返す
+    void *      address()       { return &buf_; }
+    void const* address() const { return &buf_; }
+    
   };
   // empty class に対する最適化
   // 何も格納させない
@@ -40,6 +45,11 @@ namespace etude {
   {
     storage_() = default;
     storage_( etude::uninitialized_t ) {}
+    
+    // get address
+    // これは仕方ないので this を返す
+    void *      address()       { return this; }
+    void const* address() const { return this; }
     
   };
   
@@ -63,8 +73,7 @@ namespace etude {
     void operator=( storage const& ) = delete;
     
     // get address
-    void* address() { return this; }
-    void const* address() const { return this; }
+    using storage_<void, Ts...>::address;
   
   };
   

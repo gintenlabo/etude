@@ -11,6 +11,6 @@
 #ifndef ETUDE_INCLUDED_UNPACK_HPP_
 #define ETUDE_INCLUDED_UNPACK_HPP_
 
-#include "utility/unpack.hpp"
+#include "functional/unpack.hpp"
 
 #endif  // #ifndef ETUDE_INCLUDED_UNPACK_HPP_

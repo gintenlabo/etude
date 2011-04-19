@@ -21,15 +21,22 @@
 namespace etude {
 
   // 実装、兼インデックス指定版
-  template< class Tuple, std::size_t... Indices,
-    class Result = std::tuple<
+  template< class Tuple, std::size_t... Indices >
+  inline std::tuple<
+    typename etude::tuple_element< Indices,
+      typename std::decay<Tuple>::type
+    >::type...
+  >
+  to_tuple( Tuple && t, etude::indices<Indices...> )
+  {
+    typedef std::tuple<
       typename etude::tuple_element< Indices,
         typename std::decay<Tuple>::type
       >::type...
-    >
-  >
-  inline Result to_tuple( Tuple && t, etude::indices<Indices...> ) {
-    return Result( etude::tuple_forward<Indices, Tuple>(t)... );
+    > result_type;
+    
+    (void)t; // 警告避け
+    return result_type( etude::tuple_forward<Indices, Tuple>(t)... );
   }
 
   // 本体

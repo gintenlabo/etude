@@ -16,6 +16,8 @@
 #include "value_holder.hpp"
 #include "piecewise_construct.hpp"
 #include "emplace_construct.hpp"
+#include "../types/is_constructible.hpp"
+#include "../types/is_default_constructible.hpp"
 
 #include <utility>
 #include <type_traits>
@@ -28,7 +30,7 @@ namespace etude {
   
   // 実装で毎回 ctor 書くの面倒なのでプリプロセッサ使う。
   #define ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_                            \
-    compressed_pair_() = default;                                         \
+    compressed_pair_() {}                                                 \
                                                                           \
     compressed_pair_( compressed_pair_ const& ) = default;                \
     compressed_pair_( compressed_pair_ && )     = default;                \
@@ -108,7 +110,22 @@ namespace etude {
       typedef second_type second_;
       
      public:
-      ETUDE_COMPRESSED_PAIR_IMPL_CTOR_GEN_
+      // ここは first_ と second_ の順が入れ替わるので警告避けのため手で定義
+      compressed_pair_() {}
+      
+      compressed_pair_( compressed_pair_ const& ) = default;
+      compressed_pair_( compressed_pair_ && )     = default;
+      
+      template<class U1, class U2>
+      compressed_pair_( U1 && x1, U2 && x2 )
+        : second_( emplace_construct, std::forward<U2>(x2) ),
+           first_( emplace_construct, std::forward<U1>(x1) ) {}
+      
+      template<class Tuple1, class Tuple2>
+      compressed_pair_( piecewise_construct_t, Tuple1 && x1, Tuple2 && x2 )
+        : second_( unpack_construct, std::forward<Tuple2>(x2) ),
+           first_( unpack_construct, std::forward<Tuple1>(x1) ) {}
+      
       
       // element accesss
       first_type&       first()       { return first_; }
@@ -162,8 +179,16 @@ namespace etude {
     typedef T1  first_type;
     typedef T2 second_type;
     
-    compressed_pair() = default;
+    // デフォルト ctor は gcc-4.6.0 だと = default; でエラーになる…。
+    template< class T1_ = T1, class T2_ = T2,
+      class = typename std::enable_if<
+        etude::is_default_constructible<T1_>::value &&
+        etude::is_default_constructible<T2_>::value
+      >::type
+    >
+    compressed_pair() {}
     
+    // implicit move がないので（ｒｙ
     compressed_pair( compressed_pair const& ) = default;
     compressed_pair( compressed_pair && )     = default;
     
@@ -220,8 +245,8 @@ namespace etude {
     // piecewise construction
     template<class Tuple1, class Tuple2,
       class = typename std::enable_if<
-        std::is_constructible< value_holder<T1>, unpack_construct_t, Tuple1 >::value &&
-        std::is_constructible< value_holder<T2>, unpack_construct_t, Tuple2 >::value
+        etude::is_constructible< value_holder<T1>, unpack_construct_t, Tuple1 >::value &&
+        etude::is_constructible< value_holder<T2>, unpack_construct_t, Tuple2 >::value
       >::type
     >
     compressed_pair( piecewise_construct_t, Tuple1 && t1, Tuple2 && t2 )
@@ -230,8 +255,8 @@ namespace etude {
     // piecewise construction で tuple の要素が 1 の場合
     template<class U1, class U2,
       class = typename std::enable_if<
-        std::is_constructible< value_holder<T1>, emplace_construct_t, U1 >::value &&
-        std::is_constructible< value_holder<T2>, emplace_construct_t, U2 >::value
+        etude::is_constructible< value_holder<T1>, emplace_construct_t, U1 >::value &&
+        etude::is_constructible< value_holder<T2>, emplace_construct_t, U2 >::value
       >::type
     >
     compressed_pair( emplace_construct_t, U1 && x1, U2 && x2 )

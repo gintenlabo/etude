@@ -255,4 +255,14 @@ int main()
 {
   apply_in_place_check();
   apply_typed_in_place_check();
+  
+  BOOST_ASSERT((
+    !etude::is_in_place_applyable<decltype( boost::in_place() ), tested &>::value
+  ));
+  BOOST_ASSERT((
+    !etude::is_in_place_applyable<decltype( boost::in_place() ), tested const&>::value
+  ));
+  BOOST_ASSERT((
+    !etude::is_in_place_applyable<decltype( boost::in_place() ), tested &&>::value
+  ));
 }

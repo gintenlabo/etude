@@ -17,6 +17,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "types/is_constructible.hpp"
 #include "types/make_derivable.hpp"
 
 namespace etude {
@@ -44,7 +45,7 @@ namespace etude {
     // Base 自体から構築。ただし explicit
     template< class T = Base,
       class = typename std::enable_if<
-        std::is_constructible<Base, T&&>::value
+        etude::is_constructible<Base, T&&>::value
       >::type
     >
     explicit immovable( Base && x )
@@ -53,7 +54,7 @@ namespace etude {
     // その他の構築も全て explicit
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<Base, Args...>::value
+        etude::is_constructible<Base, Args...>::value
       >::type
     >
     explicit immovable( Args&&... args )

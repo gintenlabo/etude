@@ -2,10 +2,32 @@
 //  optional:
 //    Boost.Optional の C++0x 拡張
 // 
-//    for Boost.勉強会 #4
+//    Boost.Optional の C++0x 拡張版です。
+//    rvalue reference と explicit operator bool 、
+//    optional<T const> および各種の SFINAE に対応しています。
 //    
-//    TODO: lazy 版の get_optional_value_or を実装する
-//          テストを書く
+//    また、その実装は、現行（ Boost 1.46.1 ）の Boost.Optional に比べて、
+//    格納される型がデストラクタを持たない場合や、特に参照の場合において
+//    大きく最適化されたものになっています。
+//    
+//    特に etude::optional<T&> は、「 delete できない安全なポインタ」として
+//    ほぼオーバーヘッドなく扱えるクラスになっています。
+//    
+//    現行の Boost.Optional との差異ですが、
+//    まず比較演算子が Boost.Optional のそれに比べて、より効率的に実装されています。
+//    特に異なる型の optional 同士は Boost.Optional では比較できませんが、
+//    etude::optional では、元の型に対して比較が定義されていれば、きちんと比較できます。
+//    
+//    また、 T が再代入できない型の場合、 boost::optional<T> も再代入できませんでしたが、
+//    etude::optional<T> は再構築による再代入が可能になっています。
+//    （再代入できる型なら、再構築ではなく再代入による処理を行います）
+//    
+//    特に etude::optional<T const> は、再代入が可能になっているだけでなく、
+//    move 時には非 const の T&& を得られるようになっています。
+//    
+//    
+//    なおこのクラスは、 T がポインタ以外で各操作が例外を投げない場合、
+//    標準ライブラリの NullablePointer Requirement を満たします。
 //    
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -14,323 +36,133 @@
 #ifndef ETUDE_INCLUDED_OPTIONAL_HPP_
 #define ETUDE_INCLUDED_OPTIONAL_HPP_
 
+#include <boost/none.hpp>
+#include "detail_/optional_impl_.hpp"
+
 #include <utility>
 #include <type_traits>
+#include <functional> // for std::less
 
-#include <boost/operators.hpp>
-#include <boost/none.hpp>
 #include <boost/assert.hpp>
 #include <boost/utility/addressof.hpp>
 
+#include "operators/totally_ordered.hpp"
+#include "operators/partially_ordered.hpp"
+
+#include "types/is_array_of_unknown_bound.hpp"
+#include "types/is_constructible.hpp"
+#include "types/is_assignable_or_convertible.hpp"
+#include "types/pointee.hpp"
+
+#include "types/is_equality_comparable.hpp"
+#include "types/is_less_than_comparable.hpp"
+#include "types/is_less_or_equal_comparable.hpp"
+#include "functional/equal_to.hpp"
+#include "functional/less.hpp"
+#include "functional/less_equal.hpp"
+#include "utility/pointee_equal.hpp"
+#include "utility/pointee_before.hpp"
+#include "utility/pointee_before_or_equal.hpp"
+
 #include "types/decay_and_strip.hpp"
-#include "types/is_assignable.hpp"
-#include "types/bool_constant.hpp"
-#include "memory/storage.hpp"
-#include "memory/apply_in_place.hpp"
-#include "utility/compressed_pair.hpp"
-#include "utility/emplace_construct.hpp"
 
 namespace etude {
 
   template<class T>
-  class optional;
-
-  template<class T>
-  struct optional_impl_base_
-  {
-    // construct
-    optional_impl_base_()
-      : impl_() {}  // impl_ の ctor で first は初期化されて false になる
-    // copy/move construct
-    optional_impl_base_( optional_impl_base_ const& src )
-      : impl_()
-    {
-      if( auto const p = src.get() ) {
-        construct( *p );
-      }
-    }
-    optional_impl_base_( optional_impl_base_ && src )
-      : impl_()
-    {
-      if( auto const p = src.get() ) {
-        construct( std::forward<T>(*p) );
-      }
-    }
-    // copy/move assign
-    optional_impl_base_& operator=( optional_impl_base_ const& src )
-    {
-      if( auto const p = src.get() ) {
-        this->assign( *p );
-      }
-      else {
-        this->dispose();
-      }
-      return *this;
-    }
-    optional_impl_base_& operator=( optional_impl_base_ && src )
-    {
-      if( auto const p = src.get() ) {
-        this->assign( std::forward<T>(*p) );
-      }
-      else {
-        this->dispose();
-      }
-      return *this;
-    }
-    
-    // observers
-    bool is_initialized() const { return impl_.first(); }
-    
-    void*       address()       { return impl_.second().address(); }
-    void const* address() const { return impl_.second().address(); }
-    
-    T* get() {
-      return is_initialized() ? static_cast<T*>( address() ) : 0;
-    }
-    T const* get() const {
-      return is_initialized() ? static_cast<T const*>( address() ) : 0;
-    }
-    
-    // modifiers
-    void dispose()
-    {
-      if( T* p = this->get() ) {
-        p->~T();
-        impl_.first() = false;
-      }
-    }
-    
-    template<class... Args>
-    void construct( Args&&... args )
-    {
-      dispose();
-      
-      ::new( address() ) T( std::forward<Args>(args)... );
-      impl_.first() = true;
-    }
-    
-    template<class InPlace>
-    void in_place_construct( InPlace && in_place )
-    {
-      dispose();
-      
-      apply_in_place<T>( std::forward<InPlace>(in_place), address() );
-      impl_.first() = true;
-    }
-    
-    template<class U>
-    void assign( U && x )
-    {
-      return assign_( std::forward<U>(x), 0 );
-    }
-    
-    // swap
-    void swap( optional_impl_base_& other )
-    {
-      if( auto const p1 = this->get() ) {
-        if( auto const p2 = other.get() ) {
-          using std::swap;
-          swap( *p1, *p2 );
-        }
-        else {
-          other.construct( std::forward<T>(*p2) );
-          this->dispose();
-        }
-      }
-      else {
-        if( auto const p2 = other.get() ) {
-          this->construct( std::forward<T>(*p2) );
-          other.dispose();
-        }
-      }
-    }
-    
-   private:
-    typedef etude::storage<T> storage_type;
-    etude::compressed_pair<bool, storage_type> impl_;
-    
-    // assign の実装
-    // assignable ならば代入を使う
-    template< class U,
-      class = typename std::enable_if<
-        etude::is_assignable<T, U>::value
-      >::type
-    >
-    void assign_( U && x, int )
-    {
-      if( auto const p = this->get() ) {
-        *p = std::forward<U>(x);
-      }
-      else {
-        construct( std::forward<U>(x) );
-      }
-    }
-    // assignable でないなら construct を使う
-    // 自己代入になりうる場合はチェックする
-    template< class U,
-      class = typename std::enable_if<
-        !etude::is_assignable<T, U>::value &&
-        std::is_convertible<typename std::decay<U>::type*, T*>::type
-      >::type
-    >
-    void assign_( U && x, ... )
-    {
-      if( boost::addressof(x) != this->get() ) {
-        construct( std::forward<U>(x) );
-      }
-    }
-    // それ以外
-    template<class U>
-    void assign_( U && x, ... )
-    {
-      construct( std::forward<U>(x) );
-    }
-    
-  };
-
-  template<class T, class = void>
-  struct optional_impl_
-    : optional_impl_base_<T>
-  {
-    typedef optional_impl_base_<T> base_;
-    
-    optional_impl_() = default;
-    ~optional_impl_(){ base_::dispose(); }
-    
-  };
-  
-  template<class T>
-  struct optional_impl_< T,
-    typename std::enable_if<
-      !std::is_reference<T>::value &&
-      std::has_trivial_destructor<T>::value
-    >::type
-  >
-    : optional_impl_base_<T>
-  {
-    typedef optional_impl_base_<T> base_;
-    
-    optional_impl_() = default;
-    // ~optional_impl_(){ base_::dispose(); }
-    
-  };
-  
-  template<class T>
-  struct optional_impl_< T,
-    typename std::enable_if<std::is_reference<T>::value>::type
-  >
-  {
-    typedef typename std::add_pointer<T>::type pointer;
-    
-    optional_impl_()
-      : p_() {}
-    
-    bool is_initialized() const { return p_; }
-    pointer get() const { return p_; }
-    
-    template<class U>
-    void construct( U && x ) {
-      p_ = boost::addressof(x);
-    }
-    
-    template<class InPlace>
-    void in_place_construct( InPlace && in_place ) = delete;
-    
-    template< class U,
-      class = typename std::enable_if<
-        std::is_convertible<U, T>::value
-      >::type
-    >
-    void assign( U && x ) {
-      p_ = boost::addressof(x);
-    }
-    
-    void dispose() {
-      p_ = 0;
-    }
-    
-    void swap( optional_impl_& other ) {
-      std::swap( p_, other.p_ );
-    }
-    
-   private:
-    pointer p_;
-  };
-  
-  // メタ関数 optional_assignable
-  template<class T, class U>
-  struct optional_assignable_ :
-    etude::bool_constant<
-      std::is_convertible<U, T>::value || etude::is_assignable<T, U>::value
-    >
-  {};
-
-  // 実装本体
-  template<class T>
   class optional
-    : boost::totally_ordered<optional<T>,
-        boost::totally_ordered<optional<T>, T,
-          boost::totally_ordered<optional<T>, boost::none_t>
-        >
+    : etude::totally_ordered< optional<T>, boost::none_t,
+        etude::partially_ordered< optional<T>, typename std::remove_reference<T>::type >
       >
   {
+    static_assert(
+      !std::is_void<T>::value && !std::is_function<T>::value &&
+      !etude::is_array_of_unknown_bound<T>::value,
+      "T must be complete type."
+    );
+    
     typedef optional<T> self_type;
     typedef typename std::remove_const<T>::type T_;
     typedef optional_impl_<T_> impl_type;
-    struct dummy_ {};
+    impl_type impl_;
     
    public:
-    typedef T_   value_type;  // value_type   は const が付かない
-    typedef T  element_type;  // element_type は const が付くかも
+    // 型定義
+    typedef T element_type;
     
-    typedef T&             reference;
+    typedef typename std::remove_cv<T>::type         value_type;
+    typedef typename std::remove_reference<T>::type object_type;
+    
+    typedef T &            reference;
     typedef T const& const_reference;
     typedef T_&&    rvalue_reference;
     
     typedef typename std::add_pointer<T>::type             pointer;
     typedef typename std::add_pointer<T const>::type const_pointer;
     
-    // 無効値
+    
+    // 無効値から構築
     optional() {}
     optional( boost::none_t ) {}
     
     // T_ からの構築
+    template< class U = T_&&,
+      class = typename std::enable_if<etude::is_constructible<T, U>::value>::type
+    >
     optional( T_ && x ) {
       impl_.construct( std::forward<T_>(x) );
     }
     // 型変換構築
+    // 参照の場合には、一時オブジェクトへの参照を束縛させないよう無効化。
     template<class U,
-      class = typename std::enable_if<std::is_convertible<U, T>::value>::type
+      class = typename std::enable_if<
+        !std::is_reference<T>::value &&
+        std::is_convertible<U, T>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
+      >::type
     >
     optional( U && x ) {
       impl_.construct( std::forward<U>(x) );
     }
+    // 更に T が lvalue reference の場合、 rvalue を束縛できないようにする
+    template< class U = T,
+      class = typename std::enable_if<std::is_lvalue_reference<U>::value>::type
+    >
+    optional( typename std::remove_reference<U>::type && x ) = delete;
     
     // 条件付き構築
+    template< class U = T_&&,
+      class = typename std::enable_if<etude::is_constructible<T, U>::value>::type
+    >
     optional( bool cond, T_ && x ) {
       if( cond ) {
         impl_.construct( std::forward<T_>(x) );
       }
     }
     template<class U,
-      class = typename std::enable_if<std::is_convertible<U, T>::value>::type
+      class = typename std::enable_if<
+        !std::is_reference<T>::value && // 参照の場合は無効化
+        std::is_convertible<U, T>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
+      >::type
     >
     optional( bool cond, U && x ) {
       if( cond ) {
         impl_.construct( std::forward<U>(x) );
       }
     }
+    // T が lvalue reference の場合
+    template< class U = T,
+      class = typename std::enable_if<std::is_lvalue_reference<U>::value>::type
+    >
+    optional( bool cond, typename std::remove_reference<U>::type && x ) = delete;
+    
     
     // copy/move は基底クラスのを使う
-    /*
-    optional( optional const& ) = default;
-    optional( optional && )     = default;
-    */
     
     // 型変換
     template< class U,
       class = typename std::enable_if<
-        std::is_convertible<U const&, T>::value
+        std::is_convertible<U const&, T_>::value
       >::type
     >
     optional( optional<U> const& src ) {
@@ -339,8 +171,10 @@ namespace etude {
       }
     }
     template< class U,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
-        std::is_convertible<U, T>::value
+        std::is_convertible<U_, T_>::value &&
+        !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
       >::type
     >
     optional( optional<U> && src ) {
@@ -352,7 +186,7 @@ namespace etude {
     // emplace construct
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     optional( emplace_construct_t, Args&&... args ) {
@@ -360,7 +194,7 @@ namespace etude {
     }
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     optional( bool cond, emplace_construct_t, Args&&... args ) {
@@ -370,20 +204,22 @@ namespace etude {
     }
     
     // in_place
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    optional( InPlace && in_place, dummy_ = dummy_() ) {
+    optional( InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    optional( bool cond, InPlace && in_place, dummy_ = dummy_() ) {
+    optional( bool cond, InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
     
@@ -394,7 +230,7 @@ namespace etude {
     // 与えられた引数から直接構築し直す。自己代入チェックは行われない。
     template< class... Args,
       class = typename std::enable_if<
-        std::is_constructible<T, Args...>::value
+        etude::is_constructible<T, Args...>::value
       >::type
     >
     void emplace( Args&&... args ) {
@@ -405,34 +241,37 @@ namespace etude {
     // 与えられた引数を代入する。
     // T に operator= があればそちらを、無いなら一旦破棄してから ctor を呼ぶ。
     // 破棄してから ctor を呼ぶ場合は、自己代入チェック有り
+    template< class U = T_&&,
+      class = typename std::enable_if<is_assignable_or_convertible<T_, U>::value>::type
+    >
     void assign( T_ && x ) {
       impl_.assign( std::forward<T_>(x) );
     }
     template< class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        !std::is_reference<T>::value && // 参照の場合は無効化
+        is_assignable_or_convertible<T_, U>::value &&
+        !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
       >::type
     >
     void assign( U && x ) {
       impl_.assign( std::forward<U>(x) );
     }
     // in place assignment
-    template< class InPlace,
+    template< class InPlace, class... Dummy,
       class = typename std::enable_if<
-        !optional_assignable_<T_, InPlace>::value &&
+        ( sizeof...(Dummy) == 0 ) &&
         etude::is_in_place_applyable<InPlace, T>::value
       >::type
     >
-    void assign( InPlace && in_place, dummy_ = dummy_() ) {
+    void assign( InPlace && in_place, Dummy... ) {
       impl_.in_place_construct( std::forward<InPlace>(in_place) );
     }
     
     // assign_if
     template< class P,
-      class = decltype( bool( std::declval<P>() ) ),
-      class U = decltype( *std::declval<P>() ),
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, typename etude::pointee<P>::type>::value
       >::type
     >
     void assign_if( P && p )
@@ -455,7 +294,7 @@ namespace etude {
     // 型変換
     template<class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, U const&>::value
       >::type
     >
     self_type& operator=( optional<U> const& rhs ) {
@@ -463,8 +302,10 @@ namespace etude {
       return *this;
     }
     template<class U,
+      class U_ = typename std::remove_const<U>::type,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value
+        is_assignable_or_convertible<T_, U_>::value &&
+        !( std::is_lvalue_reference<T>::value && !std::is_lvalue_reference<U>::value )
       >::type
     >
     self_type& operator=( optional<U> && rhs ) {
@@ -472,14 +313,19 @@ namespace etude {
       return *this;
     }
     // T からの代入
+    template< class U = T_&&,
+      class = typename std::enable_if<is_assignable_or_convertible<T_, U>::value>::type
+    >
     self_type& operator=( T_ && rhs ) {
       assign( std::forward<T>(rhs) );
       return *this;
     }
     template<class U,
       class = typename std::enable_if<
-        optional_assignable_<T_, U>::value ||
-        etude::is_in_place_applyable<U, T>::value
+        !std::is_reference<T>::value && ( // 参照の場合は無効化
+          is_assignable_or_convertible<T_, U>::value ||
+          etude::is_in_place_applyable<U, T>::value
+        )
       >::type
     >
     self_type& operator=( U && rhs ) {
@@ -513,6 +359,11 @@ namespace etude {
       BOOST_ASSERT( impl_.get() != 0 );
       return std::forward<T_>( *impl_.get() );
     }
+    // friend 版
+    friend T &      get( self_type      & x ) { return x.get(); }
+    friend T const& get( self_type const& x ) { return x.get(); }
+    friend T_&&     get( self_type     && x ) { return x.move(); }
+    
     // 格納されたポインタを返す
     pointer       get_ptr()       { return impl_.get(); }
     const_pointer get_ptr() const { return impl_.get(); }
@@ -522,6 +373,13 @@ namespace etude {
     }
     friend const_pointer get_pointer( self_type const& x ) {
       return x.get_ptr();
+    }
+    // get のポインタ版
+    friend pointer get( self_type* p ) {
+      return p ? p->get_ptr() : 0;
+    }
+    friend const_pointer get( self_type const* p ) {
+      return p ? p->get_ptr() : 0;
     }
     
     // operator bool
@@ -554,8 +412,28 @@ namespace etude {
     T const& get_value_or( T const& default_ ) const {
       return *this ? **this : default_;
     }
+    // move 版
+    T_&& move_value_or( T_ && default_ ) {
+      if( *this ) {
+        return this->move();
+      }
+      return std::forward<T_>( default_ );
+    }
+    // friend 版
+    friend T const& get_optional_value_or( self_type const& x, T const& default_ ) {
+      return x.get_value_or( default_ );
+    }
+    friend T_ && get_optional_value_or( self_type && x, T_ && default_ ) {
+      return x.move_value_or( std::forward<T_>(default_) );
+    }
     
-    // 比較
+    
+   private:
+    // 演算子多重定義（ friend なので private でよい）
+    
+    // 元々の T が比較可能か否か
+    static bool const is_eq_comp_ = etude::is_equality_comparable<object_type>::value;
+    static bool const is_lt_comp_ = etude::is_less_than_comparable<object_type>::value;
     
     // none_t との比較
     friend bool operator==( self_type const& lhs, boost::none_t ) /*noexcept*/ {
@@ -567,54 +445,138 @@ namespace etude {
     friend bool operator> ( self_type const& lhs, boost::none_t ) /*noexcept*/ {
       return lhs != boost::none;
     }
+    // <=, >= は etude::totally_ordered により自動定義される。
     
-    // T const& との比較
-    friend bool operator==( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? ( *lhs == rhs ) : false;
+    // object_type const& との比較
+    // T const& でないのは、 T が参照の場合にもきちんと比較できるようにするため
+    template< bool EqualityComparable = is_eq_comp_,
+      class = typename std::enable_if<EqualityComparable>::type
+    >
+    friend bool operator==( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::equal_to<object_type>()( lhs.get(), rhs ) : false;
     }
-    friend bool operator< ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? ( *lhs <  rhs ) : true;
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
+    >
+    friend bool operator< ( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less<object_type>()( lhs.get(), rhs ) : true;
     }
-    friend bool operator> ( self_type const& lhs, T const& rhs ) /*noexcept*/ {
-      return lhs ? (  rhs < *lhs ) : false;
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
+    >
+    friend bool operator> ( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less<object_type>()( rhs, lhs.get() ) : false;
     }
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
+    >
+    friend bool operator<=( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less_equal<object_type>()( lhs.get(), rhs ) : true;
+    }
+    template< bool LessThanComparable = is_lt_comp_,
+      class = typename std::enable_if<LessThanComparable>::type
+    >
+    friend bool operator>=( self_type const& lhs, object_type const& rhs ) {
+      return lhs ? etude::less_equal<object_type>()( rhs, lhs.get() ) : false;
+    }
+    // 向きを反転したものは etude::partially_ordered により自動定義される。
     
-    // optional 同士の相互比較
-    friend bool operator==( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return rhs ? ( lhs == *rhs ) : ( lhs == boost::none );
-    }
-    friend bool operator< ( self_type const& lhs, self_type const& rhs ) /*noexcept*/ {
-      return rhs ? ( lhs <  *rhs ) : ( lhs <  boost::none );
-    }
-    
-    // !=, >, <=, >= は boost::totally_ordered により自動定義される
-    
-   private:
-    impl_type impl_;
     
   };
   
-  
-  // 取得
-  template<class T>
-  inline T& get_optional_value_or( optional<T> const& x, T const& default_ ) {
-    return x.get_value_or( default_ );
+  // 二つの型の boost::optional 間での比較
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_equality_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator==( optional<T> const& lhs, optional<U> const& rhs )
+  {
+    return etude::pointee_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_equality_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator!=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return !etude::pointee_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_than_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator< ( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_than_comparable<U, T>::value
+    >::type
+  >
+  inline bool operator> ( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before( rhs, lhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_or_equal_comparable<T, U>::value
+    >::type
+  >
+  inline bool operator<=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before_or_equal( lhs, rhs );
+  }
+  template< class T, class U,
+    class = typename std::enable_if<
+      etude::is_less_or_equal_comparable<U, T>::value
+    >::type
+  >
+  inline bool operator>=( optional<T> const& lhs, optional<U> const& rhs ) {
+    return etude::pointee_before_or_equal( rhs, lhs );
   }
   
   
-  // ヘルパ関数
+  // 構築ヘルパ関数
+  
+  // 引数から型推論させる
   template<class T,
     class Result = optional<typename decay_and_strip<T>::type>
   >
   inline Result make_optional( T && x ) {
-    return Result( std::forward<T>(x) );
+    return { std::forward<T>(x) };
   }
   template<class T,
     class Result = optional<typename decay_and_strip<T>::type>
   >
   inline Result make_optional( bool cond, T && x ) {
-    return Result( cond, std::forward<T>(x) );
+    return { cond, std::forward<T>(x) };
   }
+  
+  // 他の Maybe から構築する
+  template< class Maybe,
+    class T = typename decay_and_strip<typename pointee<Maybe>::type>::type
+  >
+  inline optional<T> make_optional_if( Maybe && x )
+  {
+    if( x ) {
+      return { *std::forward<Maybe>(x) };
+    }
+    return {};
+  }
+  // 明示的に型を指定
+  template< class T, class Maybe,
+    class = typename std::enable_if<
+      std::is_convertible<typename pointee<Maybe>::type, T>::value
+    >::type
+  >
+  inline optional<T> make_optional_if( Maybe && x )
+  {
+    if( x ) {
+      return { *std::forward<Maybe>(x) };
+    }
+    return {};
+  }
+
 
 } // namespace etude
 

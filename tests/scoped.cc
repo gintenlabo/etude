@@ -15,7 +15,7 @@
 #define IS_SAME_TYPE( expr1, expr2 )  \
   STATIC_ASSERT(( std::is_same<decltype(expr1), decltype(expr2)>::value ))
 
-#include "../etude/noncopyable.hpp"
+#include "../etude/immovable.hpp"
 #include <boost/checked_delete.hpp>
 #include <boost/optional.hpp>
 
@@ -54,8 +54,12 @@ void type_check()
   }
   
   // 関数渡しても大丈夫なのん？
-  IS_SAME_TYPE( ( std::unique_ptr<int, void(*)(int*)>() ),
-    etude::scoped( new int(), boost::checked_delete<int> ) );
+  STATIC_ASSERT((
+    std::is_same<
+      std::unique_ptr<int, void(*)(int*)>,
+      decltype( etude::scoped( new int(), boost::checked_delete<int> ) )
+    >::value
+  ));
   
   
   // "pointer" のあるデリータでテストするよー。
@@ -93,7 +97,7 @@ void type_check()
 }
 
 struct my_deleter
-  : etude::noncopyable  // なんとなく noncopyable
+  : etude::immovable<>  // なんとなく immovable
 {
   my_deleter()
     : count_(0) {}

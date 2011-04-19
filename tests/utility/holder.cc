@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "../../etude/types/is_constructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 // チェック本体
@@ -18,6 +19,8 @@ void check()
 {
   typedef etude::holder<T> holder;
   typedef typename std::remove_const<T>::type U;
+  typedef typename std::add_pointer<T>::type             pointer;
+  typedef typename std::add_pointer<T const>::type const_pointer;
   
   STATIC_ASSERT((  sizeof(T) ==  sizeof(holder) || std::is_reference<T>::value ));
   STATIC_ASSERT(( alignof(T) == alignof(holder) || std::is_reference<T>::value ));
@@ -45,15 +48,12 @@ void check()
     U &&, decltype( std::declval<holder&>().move() )
   >::value ));
   
+  // get_ptr
   STATIC_ASSERT(( std::is_same<
-    T &, decltype( get( std::declval<holder&>() ) )
+    pointer, decltype( std::declval<holder&>().get_ptr() )
   >::value ));
   STATIC_ASSERT(( std::is_same<
-    T const&, decltype( get( std::declval<holder const&>() ) )
-  >::value ));
-  // 同様に move 時は const が外れる
-  STATIC_ASSERT(( std::is_same<
-    U &&, decltype( get( std::declval<holder&&>() ) )
+    const_pointer, decltype( std::declval<holder const&>().get_ptr() )
   >::value ));
   
   // operator*
@@ -66,6 +66,42 @@ void check()
   STATIC_ASSERT(( std::is_same<
     U &&, decltype( *std::declval<holder&&>() )
   >::value ));
+  
+  // operator->
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( std::declval<holder&>().operator->() )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( std::declval<holder const&>().operator->() )
+  >::value ));
+  
+  // 自由関数 get は operator* と同じ
+  STATIC_ASSERT(( std::is_same<
+    T &, decltype( get( std::declval<holder&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    T const&, decltype( get( std::declval<holder const&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    U &&, decltype( get( std::declval<holder&&>() ) )
+  >::value ));
+  
+  // 自由関数 get のポインタ版
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( get( std::declval<holder*>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( get( std::declval<holder const*>() ) )
+  >::value ));
+  
+  // 自由関数 get_pointer
+  STATIC_ASSERT(( std::is_same<
+    pointer, decltype( get_pointer( std::declval<holder&>() ) )
+  >::value ));
+  STATIC_ASSERT(( std::is_same<
+    const_pointer, decltype( get_pointer( std::declval<holder const&>() ) )
+  >::value ));
+  
 }
 
 // （CVつきの）値と参照についてチェック
@@ -91,10 +127,8 @@ void check_convertible( int )
   STATIC_ASSERT(( std::is_convertible<U, T>::value
     == std::is_convertible<etude::holder<U>, holder>::value ));
 }
-template<class T, class... Args,
-  class = typename std::enable_if<sizeof...(Args) != 1>::type
->
-void check_convertible( ... ) {}
+template<class T, class... Args>
+typename std::enable_if<sizeof...(Args) != 1>::type check_convertible( ... ) {}
 
 // 構築可能性
 template<class T, class... Args>
@@ -102,8 +136,8 @@ void check_constructible()
 {
   typedef etude::holder<T> holder;
   
-  STATIC_ASSERT(( std::is_constructible<T, Args...>::value
-    == std::is_constructible<holder, Args...>::value ));
+  STATIC_ASSERT(( etude::is_constructible<T, Args...>::value
+    == etude::is_constructible<holder, Args...>::value ));
   
   check_convertible<T, Args...>(0);
 }

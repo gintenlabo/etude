@@ -9,27 +9,11 @@
 #include "../etude/immovable.hpp"
 
 #include <type_traits>
+#include "../etude/types/is_constructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
-// gcc 4.5.0 Ç…Ç»Ç¢ÇÃÇ≈é©çÏÇ∑ÇÈ
-template<class T>
-struct is_copy_constructible
-  : std::is_constructible<T, T const&>::type {};
-
-template<class T>
-struct is_move_constructible
-  : std::is_constructible<T, T&&>::type {};
-
-#include "../etude/types/is_assignable.hpp"
-
-template<class T>
-struct is_copy_assignable
-  : etude::is_assignable<T, T const&>::type {};
-
-template<class T>
-struct is_move_assignable
-  : etude::is_assignable<T, T&&>::type {};
-
+// for is_xxx_constructible/assignable
+#include "test_utilities.hpp"
 
 int main()
 {
@@ -59,8 +43,8 @@ int main()
   
   // ctor ì]ëó
   STATIC_ASSERT(( !std::is_convertible<X&&, etude::immovable<X>>::value ));
-  STATIC_ASSERT(( std::is_constructible<etude::immovable<X>, X&&>::value ));
-  STATIC_ASSERT(( !std::is_constructible<etude::immovable<X>, int>::value ));
+  STATIC_ASSERT(( etude::is_constructible<etude::immovable<X>, X&&>::value ));
+  STATIC_ASSERT(( !etude::is_constructible<etude::immovable<X>, int>::value ));
 
 
   // immovable wrapper
@@ -72,6 +56,6 @@ int main()
   
   // ctor ì]ëó
   STATIC_ASSERT(( !std::is_convertible<int, etude::immovable<int>>::value ));
-  STATIC_ASSERT(( std::is_constructible<etude::immovable<int>, int>::value ));
-  STATIC_ASSERT(( !std::is_constructible<etude::immovable<int>, void*>::value ));
+  STATIC_ASSERT(( etude::is_constructible<etude::immovable<int>, int>::value ));
+  STATIC_ASSERT(( !etude::is_constructible<etude::immovable<int>, void*>::value ));
 }
