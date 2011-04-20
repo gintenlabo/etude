@@ -22,7 +22,7 @@
 
 namespace etude {
 
-  // t の先頭要素以外を詰めた tuple を得る
+  // t の末尾要素以外を詰めた tuple を得る
   template< class Tuple,
     class Indices = etude::make_indices<etude::tuple_size<Tuple>::value - 1>,
     class Result = decltype( etude::to_tuple( std::declval<Tuple>(), Indices() ) )
