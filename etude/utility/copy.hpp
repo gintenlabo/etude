@@ -15,11 +15,15 @@
 #define ETUDE_UTILITY_INCLUDED_COPY_HPP_
 
 #include <type_traits>
+#include "../types/is_decay_copyable.hpp"
 
 namespace etude {
 
-  template<class T>
-  inline typename std::decay<T>::type copy( T && x ) {
+  template< class T >
+  inline typename std::enable_if<
+    etude::is_decay_copyable<T>::value,
+    typename std::decay<T>::type
+  >::type copy( T && x ) {
     return static_cast<T&&>(x);
   }
 
