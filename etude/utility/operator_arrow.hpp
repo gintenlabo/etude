@@ -2,10 +2,8 @@
 //  operator_arrow:
 //    -> 演算子を呼び出す
 // 
-//    与えられた引数をコピーした prvalue を返します。
-//    
-//    この関数の戻り値の型は、引数を t としたとき、
-//    auto x = t; によって作られる x と同じ型になります。
+//    etude::operator_arrow(x) は、 x がポインタなら x を、
+//    そうでない場合には x.operator->() を返します。
 //  
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
