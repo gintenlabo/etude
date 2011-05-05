@@ -14,6 +14,7 @@
 
 #include <type_traits>
 #include <utility>
+#include <functional>
 #include <boost/utility/addressof.hpp>
 #include "uninitialized.hpp"
 #include "operator_arrow.hpp"
@@ -106,9 +107,12 @@ namespace etude {
       std::is_reference<T>::value
     >::type
   >
+    : std::reference_wrapper<typename std::remove_reference<T>::type>
   {
+    typedef std::reference_wrapper<typename std::remove_reference<T>::type> base_;
+    
     explicit wrapper( T && x )
-      : p( boost::addressof(x) ) {}
+      : base_( x ) {}
     
     // lvalue reference の場合には rvalue を束縛できないように
     template< class U = T,
@@ -117,18 +121,14 @@ namespace etude {
     explicit wrapper( typename std::remove_reference<T>::type && x ) = delete;
     
     // 参照取得
-    operator T&() const { return *p; }
-    // operator T&& () const && { return std::forward<T>(*p); }
+    operator T&() const { return base_::get(); }
+    // operator T&& () const && { return std::forward<T>(base_::get()); }
     
     // operator->
     template< class U = T&,
       class Result = decltype( etude::operator_arrow( std::declval<U>() ) )
     >
-    Result operator->() const { return etude::operator_arrow( *p ); }
-    
-   private:
-    typedef typename std::add_pointer<T>::type pointer;
-    pointer p;
+    Result operator->() const { return etude::operator_arrow( base_::get() ); }
     
   };
   
