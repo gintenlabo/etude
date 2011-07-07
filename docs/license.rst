@@ -1,53 +1,12 @@
-=======================
-  Etude C++ Libraries
-=======================
-
-
-どんなライブラリ？
--------------------
-
-C++0x におけるコーディングに慣れるために書いたコードをまとめたものです。
-
-慣れるため、と言いつつ、ライブラリにする以上は本気で実用的なものを。
-
-
-ライブラリ一覧
----------------
-
-docs/html/libs.html を見てください。
-
-
-コンパイラ対応
----------------
-
-今のところは g++ 4.5.0 の範囲で C++0x の機能を使っていこうと思います。
-gcc の独自拡張は使わないので、ゆくゆくは C++0x に対応した全てのコンパイラで動く…筈。
-具体的な対応状況は http://gcc.gnu.org/gcc-4.5/cxx0x_status.html を参考にしてください。
-
-あと `Boost C++ Libraries <http://boost.org/>`_ は必須です。
-可能なかぎり新しいものでよろしくお願いします（参考までに、2010年12月現在の最新版は 1.45.0 です）。
-
+.. index:: License
 
 ライセンス
------------
+===========
 
-ライセンスは `NYSL <http://www.kmonos.net/nysl/>`_ …にしようかと思いましたが、
-それだと問題が発生する可能性もあるので、 `Boost Software License <http://www.boost.org/users/license.html>`_ にします。
-
-といっても、基本的には、自分で書いたコードのように、自由に扱ってくださって構いません。
-基本的にただのユーティリティ集であり、目新しいことは特に何もしていませんので。
-
-
-以下、ライセンスの文面と、その参考和訳です：
-
-
-Boost Software License
-^^^^^^^^^^^^^^^^^^^^^^^
-
-http://www.boost.org/LICENSE_1_0.txt
+Etude C++ Libraries は、 `Boost Software License <http://www.boost.org/users/license.html>`_ に基づき提供されます。
 
   Boost Software License - Version 1.0 - August 17th, 2003
-  
+
   Permission is hereby granted, free of charge, to any person or organization
   obtaining a copy of the software and accompanying documentation covered by
   this license (the "Software") to use, reproduce, display, distribute,
@@ -70,8 +29,14 @@ http://www.boost.org/LICENSE_1_0.txt
   ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
   DEALINGS IN THE SOFTWARE.
 
+  --- http://www.boost.org/LICENSE_1_0.txt
 
-参考和訳（私家版）
+-----
+
+.. index::
+  single: License; 和訳
+
+以下は、その参考和訳です。
 
   Boost Software License - Version 1.0 - August 17th, 2003
   
@@ -81,24 +46,8 @@ http://www.boost.org/LICENSE_1_0.txt
   
   **ソフトウェアは「あるがまま（AS IS）」に提供されます。商業的品質、特定の目的、タイトル、非侵害性に対する適合性を含めたあらゆる事柄に対し、明示的にも暗黙的にも、いかなる保証もありません。著作権者あるいはソフトウェアを頒布するいかなるものも、契約、不法行為、その他に関わらず、ソフトウェアの使用やその他の扱いから発生または発展、関連する一切の損害やその他の法的責任に対して、法的な義務を負わないものとします。**
 
-他の和訳としては、 http://hamigaki.sourceforge.jp/doc/html/license.html 辺りが参考になります。
 
-詳しくは docs/html/license.html を参照してください。
+参考：
 
-
-何かあったら
--------------
-
-twitter
-  銀天すばる http://twitter.com/SubaruG
-blog
-  銀天随筆集 http://d.hatena.ne.jp/gintenlabo
-email
-  gintensubaru あっと gmail.com
-
-辺りまでコンタクトしてみてください。
-
-
---------------------------------------------
-
-Copyright (C) 2010  Takaya Saito (SubaruG)
+- http://hamigaki.sourceforge.jp/doc/html/license.html
+- http://notitle-goy.seesaa.net/article/128993526.html
