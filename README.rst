@@ -63,4 +63,4 @@ email
 
 --------------------------------------------
 
-Copyright (C) 2011  Takaya Saito (SubaruG)
+Copyright (C) 2011  Takaya SAITO (SubaruG)
