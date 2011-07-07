@@ -14,7 +14,7 @@ C++0x によるコーディングに慣れるために書いたコード片を�
 ライブラリ一覧
 ---------------
 
-docs/html/libs.html を見てください．
+doc/html/libs.html を見てください．
 
 
 使い方
@@ -45,7 +45,7 @@ GCC の独自拡張は使っていないので， GCC 4.5 の C++0x 機能に対
 
 このライブラリは， `Boost Software License <http://www.boost.org/users/license.html>`_ により提供されます．
 
-./LICENSE_1_0.txt または docs/html/license.html を参照してください．
+./LICENSE_1_0.txt または doc/html/license.html を参照してください．
 
 
 何かあったら
