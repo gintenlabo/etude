@@ -26,11 +26,9 @@ copy は不可能だが move は出来る ``etude::noncopyable<T>`` と、 copy 
 boost::noncopyable との違いは、
 
 - move できるか否かを選べる
-- ``= delete;`` を使っているのでメタプログラミングに強い
-- trivially dafault-constructible である
-- trivially destructible である
+- コンストラクタとデストラクタが trivial である
 
-の四点。
+の二点。
 
 特に「 copy は禁止したいけど、 move は禁止したくない」ケースは、 C++0x でコードを書く上で頻出するので、そのような場合に、簡潔にその意図を示せるクラスがあるのは便利です。
 
