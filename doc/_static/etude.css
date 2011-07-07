@@ -1,0 +1,18 @@
+@import url("default.css");
+
+tt {
+  font-size: 1em;
+}
+
+h1 tt, h2 tt, h3 tt, h4 tt, h5 tt, h6 tt {
+  font-weight: bold;
+}
+
+
+h1 tt, h2 tt, h3 tt, h4 tt, h5 tt, h6 tt {
+  font-weight: bold;
+}
+
+div.compound {
+  margin-bottom: 2em;
+}
