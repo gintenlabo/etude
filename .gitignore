@@ -5,6 +5,7 @@ doc/_build/
 doc/html/
 
 # オブジェクトファイル、実行ファイルのたぐいは全部無視
+a.out
 *.o
 *.a
 *.exe
