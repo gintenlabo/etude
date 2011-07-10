@@ -1,0 +1,51 @@
+
+設計メモ
+========
+
+.. note::
+  このドキュメントは，デザイン用のメモ書きです．
+  
+  リリース版の Etude には含まれません．
+
+
+テスト方針
+----------
+
+- Etude のテストは，原則として :file:`test` ディレクトリに置く
+
+- :file:`etude/hoge.hpp` に対するテストのファイル名は， :file:`test/hoge-{000}-pass.cc` または :file:`test/hoge-{001}-fail.cc` のように指定される
+
+  - :file:`etude/hoge/fuga.hpp` に対するテストは :file:`test/hoge/fuga-{000-pass}.cc` のように指定される
+  - "-pass.cc" で終わるテストは，コンパイルに成功し，正しく実行されることが期待される
+  - "-fail.cc" で終わるテストは，コンパイルに失敗することが期待される
+
+- :file:`test/{hoge}-000-pass.cc` のように， "000" の番号を振られたテストは，原則としてヘッダ依存に関する最小限のテストを行う
+
+  - 典型的には ::
+    
+      #include "../etude/hoge.hpp"
+      // 他のヘッダは #include しない
+      
+      int main()
+      {
+        static_assert( ETUDE_VERSION >= 0, "<etude/version.hpp> must be included" );
+        
+        // 最低限，名前があることは確認しておく
+        etude::hoge( 0, 1, 2 );
+        
+        // ...
+        
+      }
+    
+    となる
+
+- それ以降のテストは原則として自由に行う
+  
+  - 基本的には，一つ一つのテスト項目に対し，同じ通し番号を振られた pass と fail の対でテストする
+  - 何らかの事情で pass と fail のどちらかを用意できない場合には，欠番にしておけば良い
+  - 必要に応じて， :file:`test/hoge-002-{compound_case}-pass.cc` のように，通し番号の次に，テスト内容に関する端的な説明を入れても良い
+  
+    - その場合でも，自動テストが行い易いよう，終わりは必ず "-pass.cc" または "-fail.cc" にする
+
+- テストツールは， Boost.Test があるなら それを使い，無いならば ``ASSERT`` で強引にテストする
+

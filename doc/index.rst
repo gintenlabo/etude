@@ -17,6 +17,8 @@ Etude C++ Libraries は， C++0x の汎用小物ライブラリです．
    
    libs
    license
+   
+   designers-note
 
 
 索引
