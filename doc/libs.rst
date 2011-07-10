@@ -2,4 +2,12 @@
 ライブラリ一覧
 ===============
 
-under construction.
+.. toctree::
+   :hidden:
+   
+   config/index
+
+
+:doc:`config/index`
+  Etude の設定を行うと同時に，幾つかの便利なマクロを提供する
+
