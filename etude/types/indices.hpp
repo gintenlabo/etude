@@ -38,30 +38,42 @@ namespace etude {
   // make indices<0, 1, ... , N-1>
   
   // implementation classes
-  template<std::size_t N, std::size_t... Indices>
-  struct make_indices_;
+  template< class Indices >
+  struct make_indices_impl_ {};
   
-  template< bool more_recursion_required, std::size_t N, std::size_t... Indices>
-  struct make_indices_impl_
-    : make_indices_<N, Indices..., sizeof...(Indices)>
+  template< std::size_t... Indices >
+  struct make_indices_impl_< indices<Indices...> >
   {
-    static_assert( N > sizeof...(Indices), "invalid template argument" );
-  };
-  template<std::size_t N, std::size_t... Indices>
-  struct make_indices_impl_<false, N, Indices...>
-  {
-    static_assert( N == sizeof...(Indices), "invalid template argument" );
-    typedef indices<Indices...> type;
+    typedef indices<Indices..., sizeof...(Indices)> type;
   };
   
-  template<std::size_t N, std::size_t... Indices>
-  struct make_indices_
-    : make_indices_impl_<( N > sizeof...(Indices) ), N, Indices...> {};
+  
+  template< int N,
+    bool IsValid = ( 0 <= N && N < 1024 ) // 1024 : Max Template arguments
+  >
+  struct make_indices_ {};
+  
+  template<>
+  struct make_indices_<0, true>
+  {
+    typedef indices<> type;
+  };
+  
+  template< int N >
+  struct make_indices_<N, true>
+  {
+    typedef typename make_indices_<N-1>::type init_type;
+    typedef typename make_indices_impl_<init_type>::type type;
+  };
   
   // 本体
-  template<std::size_t N>
+  template<int N>
   struct make_indices
-    : make_indices_<N>::type {};
+    : make_indices_<N>::type
+  {
+    static_assert( 0 <= N,   "make_indices : N must be greater than 0." );
+    static_assert( N < 1024, "make_indices : N must be less than 1024." );
+  };
 
 } // namespace etude
 
