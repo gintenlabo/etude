@@ -67,9 +67,14 @@ Type Traits
         typedef indices<Indies...> type;
       };
       
-      template<std::size_t N>
+      // precond: 0 <= N && N < 1024
+      template<int N>
       struct make_indices
-        : indices< 0, ..., N-1 > {};
+        : indices< 0, ..., N-1 >
+      {
+        static_assert( 0 <= N,   "make_indices : N must be greater than 0." );
+        static_assert( N < 1024, "make_indices : N must be less than 1024." );
+      };
       
     }
 
