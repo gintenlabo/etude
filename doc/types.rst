@@ -20,6 +20,80 @@ Type Traits
 
 
 .. index::
+  single: types; size_of
+
+.. _size_of:
+
+``size_of``
+-------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/types/size_of.hpp>
+
+定義
+  ::
+    
+    namespace etude {
+    
+      template<class T>
+      struct size_of
+        : std::integral_constant<std::size_t, see-below>
+      {
+        static bool const is_defined = see-below;
+      };
+      
+    }
+
+``etude::size_of<T>`` は， ``std::remove_reference<T>::type`` を ``U`` としたとき，
+``U`` が要素数不定の配列以外の object type ならば ``std::integral_constant<std::size_t, sizeof(U)>``
+を継承し，そうでなければ ``std::integral_constant<std::size_t, 0>`` を継承します．
+
+static メンバ ``is_defined`` は， ``U`` が要素数不定の配列以外の object type ならば
+``true`` に，それ以外の場合には ``false`` に定義されます．
+
+``sizeof`` 演算子との違いは， ``sizeof`` 演算子の結果が定義されないような場合にも対応している点です．
+
+
+.. index::
+  single: types; align_of
+
+.. _align_of:
+
+``align_of``
+-------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/types/align_of.hpp>
+
+定義
+  ::
+    
+    namespace etude {
+    
+      template<class T>
+      struct align_of
+        : std::integral_constant<std::size_t, see-below>
+      {
+        static bool const is_defined = see-below;
+      };
+      
+    }
+
+``etude::align_of<T>`` は， ``std::remove_reference<T>::type`` を ``U`` としたとき，
+``U`` が object type ならば ``std::integral_constant<std::size_t, alignof(U)>``
+を継承し，そうでなければ ``std::integral_constant<std::size_t, 0>`` を継承します．
+
+static メンバ ``is_defined`` は， ``U`` が object type ならば ``true`` に，それ以外の場合には
+``false`` に定義されます．
+
+``alignof`` 演算子との違いは， ``alignof`` 演算子の結果が定義されないような場合にも対応している点です．
+
+
+.. index::
   single: types; decay_and_strip
 
 .. _decay_and_strip:
@@ -44,10 +118,41 @@ Type Traits
       
     }
 
-``etude::decay_and_strip<T>::type`` は、 ``std::decay<T>::type`` を ``U`` としたとき、
-``U`` が ``std::reference_wrapper<X>`` ならば ``X&`` に、そうでなければ ``U`` に定義されます。
+``etude::decay_and_strip<T>::type`` は， ``std::decay<T>::type`` を ``U`` としたとき，
+``U`` が ``std::reference_wrapper<X>`` ならば ``X&`` に，そうでなければ ``U`` に定義されます．
 
-この型変換は ``std::make_tuple`` において行われる型変換と同じものです。
+この型変換は ``std::make_tuple`` 等の関数において行われる型変換と同じものです．
+
+
+.. index::
+  single: types; get_type_or
+
+.. _get_type_or:
+
+``get_type_or``
+-------------------
+
+必要ヘッダ
+  ::
+    
+    #include <etude/types/get_type_or.hpp>
+
+定義
+  ::
+    
+    namespace etude {
+    
+      template< class T, class Default = void >
+      struct get_type_or {
+        typedef see-below type;
+      };
+      
+    }
+
+``etude::get_type_or<T, Default>::type`` は，型 ``T::type`` が存在するなら
+``T::type`` に，そうでなければ ``Default`` に定義されます．
+
+``Default`` を明示的に指定しない場合， ``Default`` は ``void`` となります．
 
 
 .. index::
@@ -85,15 +190,15 @@ Type Traits
       
     }
 
-``etude::indices<Indices...>`` は、 ``std::size_t`` のリストを型に落としこむ為のクラスです。
-通常、このクラスはライブラリの実装を補助する目的で使われ、表に現れることはありません。
+``etude::indices<Indices...>`` は， ``std::size_t`` のリストを型に落としこむ為のクラスです．
+通常，このクラスはライブラリの実装を補助する目的で使われ，表に現れることはありません．
 
-``etude::make_indices<N>`` は ``etude::indices< 0, ..., N-1 >`` を継承したクラスで、\
-主に ``std::tuple`` を unpack する場合などに、インデックスを生成する目的で使います。
+``etude::make_indices<N>`` は ``etude::indices< 0, ..., N-1 >`` を継承したクラスで，\
+主に ``std::tuple`` を unpack する場合などに，インデックスを生成する目的で使います．
 
 .. hint::
 
-  詳しい使い方は :file:`samples/types/indices.cc` を参照してください。
+  詳しい使い方は :file:`samples/types/indices.cc` を参照してください．
 
 
 .. index::
@@ -126,14 +231,8 @@ Type Traits
       
     }
 
-``etude::types<Types...>`` は、複数の型に対する単純な type envelope です。
-通常、このクラスはライブラリの実装を補助する目的で使われ、表に現れることはありません。
-
-このクラスの典型的な使われ方としては、複数の型を一つに束ねて
-``etude::is_convertible``\ :ref:`¶<is_convertible>` といったメタ関数に渡す、などが挙げられます。
-
-また、 ``apply`` によって、関連付けられた ``Types...``
-を他のクラステンプレートに渡せることを覚えておくと、メタプログラミングの際に役立つ筈です。
+``etude::types<Types...>`` は，複数の型に対する単純な type envelope です．
+通常，このクラスはライブラリの実装を補助する目的で使われ，表に現れることはありません．
 
 
 .. index::
@@ -160,9 +259,9 @@ Type Traits
       
     }
 
-``etude::is_tuple<T>`` は、 ``T`` がタプル型なら
+``etude::is_tuple<T>`` は， ``T`` がタプル型なら
 （具体的には定数 ``std::tuple_size<T>::value`` が存在し 0 以上なら）
-``std::true_type`` を継承し、そうでなければ ``std::false_type`` を継承するメタ関数です。
+``std::true_type`` を継承し，そうでなければ ``std::false_type`` を継承するメタ関数です．
 
 
 .. index::
@@ -189,8 +288,8 @@ Type Traits
       
     }
 
-``etude::tuple_size<T>`` は、 ``T`` にメタ関数 ``std::decay`` を適用することで
-CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` を計算するメタ関数です。
+``etude::tuple_size<T>`` は， ``T`` にメタ関数 ``std::decay`` を適用することで
+CV 修飾子と参照を外した型 ``U`` に対し， ``std::tuple_size<U>`` を計算するメタ関数です．
 
 
 .. index::
@@ -219,26 +318,26 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
       
     }
 
-``etude::tuple_element< I, T >`` は、以下のように定義されたメタ関数です：
+``etude::tuple_element< I, T >`` は，以下のように定義されたメタ関数です：
 
 - ``T`` が ``const`` または ``volatile`` によって修飾されている場合
 
   - ``etude::tuple_element< I, U cv >::type`` は
-    ``etude::tuple_element< I, U >::type cv`` に定義されます。
+    ``etude::tuple_element< I, U >::type cv`` に定義されます．
 
 - ``T`` が ``U&`` の場合
 
   - ``etude::tuple_element< I, U& >::type`` は
-    ``etude::tuple_element< I, U >::type &`` に定義されます。
+    ``etude::tuple_element< I, U >::type &`` に定義されます．
 
 - ``T`` が ``U&&`` の場合
 
   - ``etude::tuple_element< I, U&& >::type`` は
-    ``etude::tuple_element< I, U >::type &&`` に定義されます。
+    ``etude::tuple_element< I, U >::type &&`` に定義されます．
 
 - それ以外の場合
 
-  - ``etude::tuple_element< I, T >`` は ``std::tuple_element< I, T >`` を継承します。
+  - ``etude::tuple_element< I, T >`` は ``std::tuple_element< I, T >`` を継承します．
 
 
 .. index::
@@ -265,9 +364,9 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
       
     }
 
-``etude::tuple_indices<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
+``etude::tuple_indices<T>`` は，（ CV 修飾された）タプル，またはタプルへの参照に対し，\
 その全ての要素のインデックスを順に保持した ``etude::indices<Indices...>``\ :ref:`¶<indices>`
-を継承します。
+を継承します．
 
 
 .. index::
@@ -294,14 +393,14 @@ CV 修飾子と参照を外した型 ``U`` に対し、 ``std::tuple_size<U>`` �
       
     }
 
-``etude::tuple_types<T>`` は、（ CV 修飾された）タプル、またはタプルへの参照に対し、\
+``etude::tuple_types<T>`` は，（ CV 修飾された）タプル，またはタプルへの参照に対し，\
 その全ての要素の型
 ``etude::tuple_element< 0, T >::type, ... , etude::tuple_element< N-1, T >::type``\
 :ref:`¶<tuple_element>`
-を順に保持した ``etude::types``\ :ref:`¶<types>` を継承します。
-N は ``etude::tuple_size<T>::value``\ :ref:`¶<tuple_size>` です。
+を順に保持した ``etude::types``\ :ref:`¶<types>` を継承します．
+N は ``etude::tuple_size<T>::value``\ :ref:`¶<tuple_size>` です．
 
 .. hint::
 
-  ``T`` が CV 修飾されている場合や参照の場合には、中身の型も同様に修飾されます。
+  ``T`` が CV 修飾されている場合や参照の場合には，中身の型も同様に修飾されます．
 
