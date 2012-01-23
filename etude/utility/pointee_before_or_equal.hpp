@@ -35,22 +35,6 @@
 
 namespace etude {
 
-  // 同じ型版
-  template< class T, class Comp = etude::less_equal<>,
-    class U = typename etude::pointee<T const&>::type,
-    class = typename std::enable_if<
-      etude::is_constructible< bool,
-        decltype( std::declval<Comp&>()( std::declval<U>(), std::declval<U>() ) )
-      >::value
-    >::type
-  >
-  inline bool pointee_before_or_equal(
-    T const& lhs, T const& rhs, Comp && comp = Comp() )
-  {
-    return lhs ? ( rhs ? bool( comp( *lhs, *rhs ) ) : false ) : true;
-  }
-  
-  // 違う型版
   template< class T, class U, class Comp = etude::less_equal<>,
     class = typename std::enable_if<
       etude::is_constructible< bool,
