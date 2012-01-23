@@ -1,0 +1,201 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>設計メモ &mdash; Etude C++ Libraries v1.0.0-experimental documentation</title>
+    <link rel="stylesheet" href="../_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.0-experimental',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries v1.0.0-experimental documentation" href="../index.html" />
+    <link rel="up" title="Etude.Config" href="index.html" />
+    <link rel="next" title="Etude.TypeTraits" href="../type_traits/index.html" />
+    <link rel="prev" title="Etude.Config" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../type_traits/index.html" title="Etude.TypeTraits"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.Config"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Etude.Config</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>設計メモ<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>このドキュメントは，デザイン用のメモ書きです．</p>
+<p class="last">リリース版の Etude には含まれません．</p>
+</div>
+<div class="section" id="etude-config">
+<h2>Etude.Config の目的<a class="headerlink" href="#etude-config" title="Permalink to this headline">¶</a></h2>
+<p>Boost を始めとした依存ライブラリの有無や，コンパイラのバージョンといった，細かい差異を吸収する．</p>
+<p>また， Etude に上手く機能しないライブラリが有ったとき，それに依存しているライブラリも使用不能になるのを防ぐため， Etude の中での依存も切れるようにしたい．</p>
+</div>
+<div class="section" id="id2">
+<h2>マクロによる実装の切り替え<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>コンパイラ対応やライブラリ依存など，何らかの事情により Etude 内部で実装を切り替える場合には， <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> という形のマクロが <tt class="docutils literal"><span class="pre">#define</span></tt> されているか否かが参照される</li>
+<li>これらマクロは， <tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> をインクルードしたとき，環境に応じて <tt class="docutils literal"><span class="pre">#define</span></tt> される</li>
+<li>カスタマイズするには， <tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> をインクルードする前に， <tt class="docutils literal"><span class="pre">ETUDE_USING_XXX</span></tt> と <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> のうち，片方を <tt class="docutils literal"><span class="pre">#define</span></tt> すればよい</li>
+<li><tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> の内部では，各設定項目に対して，以下のような操作を行う<ul>
+<li>対応する <tt class="docutils literal"><span class="pre">ETUDE_USING_XXX</span></tt> あるいは <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> のうち，どちらか片方または両方が <tt class="docutils literal"><span class="pre">#define</span></tt> されている場合，その設定項目に関しては何も設定しない<ul>
+<li>Etude 内部では一貫して <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> を参照するため，両方が <tt class="docutils literal"><span class="pre">#define</span></tt> されている場合には， <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> が優先されることになる</li>
+</ul>
+</li>
+<li>どちらも定義されていない場合には，以下のようなルールで， <tt class="docutils literal"><span class="pre">ETUDE_USING_XXX</span></tt> と <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> のうち，片方が <tt class="docutils literal"><span class="pre">#define</span></tt> される<ul>
+<li>Etude のサブライブラリは，原則として使用するように設定される<ul>
+<li>ただし， Boost に依存しているのに Boost を使わない設定になっている等，その他の設定項目から判断して明らかに使用不可能である場合には，この限りではない</li>
+</ul>
+</li>
+<li>Boost はデフォルトでは使用するよう設定される<ul>
+<li>Boost の有無を調べることは困難であるため</li>
+<li><tt class="docutils literal"><span class="pre">BOOST_VERSION</span></tt> が <tt class="docutils literal"><span class="pre">#define</span></tt> されているか否かによって Boost の有無を検出する方法もあるが， Etude のヘッダより先に Boost のヘッダを置くか否か，という，ほんの些細な差でライブラリの動作が変化するのは，ライブラリ使用者を無駄に混乱させるだけだ，という判断から，あえて決め打ちすることに</li>
+<li>Autoconf による対応を考えているが，実現できるかは未知数</li>
+</ul>
+</li>
+<li>それ以外の設定項目に関しては，以下のように設定する<ul>
+<li>GCC を使う場合には， GCC のバージョンによって設定する</li>
+<li>それ以外のケースで， <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_BOOST</span></tt> が <tt class="docutils literal"><span class="pre">#define</span></tt> されておらず，かつ Boost.Config に該当する項目がある場合には， Boost.Config を見て設定する</li>
+<li>それ以外のケースでは， gcc-4.5 の実装より，標準規格を優先する<ul>
+<li><tt class="docutils literal"><span class="pre">noexcept</span></tt> といった， gcc-4.5 で実装されていない機能も，デフォルトでは使用される</li>
+<li>それ以外の微妙な差異も，全て標準規格を優先する</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Etude の内部で参照されるのは専ら <tt class="docutils literal"><span class="pre">ETUDE_USING_NO_XXX</span></tt> であるが， <tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> では <tt class="docutils literal"><span class="pre">ETUDE_USING_XXX</span></tt> も設定される<ul>
+<li>これは，異なるバージョンの Etude が使われるケースに対応するため</li>
+<li>新たな設定項目が追加された場合の手間を，少しでも削減する</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h2>バージョンに関するマクロ<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">&lt;etude/version.hpp&gt;</span></tt> で設定される <tt class="docutils literal"><span class="pre">ETUDE_VERSION</span></tt> でバージョンを取得</li>
+<li><tt class="docutils literal"><span class="pre">BOOST_VERSION</span></tt> と同じように設定する</li>
+<li>それに加え，正式版でない場合には <tt class="docutils literal"><span class="pre">ETUDE_EXPERIMENTAL</span></tt> が <tt class="docutils literal"><span class="pre">#define</span></tt> される</li>
+<li>Etude の全てのヘッダは <tt class="docutils literal"><span class="pre">&lt;etude/version.hpp&gt;</span></tt> をインクルードする<ul>
+<li>少なくともドキュメントに載っている全てのヘッダでインクルードするよう徹底する</li>
+<li>それに対し， <tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> をインクルードするか否かはヘッダ依存</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h2>利便性のためのマクロ<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>主に Etude 内部で使うが，外部でも使用できるようドキュメント化</li>
+<li><tt class="docutils literal"><span class="pre">&lt;etude/noexcept.hpp&gt;</span></tt> など， etude 直下の各ヘッダで定義する</li>
+<li><tt class="docutils literal"><span class="pre">&lt;etude/config.hpp&gt;</span></tt> の中身に応じて変化するマクロで，いちいち <tt class="docutils literal"><span class="pre">#ifndef</span> <span class="pre">ETUDE_USING_NO_XXX</span></tt> と書かずに済むようにすることが目的</li>
+<li>例えば <tt class="docutils literal"><span class="pre">ETUDE_NOEXCEPT(</span> <span class="pre">expr</span> <span class="pre">)</span></tt> は， <tt class="docutils literal"><span class="pre">noexcept</span></tt> 演算子をシミュレーションするマクロ</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">設計メモ</a><ul>
+<li><a class="reference internal" href="#etude-config">Etude.Config の目的</a></li>
+<li><a class="reference internal" href="#id2">マクロによる実装の切り替え</a></li>
+<li><a class="reference internal" href="#id3">バージョンに関するマクロ</a></li>
+<li><a class="reference internal" href="#id4">利便性のためのマクロ</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Etude.Config</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../type_traits/index.html"
+                        title="next chapter">Etude.TypeTraits</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/config/designers-note.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../type_traits/index.html" title="Etude.TypeTraits"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.Config"
+             >previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" >Etude.Config</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Takaya SAITO (SubaruG).
+      Last updated on 07/11, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

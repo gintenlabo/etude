@@ -1,0 +1,310 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>設計メモ &mdash; Etude C++ Libraries v1.0.0-experimental documentation</title>
+    <link rel="stylesheet" href="../_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.0-experimental',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries v1.0.0-experimental documentation" href="../index.html" />
+    <link rel="up" title="Etude.Range" href="index.html" />
+    <link rel="next" title="ライセンス" href="../license.html" />
+    <link rel="prev" title="Etude.Range" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../license.html" title="ライセンス"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.Range"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Etude.Range</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>設計メモ<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>このドキュメントは，デザイン用のメモ書きです．</p>
+<p class="last">リリース版の Etude には含まれません．</p>
+</div>
+<div class="section" id="etude-range">
+<h2>Etude.Range の目的<a class="headerlink" href="#etude-range" title="Permalink to this headline">¶</a></h2>
+<p>Boost.Range や Pstade.Oven とは別アプローチの Range Library を提供する．</p>
+<p>具体的には Iterators Must Go! のアレ．</p>
+</div>
+<div class="section" id="id2">
+<h2>基本的なデザイン<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">std::vector&lt;T&gt;</span></tt> や <tt class="docutils literal"><span class="pre">boost::iterator_range&lt;Iter&gt;</span></tt> 等を Range と呼び，これらを扱っていく．</li>
+<li>Range には三種類ある．<ul>
+<li>従来通りの，イテレータを使った Range ． Iterator Range と呼ぶ．</li>
+<li>std::istream に対応する Range 等，イテレータを使わない Range ． Generalized Range と呼ぶ．</li>
+<li>後述する Range View ．</li>
+</ul>
+</li>
+<li>Range を扱う上で，ライブラリ内部では，直接 Range を扱うのではなく， Range View を通じて扱う．<ul>
+<li>対応する Range View を製作する関数は <tt class="docutils literal"><span class="pre">make_range_view</span></tt> ．<ul>
+<li>Iterator Range に対しては， <tt class="docutils literal"><span class="pre">etude::range::iterator_range_view&lt;Iter&gt;</span></tt> を返す．</li>
+<li>Generalized Range に対しては，各々のクラスで定義されたものを返す．</li>
+<li>Range View に対しては，受け取った Range View 自身を返す．</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Range View は，クラスとして実装する．<ul>
+<li>メンバ関数によるアクセスと，非メンバ関数によるアクセスの両方を提供</li>
+<li>Range View のメンバ関数は，必要最小限のもののみを扱う．<ul>
+<li><tt class="docutils literal"><span class="pre">empty</span></tt>, <tt class="docutils literal"><span class="pre">front</span></tt>, <tt class="docutils literal"><span class="pre">pop_front</span></tt> や <tt class="docutils literal"><span class="pre">operator==</span></tt> など．</li>
+</ul>
+</li>
+<li>Range View の非メンバ関数は，基本的にはメンバ関数から自動生成できるが，しかしユーザ定義することで効率化できるものを扱う．<ul>
+<li><tt class="docutils literal"><span class="pre">move_front</span></tt> や <tt class="docutils literal"><span class="pre">advance_front</span></tt> ， <tt class="docutils literal"><span class="pre">for_each</span></tt> や <tt class="docutils literal"><span class="pre">find_if</span></tt> など．</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="range-view">
+<h2>Range View の要件<a class="headerlink" href="#range-view" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="input-view">
+<h3>Input View<a class="headerlink" href="#input-view" title="Permalink to this headline">¶</a></h3>
+<p>Input View は， View としての最低限の要件を規定する．</p>
+<p>Input View であるためには，前提条件として，</p>
+<ul class="simple">
+<li>Move Constructible</li>
+</ul>
+<p>である必要がある．</p>
+<p>以下のような <tt class="docutils literal"><span class="pre">typedef</span></tt> が提供される．</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">value_type</span></tt></dt>
+<dd><ul class="first last simple">
+<li>type of elements which belongs to the range referred by the view.</li>
+<li>Requires: shall be non-reference, non-cv-qualified type.</li>
+</ul>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">reference</span></tt></dt>
+<dd><ul class="first last simple">
+<li>result type of element access functions, such as <tt class="docutils literal"><span class="pre">front()</span></tt>.</li>
+<li>Requires: shall be convertible to <tt class="docutils literal"><span class="pre">value_type</span> <span class="pre">const&amp;</span></tt>.</li>
+</ul>
+</dd>
+</dl>
+<p>要求するメンバ関数は，以下のとおり：</p>
+<dl class="docutils">
+<dt><tt class="docutils literal"><span class="pre">bool</span> <span class="pre">empty()</span> <span class="pre">const;</span></tt></dt>
+<dd><ul class="first last simple">
+<li>Returns: true if the range referred by the view is empty; otherwise false.</li>
+</ul>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">reference</span> <span class="pre">front()</span> <span class="pre">const;</span></tt></dt>
+<dd><ul class="first last simple">
+<li>Precond: <tt class="docutils literal"><span class="pre">!this-&gt;empty()</span></tt></li>
+<li>Returns: ( a reference to ) the first element of the range referred by the view.</li>
+</ul>
+</dd>
+<dt><tt class="docutils literal"><span class="pre">void</span> <span class="pre">pop_front();</span></tt></dt>
+<dd><ul class="first last simple">
+<li>Precond: <tt class="docutils literal"><span class="pre">!this-&gt;empty()</span></tt></li>
+<li>Effect: reduces the range referred by the view from left by one element.</li>
+</ul>
+</dd>
+</dl>
+<p>典型的なアルゴリズムとしては，以下のようなものがある：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span> <span class="k">class</span> <span class="nc">View</span><span class="p">,</span> <span class="k">class</span> <span class="nc">F</span> <span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">F</span> <span class="n">for_each</span><span class="p">(</span> <span class="n">View</span> <span class="n">view</span><span class="p">,</span> <span class="n">F</span> <span class="n">f</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span> <span class="o">!</span><span class="n">view</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">f</span><span class="p">(</span> <span class="n">view</span><span class="p">.</span><span class="n">front</span><span class="p">()</span> <span class="p">);</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span> <span class="k">class</span> <span class="nc">View</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">BinaryOperation</span> <span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span> <span class="n">accumulate</span><span class="p">(</span> <span class="n">View</span> <span class="n">view</span><span class="p">,</span> <span class="n">T</span> <span class="n">init</span><span class="p">,</span> <span class="n">BinaryOperation</span> <span class="n">op</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span> <span class="o">!</span><span class="n">view</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="n">op</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">init</span><span class="p">),</span> <span class="n">view</span><span class="p">.</span><span class="n">front</span><span class="p">()</span> <span class="p">);</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">init</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">template</span><span class="o">&lt;</span> <span class="k">class</span> <span class="nc">View</span> <span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">View</span> <span class="n">advance</span><span class="p">(</span> <span class="n">View</span> <span class="n">view</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">size_t</span> <span class="n">n</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span> <span class="n">n</span> <span class="o">--&gt;</span> <span class="mi">0</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">view</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">view</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="forward-view">
+<h3>Forward View<a class="headerlink" href="#forward-view" title="Permalink to this headline">¶</a></h3>
+<p>Forward View は， Input View の拡張であり， View として望ましい性質を規定する．</p>
+<p>Forward View であるためには， Input View の条件に加えて，</p>
+<ul class="simple">
+<li>Default Constructible</li>
+<li>Copy Constructible</li>
+<li>Copy Assignable</li>
+<li>Equality Comparable</li>
+</ul>
+<p>である必要がある．</p>
+<p>典型的なアルゴリズムとしては，以下のようなものがある：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span> <span class="k">class</span> <span class="nc">View1</span><span class="p">,</span> <span class="k">class</span> <span class="nc">View2</span> <span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="kt">void</span> <span class="n">rotate</span><span class="p">(</span> <span class="n">View1</span> <span class="n">v1</span><span class="p">,</span> <span class="n">View2</span> <span class="n">v2</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">using</span> <span class="n">std</span><span class="o">::</span><span class="n">swap</span><span class="p">;</span>
+
+  <span class="k">if</span><span class="p">(</span> <span class="n">v2</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="n">View2</span> <span class="n">v2_</span> <span class="o">=</span> <span class="n">v2</span><span class="p">;</span>
+
+  <span class="k">for</span><span class="p">(;;)</span> <span class="p">{</span>
+    <span class="n">swap</span><span class="p">(</span> <span class="n">v1</span><span class="p">.</span><span class="n">front</span><span class="p">(),</span> <span class="n">v2</span><span class="p">.</span><span class="n">front</span><span class="p">()</span> <span class="p">);</span>
+    <span class="n">v1</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span> <span class="n">v2</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+
+    <span class="k">if</span><span class="p">(</span> <span class="n">v1</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="k">if</span><span class="p">(</span> <span class="n">v2</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="p">{</span>
+        <span class="k">break</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">v2</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="n">v2</span> <span class="o">=</span> <span class="n">v2_</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">View2</span> <span class="n">v3</span> <span class="o">=</span> <span class="n">v2</span><span class="p">;</span>
+  <span class="k">for</span><span class="p">(;;)</span> <span class="p">{</span>
+    <span class="n">swap</span><span class="p">(</span> <span class="n">v2_</span><span class="p">.</span><span class="n">front</span><span class="p">(),</span> <span class="n">v2</span><span class="p">.</span><span class="n">front</span><span class="p">()</span> <span class="p">);</span>
+    <span class="n">v2_</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span> <span class="n">v2</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+
+    <span class="k">if</span><span class="p">(</span> <span class="n">v2</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="p">){</span>
+      <span class="k">if</span><span class="p">(</span> <span class="n">v2_</span> <span class="o">==</span> <span class="n">v3</span> <span class="p">)</span> <span class="p">{</span>
+        <span class="k">return</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="p">{</span>
+        <span class="n">v2</span> <span class="o">=</span> <span class="n">v3</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="k">if</span><span class="p">(</span> <span class="n">v2_</span> <span class="o">==</span> <span class="n">v3</span> <span class="p">)</span> <span class="p">{</span>
+      <span class="n">v3</span> <span class="o">=</span> <span class="n">v2</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">設計メモ</a><ul>
+<li><a class="reference internal" href="#etude-range">Etude.Range の目的</a></li>
+<li><a class="reference internal" href="#id2">基本的なデザイン</a></li>
+<li><a class="reference internal" href="#range-view">Range View の要件</a><ul>
+<li><a class="reference internal" href="#input-view">Input View</a></li>
+<li><a class="reference internal" href="#forward-view">Forward View</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Etude.Range</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../license.html"
+                        title="next chapter">ライセンス</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/range/designers-note.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../license.html" title="ライセンス"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.Range"
+             >previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" >Etude.Range</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Takaya SAITO (SubaruG).
+      Last updated on 07/22, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

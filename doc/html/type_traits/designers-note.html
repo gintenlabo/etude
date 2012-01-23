@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>設計メモ &mdash; Etude C++ Libraries v1.0.0-experimental documentation</title>
+    <link rel="stylesheet" href="../_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '1.0.0-experimental',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries v1.0.0-experimental documentation" href="../index.html" />
+    <link rel="up" title="Etude.TypeTraits" href="index.html" />
+    <link rel="next" title="ライセンス" href="../license.html" />
+    <link rel="prev" title="Etude.TypeTraits" href="index.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="../license.html" title="ライセンス"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.TypeTraits"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" accesskey="U">Etude.TypeTraits</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="id1">
+<h1>設計メモ<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h1>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p>このドキュメントは，デザイン用のメモ書きです．</p>
+<p class="last">リリース版の Etude には含まれません．</p>
+</div>
+<div class="section" id="id2">
+<h2>基本方針<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>基本的には C++0x 標準の <tt class="docutils literal"><span class="pre">&lt;type_traits&gt;</span></tt> に準ずる</li>
+<li>integral constant を「返す」ような Traits の場合，以下のような制約を満たす<ul>
+<li>特に明記されない限り，該当する <tt class="docutils literal"><span class="pre">std::integral_constant</span></tt> から直接的に派生する</li>
+<li>特に明記されない限り，派生先のクラスの本体の定義は空になる</li>
+<li>与えられた引数から <tt class="docutils literal"><span class="pre">value</span></tt> を計算できない場合には，原則として <tt class="docutils literal"><span class="pre">std::integral_constant</span></tt> からは派生せず， <tt class="docutils literal"><span class="pre">::value</span></tt> も定義されない<ul>
+<li>この時， SFINAE を適用できるよう，原則として Traits 内部ではコンパイルエラーを回避する</li>
+<li>incomplete type に対する扱い等， undefined behavior となるケースでは，その限りではない</li>
+<li><tt class="docutils literal"><span class="pre">::value_type</span></tt> や <tt class="docutils literal"><span class="pre">::type</span></tt> は，必要に応じて定義されるかもしれないし，定義されないかもしれない</li>
+<li><tt class="docutils literal"><span class="pre">::value</span></tt> の定義されない型としては， <tt class="docutils literal"><span class="pre">etude::no_value_is_defined&lt;T&gt;</span></tt> などが考えられ，実装によっては，これらのクラスから派生する形で Traits を定義するかもしれない<ul>
+<li><tt class="docutils literal"><span class="pre">etude::no_value_is_defined&lt;T&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">::value</span></tt> こそ定義されないが， <tt class="docutils literal"><span class="pre">::value_type</span></tt> は <tt class="docutils literal"><span class="pre">T</span></tt> に， <tt class="docutils literal"><span class="pre">::type</span></tt> は <tt class="docutils literal"><span class="pre">etude::no_value_is_defined&lt;T&gt;</span></tt> 自身に それぞれ 定義されたクラスであり， <tt class="docutils literal"><span class="pre">::type</span></tt> による連鎖を行いたい場合などに使用できる</li>
+<li><tt class="docutils literal"><span class="pre">::value</span></tt> の定義されない型としては，この他に <tt class="docutils literal"><span class="pre">etude::no_type_is_defined</span></tt> も考えられるが，特に明記されない限り， Traits がこれらのクラスから派生している保証は存在しない</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>integral constant 以外の <tt class="docutils literal"><span class="pre">type</span></tt> を「返す」ような Traits の場合，以下のような制約を満たす<ul>
+<li>与えられた型から <tt class="docutils literal"><span class="pre">type</span></tt> を計算できない場合（例えば <tt class="docutils literal"><span class="pre">common_type&lt;T,</span> <span class="pre">U&gt;</span></tt> で，該当する型が存在しないような場合）には，原則として <tt class="docutils literal"><span class="pre">::type</span></tt> は定義されない<ul>
+<li>この時も， SFINAE を適用できるよう，原則として Traits 内部ではコンパイルエラーを回避する</li>
+<li>incomplete type に対する扱い等， undefined behavior となるケースでは，その限りではない</li>
+<li>そのようなケースでは， Traits は <tt class="docutils literal"><span class="pre">etude::no_type_is_defined</span></tt> や <tt class="docutils literal"><span class="pre">std::enable_if&lt;false&gt;</span></tt> といった <tt class="docutils literal"><span class="pre">::type</span></tt> の定義されないクラスから派生する形で定義されるかもしれないが，特に明記されない限り， Traits がこれらのクラスから派生している保証は存在しない</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="traits">
+<h2>Traits を計算するときのルール<a class="headerlink" href="#traits" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>何らかの整数値をテンプレート引数として受け取りたい場合<ul>
+<li>直接的にテンプレート引数として受け取る戦略の他に，ある型 <tt class="docutils literal"><span class="pre">Type</span></tt> を受け取り <tt class="docutils literal"><span class="pre">Type::value</span></tt> を計算する戦略が考えられる</li>
+<li>前者の戦略を使う場合には，原則として，名前の末尾に &#8220;_c&#8221; を付ける</li>
+<li>後者の戦略を使う場合にも，必要ならば &#8220;_c&#8221; 以外の接尾辞を付けるかもしれない<ul>
+<li>後者の戦略を使う場合，原則として，単純に <tt class="docutils literal"><span class="pre">Type::value</span></tt> を計算するのではなく， <tt class="docutils literal"><span class="pre">etude::make_integral_constant&lt;Type&gt;::value</span></tt> を使って計算する<ul>
+<li><tt class="docutils literal"><span class="pre">etude::make_integral_constant&lt;Type&gt;::value</span></tt> は，以下のように計算される<ul>
+<li><tt class="docutils literal"><span class="pre">Type::value</span></tt> が存在する場合は， <tt class="docutils literal"><span class="pre">Type::value</span></tt> になる</li>
+<li>それ以外のケースで <tt class="docutils literal"><span class="pre">Type::type::value</span></tt> が存在する場合は， <tt class="docutils literal"><span class="pre">Type::type::value</span></tt> になる</li>
+<li>上記のいずれでもない場合は， <tt class="docutils literal"><span class="pre">etude::make_integral_constant&lt;Type&gt;::value</span></tt> は定義されない</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">etude::make_integral_constant&lt;Type&gt;::value</span></tt> が定義されない場合，該当する Traits の <tt class="docutils literal"><span class="pre">::type</span></tt> や <tt class="docutils literal"><span class="pre">::value</span></tt> も定義されない</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>型のシーケンスをテンプレート引数として受け取りたい場合<ul>
+<li>Variadic Templates で直接的にテンプレート引数として受け取る戦略と，ラッパークラスを介して単一の型として受け取る戦略の，二種類が考えられる</li>
+<li>両者の戦略を併用する</li>
+<li>後者の戦略を使う場合には，原則として以下のように処理する<ul>
+<li>ラッパークラスとしては <tt class="docutils literal"><span class="pre">etude::type&lt;Types...&gt;</span></tt> を使う</li>
+<li>直接的に <tt class="docutils literal"><span class="pre">etude::type&lt;Types...&gt;</span></tt> を受け取るのではなく，一段階はさんで受け取る<ul>
+<li>与えられた型 <tt class="docutils literal"><span class="pre">Type</span></tt> に対して， <tt class="docutils literal"><span class="pre">typename</span> <span class="pre">Type::type</span></tt> を計算する</li>
+<li>その型に対して <tt class="docutils literal"><span class="pre">etude::type&lt;Types...&gt;</span></tt> でパターンマッチを行う</li>
+<li><tt class="docutils literal"><span class="pre">typename</span> <span class="pre">Type::type</span></tt> が <tt class="docutils literal"><span class="pre">etude::type&lt;Types...&gt;</span></tt> でない場合には，該当する Traits の <tt class="docutils literal"><span class="pre">::type</span></tt> や <tt class="docutils literal"><span class="pre">::value</span></tt> は定義されない</li>
+</ul>
+</li>
+<li>Boost.MPL や Boost.Fusion の Random Access Sequence に対しても適用できるとよい<ul>
+<li>今のところ <tt class="docutils literal"><span class="pre">mpl_to_types</span></tt> や <tt class="docutils literal"><span class="pre">fusion_to_types</span></tt> といったもので明示的に <tt class="docutils literal"><span class="pre">etude::types</span></tt> を作るようにすることを考えている（名前は適当， <tt class="docutils literal"><span class="pre">make_types_from_mpl_seq</span></tt> みたいにするかも）</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>クラステンプレートをテンプレート引数として受け取りたい場合<ul>
+<li><tt class="docutils literal"><span class="pre">template&lt;</span> <span class="pre">template&lt;class...&gt;</span> <span class="pre">class</span> <span class="pre">Hoge</span> <span class="pre">&gt;</span></tt> で受け取るか，あるいはラッパークラスを介して受け取るか<ul>
+<li>後者ならば Boost.MPL と相性が良さそう</li>
+<li>ラッパークラスを使う場合，どういうデザインにしようか？<ul>
+<li><tt class="docutils literal"><span class="pre">Hoge::template</span> <span class="pre">apply&lt;Types...&gt;::type</span></tt> か <tt class="docutils literal"><span class="pre">boost::mpl::apply&lt;Hoge,</span> <span class="pre">Types...&gt;::type</span></tt> か</li>
+<li>直接 Boost に依存しない分，前者を採用するべきか</li>
+<li>Boost.MPL を使う場合は <tt class="docutils literal"><span class="pre">boost::mpl::lambda</span></tt> を使えばいいし</li>
+</ul>
+</li>
+<li>ってか，むしろ全部用意すりゃいいんじゃね？</li>
+<li>と思ったが，複雑になりすぎるのも厄介なので，やるなら別名前空間に隔離するべきか</li>
+<li>やるとしたら， Boost.MPL や Boost.Fusion の拡張にするべきか，それとも Instanciations Must Go! のような形にするべきか<ul>
+<li>Boost.MPL や Boost.Fusion は， C++0x では Variadic Templates を使えばよく，実装は楽<ul>
+<li>テンプレート実引数の最大値は， C++0x では最低でも 1024 個は使えるので， 全部 <tt class="docutils literal"><span class="pre">mpl::vector</span></tt> で良く， <tt class="docutils literal"><span class="pre">mpl::list</span></tt> 等を用意する必要はない</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>必要になったら考えることにする</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="../index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">設計メモ</a><ul>
+<li><a class="reference internal" href="#id2">基本方針</a></li>
+<li><a class="reference internal" href="#traits">Traits を計算するときのルール</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Etude.TypeTraits</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="../license.html"
+                        title="next chapter">ライセンス</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="../_sources/type_traits/designers-note.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="../license.html" title="ライセンス"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Etude.TypeTraits"
+             >previous</a> |</li>
+        <li><a href="../index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="../libs.html" >ライブラリ一覧</a> &raquo;</li>
+          <li><a href="index.html" >Etude.TypeTraits</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2011, Takaya SAITO (SubaruG).
+      Last updated on 07/11, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

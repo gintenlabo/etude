@@ -1,0 +1,476 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Type Traits &mdash; Etude C++ Libraries: Documentation</title>
+    <link rel="stylesheet" href="_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries: Documentation" href="index.html" />
+    <link rel="up" title="ライブラリ一覧" href="libs.html" />
+    <link rel="next" title="ライセンス" href="license.html" />
+    <link rel="prev" title="In-Place Factories" href="in-place.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="license.html" title="ライセンス"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" accesskey="U">ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="type-traits">
+<span id="index-0"></span><h1>Type Traits<a class="headerlink" href="#type-traits" title="Permalink to this headline">¶</a></h1>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>このドキュメントは書きかけです．</p>
+<p class="last">正式な仕様はヘッダファイルのドキュメントを参照して下さい．</p>
+</div>
+<dl class="docutils">
+<dt>使い道</dt>
+<dd>様々な型特性メタ関数群</dd>
+</dl>
+<div class="contents local topic" id="contents">
+<ul class="simple">
+<li><a class="reference internal" href="#size-of" id="id12"><tt class="docutils literal"><span class="pre">size_of</span></tt></a></li>
+<li><a class="reference internal" href="#align-of" id="id13"><tt class="docutils literal"><span class="pre">align_of</span></tt></a></li>
+<li><a class="reference internal" href="#decay-and-strip" id="id14"><tt class="docutils literal"><span class="pre">decay_and_strip</span></tt></a></li>
+<li><a class="reference internal" href="#get-type-or" id="id15"><tt class="docutils literal"><span class="pre">get_type_or</span></tt></a></li>
+<li><a class="reference internal" href="#indices" id="id16"><tt class="docutils literal"><span class="pre">indices</span></tt></a></li>
+<li><a class="reference internal" href="#types" id="id17"><tt class="docutils literal"><span class="pre">types</span></tt></a></li>
+<li><a class="reference internal" href="#is-tuple" id="id18"><tt class="docutils literal"><span class="pre">is_tuple</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-size" id="id19"><tt class="docutils literal"><span class="pre">tuple_size</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-element" id="id20"><tt class="docutils literal"><span class="pre">tuple_element</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-indices" id="id21"><tt class="docutils literal"><span class="pre">tuple_indices</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-types" id="id22"><tt class="docutils literal"><span class="pre">tuple_types</span></tt></a></li>
+</ul>
+</div>
+<div class="section" id="size-of">
+<span id="index-1"></span><span id="id1"></span><h2><a class="toc-backref" href="#id12"><tt class="docutils literal"><span class="pre">size_of</span></tt></a><a class="headerlink" href="#size-of" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/size_of.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">size_of</span>
+    <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">size_t</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span>
+  <span class="p">{</span>
+    <span class="k">static</span> <span class="kt">bool</span> <span class="k">const</span> <span class="n">is_defined</span> <span class="o">=</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">;</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::size_of&lt;T&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">std::remove_reference&lt;T&gt;::type</span></tt> を <tt class="docutils literal"><span class="pre">U</span></tt> としたとき，
+<tt class="docutils literal"><span class="pre">U</span></tt> が要素数不定の配列以外の object type ならば <tt class="docutils literal"><span class="pre">std::integral_constant&lt;std::size_t,</span> <span class="pre">sizeof(U)&gt;</span></tt>
+を継承し，そうでなければ <tt class="docutils literal"><span class="pre">std::integral_constant&lt;std::size_t,</span> <span class="pre">0&gt;</span></tt> を継承します．</p>
+<p>static メンバ <tt class="docutils literal"><span class="pre">is_defined</span></tt> は， <tt class="docutils literal"><span class="pre">U</span></tt> が要素数不定の配列以外の object type ならば
+<tt class="docutils literal"><span class="pre">true</span></tt> に，それ以外の場合には <tt class="docutils literal"><span class="pre">false</span></tt> に定義されます．</p>
+<p><tt class="docutils literal"><span class="pre">sizeof</span></tt> 演算子との違いは， <tt class="docutils literal"><span class="pre">sizeof</span></tt> 演算子の結果が定義されないような場合にも対応している点です．</p>
+</div>
+<div class="section" id="align-of">
+<span id="index-2"></span><span id="id2"></span><h2><a class="toc-backref" href="#id13"><tt class="docutils literal"><span class="pre">align_of</span></tt></a><a class="headerlink" href="#align-of" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/align_of.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">align_of</span>
+    <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">size_t</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span>
+  <span class="p">{</span>
+    <span class="k">static</span> <span class="kt">bool</span> <span class="k">const</span> <span class="n">is_defined</span> <span class="o">=</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">;</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::align_of&lt;T&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">std::remove_reference&lt;T&gt;::type</span></tt> を <tt class="docutils literal"><span class="pre">U</span></tt> としたとき，
+<tt class="docutils literal"><span class="pre">U</span></tt> が object type ならば <tt class="docutils literal"><span class="pre">std::integral_constant&lt;std::size_t,</span> <span class="pre">alignof(U)&gt;</span></tt>
+を継承し，そうでなければ <tt class="docutils literal"><span class="pre">std::integral_constant&lt;std::size_t,</span> <span class="pre">0&gt;</span></tt> を継承します．</p>
+<p>static メンバ <tt class="docutils literal"><span class="pre">is_defined</span></tt> は， <tt class="docutils literal"><span class="pre">U</span></tt> が object type ならば <tt class="docutils literal"><span class="pre">true</span></tt> に，それ以外の場合には
+<tt class="docutils literal"><span class="pre">false</span></tt> に定義されます．</p>
+<p><tt class="docutils literal"><span class="pre">alignof</span></tt> 演算子との違いは， <tt class="docutils literal"><span class="pre">alignof</span></tt> 演算子の結果が定義されないような場合にも対応している点です．</p>
+</div>
+<div class="section" id="decay-and-strip">
+<span id="index-3"></span><span id="id3"></span><h2><a class="toc-backref" href="#id14"><tt class="docutils literal"><span class="pre">decay_and_strip</span></tt></a><a class="headerlink" href="#decay-and-strip" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/decay_and_strip.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">decay_and_strip</span> <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span> <span class="n">type</span><span class="p">;</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::decay_and_strip&lt;T&gt;::type</span></tt> は， <tt class="docutils literal"><span class="pre">std::decay&lt;T&gt;::type</span></tt> を <tt class="docutils literal"><span class="pre">U</span></tt> としたとき，
+<tt class="docutils literal"><span class="pre">U</span></tt> が <tt class="docutils literal"><span class="pre">std::reference_wrapper&lt;X&gt;</span></tt> ならば <tt class="docutils literal"><span class="pre">X&amp;</span></tt> に，そうでなければ <tt class="docutils literal"><span class="pre">U</span></tt> に定義されます．</p>
+<p>この型変換は <tt class="docutils literal"><span class="pre">std::make_tuple</span></tt> 等の関数において行われる型変換と同じものです．</p>
+</div>
+<div class="section" id="get-type-or">
+<span id="index-4"></span><span id="id4"></span><h2><a class="toc-backref" href="#id15"><tt class="docutils literal"><span class="pre">get_type_or</span></tt></a><a class="headerlink" href="#get-type-or" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/get_type_or.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span> <span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Default</span> <span class="o">=</span> <span class="kt">void</span> <span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">get_type_or</span> <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span> <span class="n">type</span><span class="p">;</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::get_type_or&lt;T,</span> <span class="pre">Default&gt;::type</span></tt> は，型 <tt class="docutils literal"><span class="pre">T::type</span></tt> が存在するなら
+<tt class="docutils literal"><span class="pre">T::type</span></tt> に，そうでなければ <tt class="docutils literal"><span class="pre">Default</span></tt> に定義されます．</p>
+<p><tt class="docutils literal"><span class="pre">Default</span></tt> を明示的に指定しない場合， <tt class="docutils literal"><span class="pre">Default</span></tt> は <tt class="docutils literal"><span class="pre">void</span></tt> となります．</p>
+</div>
+<div class="section" id="indices">
+<span id="index-5"></span><span id="id5"></span><h2><a class="toc-backref" href="#id16"><tt class="docutils literal"><span class="pre">indices</span></tt></a><a class="headerlink" href="#indices" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/indices.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">size_t</span><span class="p">...</span> <span class="n">Indices</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">indices</span> <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">indices</span><span class="o">&lt;</span><span class="n">Indies</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">type</span><span class="p">;</span>
+  <span class="p">};</span>
+
+  <span class="c1">// precond: 0 &lt;= N &amp;&amp; N &lt; 1024</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="kt">int</span> <span class="n">N</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">make_indices</span>
+    <span class="o">:</span> <span class="n">indices</span><span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="p">...,</span> <span class="n">N</span><span class="o">-</span><span class="mi">1</span> <span class="o">&gt;</span>
+  <span class="p">{</span>
+    <span class="n">static_assert</span><span class="p">(</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">N</span><span class="p">,</span>   <span class="s">&quot;make_indices : N must be greater than 0.&quot;</span> <span class="p">);</span>
+    <span class="n">static_assert</span><span class="p">(</span> <span class="n">N</span> <span class="o">&lt;</span> <span class="mi">1024</span><span class="p">,</span> <span class="s">&quot;make_indices : N must be less than 1024.&quot;</span> <span class="p">);</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::indices&lt;Indices...&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">std::size_t</span></tt> のリストを型に落としこむ為のクラスです．
+通常，このクラスはライブラリの実装を補助する目的で使われ，表に現れることはありません．</p>
+<p><tt class="docutils literal"><span class="pre">etude::make_indices&lt;N&gt;</span></tt> は <tt class="docutils literal"><span class="pre">etude::indices&lt;</span> <span class="pre">0,</span> <span class="pre">...,</span> <span class="pre">N-1</span> <span class="pre">&gt;</span></tt> を継承したクラスで，主に <tt class="docutils literal"><span class="pre">std::tuple</span></tt> を unpack する場合などに，インデックスを生成する目的で使います．</p>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">詳しい使い方は <tt class="file docutils literal"><span class="pre">samples/types/indices.cc</span></tt> を参照してください．</p>
+</div>
+</div>
+<div class="section" id="types">
+<span id="index-6"></span><span id="id6"></span><h2><a class="toc-backref" href="#id17"><tt class="docutils literal"><span class="pre">types</span></tt></a><a class="headerlink" href="#types" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/types.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">types</span>
+  <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">types</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">type</span><span class="p">;</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">class</span> <span class="nc">U</span><span class="o">&gt;</span>
+    <span class="k">struct</span> <span class="n">apply</span> <span class="p">{</span> <span class="k">typedef</span> <span class="n">U</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">type</span><span class="p">;</span> <span class="p">}</span>
+
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::types&lt;Types...&gt;</span></tt> は，複数の型に対する単純な type envelope です．
+通常，このクラスはライブラリの実装を補助する目的で使われ，表に現れることはありません．</p>
+</div>
+<div class="section" id="is-tuple">
+<span id="index-7"></span><span id="id7"></span><h2><a class="toc-backref" href="#id18"><tt class="docutils literal"><span class="pre">is_tuple</span></tt></a><a class="headerlink" href="#is-tuple" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/is_tuple.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">is_tuple</span>
+    <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::is_tuple&lt;T&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">T</span></tt> がタプル型なら
+（具体的には定数 <tt class="docutils literal"><span class="pre">std::tuple_size&lt;T&gt;::value</span></tt> が存在し 0 以上なら）
+<tt class="docutils literal"><span class="pre">std::true_type</span></tt> を継承し，そうでなければ <tt class="docutils literal"><span class="pre">std::false_type</span></tt> を継承するメタ関数です．</p>
+</div>
+<div class="section" id="tuple-size">
+<span id="index-8"></span><span id="id8"></span><h2><a class="toc-backref" href="#id19"><tt class="docutils literal"><span class="pre">tuple_size</span></tt></a><a class="headerlink" href="#tuple-size" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/tuple_size.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">tuple_size</span>
+    <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple_size</span><span class="o">&lt;</span><span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">decay</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::tuple_size&lt;T&gt;</span></tt> は， <tt class="docutils literal"><span class="pre">T</span></tt> にメタ関数 <tt class="docutils literal"><span class="pre">std::decay</span></tt> を適用することで
+CV 修飾子と参照を外した型 <tt class="docutils literal"><span class="pre">U</span></tt> に対し， <tt class="docutils literal"><span class="pre">std::tuple_size&lt;U&gt;</span></tt> を計算するメタ関数です．</p>
+</div>
+<div class="section" id="tuple-element">
+<span id="index-9"></span><span id="id9"></span><h2><a class="toc-backref" href="#id20"><tt class="docutils literal"><span class="pre">tuple_element</span></tt></a><a class="headerlink" href="#tuple-element" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/tuple_element.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">size_t</span> <span class="n">I</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">tuple_element</span>
+  <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span> <span class="n">type</span><span class="p">;</span>
+  <span class="p">};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">T</span> <span class="pre">&gt;</span></tt> は，以下のように定義されたメタ関数です：</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">T</span></tt> が <tt class="docutils literal"><span class="pre">const</span></tt> または <tt class="docutils literal"><span class="pre">volatile</span></tt> によって修飾されている場合<ul>
+<li><tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U</span> <span class="pre">cv</span> <span class="pre">&gt;::type</span></tt> は
+<tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U</span> <span class="pre">&gt;::type</span> <span class="pre">cv</span></tt> に定義されます．</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">T</span></tt> が <tt class="docutils literal"><span class="pre">U&amp;</span></tt> の場合<ul>
+<li><tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U&amp;</span> <span class="pre">&gt;::type</span></tt> は
+<tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U</span> <span class="pre">&gt;::type</span> <span class="pre">&amp;</span></tt> に定義されます．</li>
+</ul>
+</li>
+<li><tt class="docutils literal"><span class="pre">T</span></tt> が <tt class="docutils literal"><span class="pre">U&amp;&amp;</span></tt> の場合<ul>
+<li><tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U&amp;&amp;</span> <span class="pre">&gt;::type</span></tt> は
+<tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">U</span> <span class="pre">&gt;::type</span> <span class="pre">&amp;&amp;</span></tt> に定義されます．</li>
+</ul>
+</li>
+<li>それ以外の場合<ul>
+<li><tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">T</span> <span class="pre">&gt;</span></tt> は <tt class="docutils literal"><span class="pre">std::tuple_element&lt;</span> <span class="pre">I,</span> <span class="pre">T</span> <span class="pre">&gt;</span></tt> を継承します．</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="tuple-indices">
+<span id="index-10"></span><span id="id10"></span><h2><a class="toc-backref" href="#id21"><tt class="docutils literal"><span class="pre">tuple_indices</span></tt></a><a class="headerlink" href="#tuple-indices" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/tuple_indices.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">tuple_indices</span>
+    <span class="o">:</span> <span class="n">make_indices</span><span class="o">&lt;</span><span class="n">etude</span><span class="o">::</span><span class="n">tuple_size</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;::</span><span class="n">value</span><span class="o">&gt;::</span><span class="n">type</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::tuple_indices&lt;T&gt;</span></tt> は，（ CV 修飾された）タプル，またはタプルへの参照に対し，その全ての要素のインデックスを順に保持した <tt class="docutils literal"><span class="pre">etude::indices&lt;Indices...&gt;</span></tt><a class="reference internal" href="#indices"><em>¶</em></a>
+を継承します．</p>
+</div>
+<div class="section" id="tuple-types">
+<span id="index-11"></span><span id="id11"></span><h2><a class="toc-backref" href="#id22"><tt class="docutils literal"><span class="pre">tuple_types</span></tt></a><a class="headerlink" href="#tuple-types" title="Permalink to this headline">¶</a></h2>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/types/tuple_types.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">tuple_types</span>
+    <span class="o">:</span> <span class="n">etude</span><span class="o">::</span><span class="n">types</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::tuple_types&lt;T&gt;</span></tt> は，（ CV 修飾された）タプル，またはタプルへの参照に対し，その全ての要素の型
+<tt class="docutils literal"><span class="pre">etude::tuple_element&lt;</span> <span class="pre">0,</span> <span class="pre">T</span> <span class="pre">&gt;::type,</span> <span class="pre">...</span> <span class="pre">,</span> <span class="pre">etude::tuple_element&lt;</span> <span class="pre">N-1,</span> <span class="pre">T</span> <span class="pre">&gt;::type</span></tt><a class="reference internal" href="#tuple-element"><em>¶</em></a>
+を順に保持した <tt class="docutils literal"><span class="pre">etude::types</span></tt><a class="reference internal" href="#types"><em>¶</em></a> を継承します．
+N は <tt class="docutils literal"><span class="pre">etude::tuple_size&lt;T&gt;::value</span></tt><a class="reference internal" href="#tuple-size"><em>¶</em></a> です．</p>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last"><tt class="docutils literal"><span class="pre">T</span></tt> が CV 修飾されている場合や参照の場合には，中身の型も同様に修飾されます．</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Type Traits</a><ul>
+<li><a class="reference internal" href="#size-of"><tt class="docutils literal"><span class="pre">size_of</span></tt></a></li>
+<li><a class="reference internal" href="#align-of"><tt class="docutils literal"><span class="pre">align_of</span></tt></a></li>
+<li><a class="reference internal" href="#decay-and-strip"><tt class="docutils literal"><span class="pre">decay_and_strip</span></tt></a></li>
+<li><a class="reference internal" href="#get-type-or"><tt class="docutils literal"><span class="pre">get_type_or</span></tt></a></li>
+<li><a class="reference internal" href="#indices"><tt class="docutils literal"><span class="pre">indices</span></tt></a></li>
+<li><a class="reference internal" href="#types"><tt class="docutils literal"><span class="pre">types</span></tt></a></li>
+<li><a class="reference internal" href="#is-tuple"><tt class="docutils literal"><span class="pre">is_tuple</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-size"><tt class="docutils literal"><span class="pre">tuple_size</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-element"><tt class="docutils literal"><span class="pre">tuple_element</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-indices"><tt class="docutils literal"><span class="pre">tuple_indices</span></tt></a></li>
+<li><a class="reference internal" href="#tuple-types"><tt class="docutils literal"><span class="pre">tuple_types</span></tt></a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="in-place.html"
+                        title="previous chapter">In-Place Factories</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="license.html"
+                        title="next chapter">ライセンス</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/types.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="license.html" title="ライセンス"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             >previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" >ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010-11, Takaya Saito (SubaruG).
+      Last updated on 01/24, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

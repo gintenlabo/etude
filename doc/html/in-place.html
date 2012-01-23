@@ -1,0 +1,1693 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>In-Place Factories &mdash; Etude C++ Libraries: Documentation</title>
+    <link rel="stylesheet" href="_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries: Documentation" href="index.html" />
+    <link rel="up" title="ライブラリ一覧" href="libs.html" />
+    <link rel="next" title="Type Traits" href="types.html" />
+    <link rel="prev" title="Noncopyable" href="noncopyable.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="types.html" title="Type Traits"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="noncopyable.html" title="Noncopyable"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" accesskey="U">ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="in-place-factories">
+<span id="index-0"></span><h1>In-Place Factories<a class="headerlink" href="#in-place-factories" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>使い道</dt>
+<dd>コンストラクタの引数を転送し、メモリ領域を直接初期化する</dd>
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="c1">// 全ての機能を使う場合。以下の全てのヘッダがインクルードされる</span>
+<span class="cp">#include &lt;etude/in_place.hpp&gt;</span>
+
+<span class="c1">// etude::in_place のみ使いたい場合</span>
+<span class="cp">#include &lt;etude/memory/in_place_factory.hpp&gt;        </span><span class="c1">// 型指定なし版</span>
+<span class="cp">#include &lt;etude/memory/typed_in_place_factory.hpp&gt;  </span><span class="c1">// 型指定あり版</span>
+
+<span class="c1">// in-place factory の適用ヘルパ関数</span>
+<span class="cp">#include &lt;etude/memory/apply_in_place.hpp&gt;</span>
+
+<span class="c1">// 問い合わせ用の小物メタ関数</span>
+<span class="cp">#include &lt;etude/memory/is_in_place_factory.hpp&gt;</span>
+<span class="cp">#include &lt;etude/memory/is_typed_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/utility/in_place_factories.html">Boost.InPlaceFactories</a> の
+C++0x 版です。rvalue references と variadic templates に対応しています。</p>
+<p>InPlaceFactories は、それ単独では価値を見出しにくいライブラリですが、
+例えば <a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/optional/doc/html/">Boost.Optional</a>
+といったライブラリと組み合わせることで、非常に便利に使うことが出来ます。</p>
+<p>InPlaceFactories は、あるメモリ領域に、 copy や move に依らず、
+直接的にオブジェクトを構築することを可能にします：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;boost/scoped_ptr.hpp&gt;</span>
+<span class="cp">#include &lt;boost/optional.hpp&gt;</span>
+<span class="cp">#include &lt;boost/utility/in_place_factory.hpp&gt;</span>
+
+<span class="c1">// このクラスは boost::scoped_ptr を持っているのでコピー出来ない</span>
+<span class="k">struct</span> <span class="n">hoge</span>
+<span class="p">{</span>
+  <span class="n">hoge</span><span class="p">(</span> <span class="kt">int</span> <span class="n">a</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">s</span> <span class="p">);</span>
+  <span class="o">~</span><span class="n">hoge</span><span class="p">();</span>
+
+  <span class="kt">void</span> <span class="n">foo</span><span class="p">();</span>
+
+ <span class="k">private</span><span class="o">:</span>
+  <span class="k">class</span> <span class="nc">Impl_</span><span class="p">;</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">scoped_ptr</span><span class="o">&lt;</span><span class="n">Impl_</span><span class="o">&gt;</span> <span class="n">pImpl_</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="n">some_function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">hoge</span><span class="o">&gt;</span> <span class="n">h</span><span class="p">;</span>
+  <span class="c1">// でも Boost.Optional に格納できる！</span>
+  <span class="n">h</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;hoge&quot;</span> <span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>使い方は、オブジェクトの引数を <tt class="docutils literal"><span class="pre">in_place</span></tt> という関数で束ねた上で、
+InPlaceFactories をサポートしているクラスに渡すだけです。</p>
+<p>そのようにして InPlaceFactories を使った場合の分かりやすい恩恵は、上記のように、
+コピー出来ないオブジェクトを扱う際の制限が減る、というものですが、
+それだけに留まりません。</p>
+<p>InPlaceFactories を使うことにより、「構築して copy/move する」と
+二段階で初期化していたオブジェクトを、
+たった一回、直接的に初期化するのみで構築することが出来るようになるのです。</p>
+<p>実際には C++ には RVO という機能があるので、 InPlaceFactories を使わずとも、
+コンパイラによって二段階ではなく一段階の初期化に最適化されうるのですが、
+その最適化が働くかどうかはコンパイラ依存です。</p>
+<p>InPlaceFactories を使えば、原理的には、
+コンパイラに依らず、 copy/move を介さない一度の呼び出しで、
+あらゆるオブジェクトを初期化出来るようになります。</p>
+<p>実際には InPlaceFactories に対応したライブラリはごく一部なので
+そう簡単には行きませんが、少なくとも「何となく便利そうだ」ということは
+分かってもらえたんじゃないでしょうか。</p>
+<p>で、そんな便利な Boost.InPlaceFactories ですが、現状ではいくらか問題があります。</p>
+<ul class="simple">
+<li>デフォルトで引数パックを値キャプチャするので、効率がいささか悪い</li>
+<li>Variadic Templates を使っていないので、型が分かりにくい</li>
+<li>実装側の問題だが、 apply する時に move してくれない</li>
+<li>同じく実装側の問題だが、 InPlaceFactory と TypedInPlaceFactory の二種類に対応しなければならない</li>
+</ul>
+<p>これらの問題に対処したのが、 Etude.InPlaceFactories です。</p>
+<p>Etude.InPlaceFactories は、基本的には Boost.InPlaceFactories と全く同じように扱うことが出来ます。</p>
+<p>これは、今まで Boost.InPlaceFactories を使っていた場面を、そのまま Etude.InPlaceFactories
+によって置き換えることができる、ということです：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// 再掲。 hoge の定義は上を参照</span>
+<span class="kt">void</span> <span class="n">some_function</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">hoge</span><span class="o">&gt;</span> <span class="n">h</span><span class="p">;</span>
+  <span class="c1">// Boost.Optional を置き換えずに etude::in_place を使える</span>
+  <span class="n">h</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;hoge&quot;</span> <span class="p">);</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>それに加えて Etude.InPlaceFactories では、 rvalue references を扱うことが出来ます：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// etude なら OK, boost だと NG</span>
+<span class="n">XXX</span> <span class="n">xxx</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="n">foo</span><span class="o">&gt;</span><span class="p">(</span> <span class="k">new</span> <span class="n">foo</span><span class="p">()</span> <span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>その為には実装側で rvalue references に対応する必要がありますが、
+その実装を助けるための各種のヘルパ関数、ヘルパメタ関数も
+Etude.InPlaceFactories には用意されています。</p>
+<p>また、地味ですが、 Etude.InPlaceFactories では、 <tt class="docutils literal"><span class="pre">in_place</span></tt> 関数の結果を保持するクラスの名前が、
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;Args...&gt;</span></tt> および <tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> と
+明確に定義されている為、いざという時に便利です。</p>
+<p>詳しい使い方、および Boost との差異については、以下で述べます。</p>
+</div>
+<div class="section" id="id2">
+<h2>使い方（利用側）<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>基本的な使用法<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<p><tt class="docutils literal"><span class="pre">boost::in_place(...)</span></tt> と書く場所で、 <tt class="docutils literal"><span class="pre">etude::in_place(...)</span></tt> と書く。これだけです。</p>
+<p>Etude.InPlaceFactory は、 Boost.InPlaceFactory の完全な上位互換となっているので、
+Boost.InPlaceFactory を使えるライブラリであるならば、そのライブラリがきちんと実装されている限り、
+Etude.InPlaceFactory も問題なく扱うことが出来ます。</p>
+<p>Boost との差異は、 Perfect Forward を使っていることです。
+これよにり、参照を取るコンストラクタであっても、問題なく転送することが出来ます。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">struct</span> <span class="n">Hoge</span> <span class="p">{</span>
+  <span class="kt">int</span><span class="o">&amp;</span> <span class="n">r</span><span class="p">;</span>
+
+  <span class="k">explicit</span> <span class="n">Hoge</span><span class="p">(</span> <span class="kt">int</span><span class="o">&amp;</span> <span class="n">r_</span> <span class="p">)</span>
+    <span class="o">:</span> <span class="n">r</span><span class="p">(</span> <span class="n">r_</span> <span class="p">)</span> <span class="p">{}</span>
+
+<span class="p">};</span>
+
+<span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+
+<span class="c1">// NG</span>
+<span class="c1">// boost::optional&lt;Hoge&gt; x( boost::in_place(i) );</span>
+
+<span class="c1">// OK</span>
+<span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="n">x</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>また、これは受け取る側が Etude.InPlaceFactory に対応している場合に限りますが、
+Move Semantics により、一時オブジェクトをコピーすることなく渡すことが出来ます。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="c1">// InPlaceFactory を受け入れられる何か</span>
+<span class="n">etude_in_place_acceptable</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span> <span class="k">new</span> <span class="kt">int</span><span class="p">()</span> <span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>これにより、 <tt class="docutils literal"><span class="pre">boost::in_place</span></tt> よりも効率よく引数を転送できます。</p>
+<div class="section" id="id4">
+<h4>注意点<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h4>
+<p>「 Etude.InPlaceFactory は Boost.InPlaceFactory の完全な上位互換となっている」</p>
+<p>と書きましたが、これは厳密には正しくありません。</p>
+<p>Etude.InPlaceFactory が Boost.InPlaceFactory の全ての機能を含んでいるのは事実ですが、
+<tt class="docutils literal"><span class="pre">etude::in_place</span></tt><a class="reference internal" href="#in-place"><em>¶</em></a><a class="reference internal" href="#in-place-typed"><em>¶</em></a> という関数自身については、
+<tt class="docutils literal"><span class="pre">boost::in_place</span></tt> とは若干異なった動作をする関数になっています。</p>
+<p>具体的には、 <tt class="docutils literal"><span class="pre">etude::in_place</span></tt> によって作られたオブジェクトを、</p>
+<ul class="simple">
+<li>コピーする場合</li>
+<li>そのスコープで変数に束縛する場合</li>
+<li>関数の戻り値として使う場合</li>
+</ul>
+<p>には、コンパイルエラーになったり、さらに悪いことには、
+コンパイルエラーにすらならず異常動作を引き起こす可能性があります。</p>
+<p><tt class="docutils literal"><span class="pre">etude::in_place</span></tt> の結果を渡した先でコンパイルエラーになる場合や、
+<tt class="docutils literal"><span class="pre">etude::in_place</span></tt> を呼び出した結果を</p>
+<ul class="simple">
+<li>そのスコープで変数に束縛する場合</li>
+<li>関数の戻り値として使う場合</li>
+</ul>
+<p>には、 <tt class="docutils literal"><span class="pre">etude::in_place</span></tt> ではなく
+<tt class="docutils literal"><span class="pre">etude::bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a><a class="reference internal" href="#bind-in-place-typed"><em>¶</em></a>
+を使うようにしてください</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+
+<span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span> <span class="n">x</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;a&quot;</span><span class="p">)</span> <span class="p">)</span> <span class="p">);</span> <span class="c1">// 問題なし</span>
+
+<span class="c1">// ダメ。</span>
+<span class="c1">// std::string の一時オブジェクトは auto in_place = ～; の実行後に破棄される</span>
+<span class="c1">// auto in_place = etude::in_place( i, std::string(&quot;b&quot;) );</span>
+<span class="c1">// x = in_place; // dangling reference !</span>
+
+<span class="c1">// 代わりに bind_in_place を使う</span>
+<span class="k">auto</span> <span class="n">in_place</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">bind_in_place</span><span class="p">(</span> <span class="n">i</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="p">(</span><span class="s">&quot;b&quot;</span><span class="p">)</span> <span class="p">);</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">in_place</span><span class="p">;</span> <span class="c1">// 問題なし</span>
+</pre></div>
+</div>
+<p>そうすることで、これらの問題は、完全に回避することができます。</p>
+<p><tt class="docutils literal"><span class="pre">etude::bind_in_place</span></tt> に渡した引数は、参照ではなく値として束縛され、
+<tt class="docutils literal"><span class="pre">std::ref</span></tt> や <tt class="docutils literal"><span class="pre">std::cref</span></tt> 経由で渡した引数のみが参照で束縛されます。</p>
+<p>詳細な動作は <a class="reference internal" href="#in-place"><em>こちら</em></a> を参照してください。</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><tt class="docutils literal"><span class="pre">etude::in_place</span></tt> が、このような
+「コンパイルエラーにすらならず、異常動作を引き起こしうる」
+という危険性をあえて残しているのは、
+<tt class="docutils literal"><span class="pre">etude::in_place</span></tt> の設計方針として、 Perfect Forward であることと、
+一切の余計なコピーを行わないことを重視しているためです。</p>
+<p>その設計に伴う危険性ですが、</p>
+<ul>
+<li><p class="first">コンパイルエラーにならずに異常動作を引き起こすの可能性があるのは、あくまで</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">etude::in_place</span></tt> を呼び出した <strong>そのスコープで</strong> 、 <tt class="docutils literal"><span class="pre">auto</span></tt> 等を使って変数に束縛した場合</li>
+<li><tt class="docutils literal"><span class="pre">etude::in_place</span></tt> の呼び出し結果を、 <tt class="docutils literal"><span class="pre">decltype</span></tt> 等で、関数の戻り値に <strong>直接</strong> 使った場合</li>
+</ul>
+<p>のみであり、それ以外の場合には、コンパイルエラーによって通知されること。</p>
+</li>
+<li><p class="first">基本的に、 <tt class="docutils literal"><span class="pre">in_place</span></tt> で作られたオブジェクトを、すぐに使わず変数に束縛したり、
+あるいは関数から返すようなことは、意図して行わない限りは起こらず、
+仮に起こったとしても、よほど混み入ったコードでもない限り、コードを見ればすぐに分かること。</p>
+</li>
+<li><p class="first">それに加え、従来の Boost.InPlaceFactories を使っていたコードは、基本的に
+C++98/03 であり、 C++98/03 の範疇では、 <tt class="docutils literal"><span class="pre">auto</span></tt> を使って変数に束縛する、ということや、
+<tt class="docutils literal"><span class="pre">decltype</span></tt> を使って戻り値に利用する、ということは行えなかったことから、
+従来の <tt class="docutils literal"><span class="pre">boost::in_place</span></tt> を機械的に <tt class="docutils literal"><span class="pre">etude::in_place</span></tt>
+に書き換えても、問題は起こりにくいと考えられること。</p>
+</li>
+<li><p class="first">それとは別に、このような問題は、標準ライブラリの <tt class="docutils literal"><span class="pre">std::forward_as_tuple</span></tt>
+でも生じるものであり、 <tt class="docutils literal"><span class="pre">etude::in_place</span></tt> に固有の問題というわけではないこと。</p>
+</li>
+</ul>
+<p class="last">上記の理由により十分に回避可能である、と判断しています。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id5">
+<h3>より高度な使用法<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="inplacefactory">
+<h4>タプルに束ねられた引数リストから InPlaceFactory への変換<a class="headerlink" href="#inplacefactory" title="Permalink to this headline">¶</a></h4>
+<p>Etude.InPlaceFactory は、 <tt class="docutils literal"><span class="pre">std::tuple</span></tt> をはじめとした、各種タプルからの構築をサポートしています。</p>
+<p>何らかの理由により、タプルによって予め束ねられた引数リストから InPlaceFactory
+を構築したくなった場合、通常ならば、プリプロセッサや補助クラス（例：
+<tt class="docutils literal"><span class="pre">etude::indices</span></tt><a class="reference internal" href="types.html#indices"><em>¶</em></a> ）を使ったトリッキーなコードを書く必要がありますが、
+Etude.InPlaceFactory を使えば、
+<tt class="docutils literal"><span class="pre">in_place_from_tuple</span></tt><a class="reference internal" href="#in-place-from-tuple"><em>¶</em></a><a class="reference internal" href="#in-place-from-tuple-typed"><em>¶</em></a>
+を使うことで、ごく自然に tuple を unpack することが可能になっています。</p>
+<p>その際、渡すタプルが <tt class="docutils literal"><span class="pre">std::tuple</span></tt> である必要はありません。
+<tt class="docutils literal"><span class="pre">std::tuple_size</span></tt> と <tt class="docutils literal"><span class="pre">std::tuple_element</span></tt> 、 <tt class="docutils literal"><span class="pre">std::get</span></tt>
+さえ適切に定義されていれば、問題なく unpack することが可能です。</p>
+<p>普段、この機能を使うことは滅多に無いでしょうが、覚えておいて損はない筈です。</p>
+</div>
+<div class="section" id="id6">
+<h4>InPlaceFactory の要件を満たすクラスの自作<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h4>
+<p>何らかの理由で、 InPlaceFactory の仕組み自体は使いたいが、
+コンストラクタ呼び出しはライブラリ経由ではなく自前で行ないたい、という場合を考えます。</p>
+<p>例えば、 private constructor 経由で構築したい場合などが、その最たるものでしょう。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">struct</span> <span class="n">Hoge</span>
+<span class="p">{</span>
+  <span class="c1">// interfaces</span>
+  <span class="kt">void</span> <span class="n">foo</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="n">bar</span><span class="p">();</span>
+  <span class="c1">// ...</span>
+
+  <span class="c1">// 構築関数</span>
+  <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="n">create</span><span class="p">();</span>
+
+ <span class="k">private</span><span class="o">:</span>
+  <span class="n">Hoge</span><span class="p">()</span> <span class="p">{}</span> <span class="c1">// スタック上に構築されると困る場合とか</span>
+
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>上記のようなクラスで、 <tt class="docutils literal"><span class="pre">create()</span></tt> 関数内において InPlaceFactory を受け入れるライブラリ（例えば
+Boost.Optional ）を使いたい時、普通に <tt class="docutils literal"><span class="pre">etude::in_place</span></tt> を使うのでは、 <tt class="docutils literal"><span class="pre">Hoge::Hoge()</span></tt> は
+<tt class="docutils literal"><span class="pre">private</span></tt> なので、 <tt class="docutils literal"><span class="pre">etude::in_place_factory</span></tt> から呼び出すことが出来ずエラーになります。</p>
+<p>その場合、 InPlaceFactory の要件を満たした自前のクラスを作れば、アクセス制限を回避しつつ、
+InPlaceFactory の恩恵を最大限に満たすことが出来るようになります。
+InPlaceFactory の要件は、以下の通りです：</p>
+<ul class="simple">
+<li>クラス <tt class="docutils literal"><span class="pre">InPlace</span></tt> が以下の条件を充たす場合、
+<tt class="docutils literal"><span class="pre">InPlace</span></tt> は InPlaceFactory の要件を満たします：<ul>
+<li><tt class="docutils literal"><span class="pre">InPlace</span></tt> が <tt class="docutils literal"><span class="pre">boost::in_place_factory_base</span></tt> を <tt class="docutils literal"><span class="pre">public</span></tt> 継承している</li>
+<li><tt class="docutils literal"><span class="pre">InPlace</span> <span class="pre">const</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">...;</span>&nbsp; <span class="pre">void*</span> <span class="pre">addr;</span></tt> に対し
+<tt class="docutils literal"><span class="pre">x.template</span> <span class="pre">apply&lt;T&gt;(addr);</span></tt> という形のメンバ関数テンプレート呼び出しが可能である</li>
+</ul>
+</li>
+<li>クラス <tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> が以下の条件を充たす場合、
+<tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> は TypedInPlaceFactory の要件を満たします：<ul>
+<li><tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> が <tt class="docutils literal"><span class="pre">boost::typed_in_place_factory_base</span></tt> を <tt class="docutils literal"><span class="pre">public</span></tt> 継承している</li>
+<li><tt class="docutils literal"><span class="pre">typename</span> <span class="pre">TypedInPlace::value_type</span></tt> が何かしらの型に <tt class="docutils literal"><span class="pre">typedef</span></tt> されている</li>
+<li><tt class="docutils literal"><span class="pre">TypedInPlace</span> <span class="pre">const</span> <span class="pre">x</span> <span class="pre">=</span> <span class="pre">...;</span>&nbsp; <span class="pre">void*</span> <span class="pre">addr;</span></tt> に対し
+<tt class="docutils literal"><span class="pre">x.apply(addr);</span></tt> という形のメンバ関数呼び出しが可能である</li>
+</ul>
+</li>
+</ul>
+<p>例として、上記の <tt class="docutils literal"><span class="pre">Hoge</span></tt> の <tt class="docutils literal"><span class="pre">create()</span></tt> 周りを実装してみます：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">struct</span> <span class="n">Hoge</span>
+<span class="p">{</span>
+  <span class="c1">// interfaces</span>
+  <span class="kt">void</span> <span class="n">foo</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="n">bar</span><span class="p">();</span>
+  <span class="c1">// ...</span>
+
+  <span class="k">static</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="n">create</span><span class="p">();</span>
+
+ <span class="k">private</span><span class="o">:</span>
+  <span class="n">Hoge</span><span class="p">()</span> <span class="p">{}</span>
+
+  <span class="c1">// この場合は TypedInPlace が妥当</span>
+  <span class="k">struct</span> <span class="n">Construct</span>
+    <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">typed_in_place_factory_base</span>
+  <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">Hoge</span> <span class="n">value_type</span><span class="p">;</span>
+
+    <span class="kt">void</span> <span class="n">apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+      <span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">Hoge</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">};</span>
+
+<span class="p">};</span>
+
+<span class="c1">// 構築関数 本体</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="n">Hoge</span><span class="o">::</span><span class="n">create</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">p</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_shared</span><span class="o">&lt;</span><span class="n">boost</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;&gt;</span><span class="p">();</span>
+
+  <span class="c1">// *p = etude::in_place();  // ダメ</span>
+  <span class="o">*</span><span class="n">p</span> <span class="o">=</span> <span class="n">Hoge</span><span class="o">::</span><span class="n">Construct</span><span class="p">();</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">p</span><span class="p">),</span> <span class="n">p</span><span class="o">-&gt;</span><span class="n">get_ptr</span><span class="p">()</span> <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>このように <tt class="docutils literal"><span class="pre">Hoge::create()</span></tt> を実装することで、単純に</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="n">Hoge</span><span class="o">::</span><span class="n">create</span><span class="p">()</span> <span class="p">{</span>
+  <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span><span class="p">(</span> <span class="k">new</span> <span class="n">Hoge</span><span class="p">()</span> <span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>と書くのに比べ、メモリ確保回数を減らすことが可能になります。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id7">
+<h2>使い方（実装側）<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">この章を読む前に、
+<a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/utility/in_place_factories.html#container-usage">Boost.InPlaceFactory の Container-side Usage</a>
+に一通り目を通すようにしてください。</p>
+</div>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>これから扱う事項は、いくつもの落とし穴がある、 <strong>本質的に安全でない</strong> ものであり、
+少なくとも、普通に C++ を扱う分には、まず必要とならないものです。</p>
+<p>これらは、「何をやっているか」を理解した上で使う分には、安全であり、様々な最適化に役立ちますが、
+よく理解しないまま 安易に真似をした場合、 <strong>非常に取りにくいバグの原因となります</strong> 。</p>
+<p class="last">以降の解説を参考にしてコードを書く場合は、そのことを常に留意し、
+<strong>必要ならば規格に当たる</strong> など、安全性を常に意識するようにしてください。</p>
+</div>
+<div class="section" id="id8">
+<h3>基本的な実装法<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<p>Etude.InPlaceFactory は基本的に、 Boost.InPlaceFactory と同じく、
+未初期化のメモリ領域に対し、メンバ関数テンプレート <tt class="docutils literal"><span class="pre">apply</span></tt> を呼び出すことにより、
+コンストラクタを呼び出して任意の型のオブジェクトを構築する、という動作を行います。</p>
+<p>具体的には、下記のコード</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">Hoge</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="p">).</span><span class="n">apply</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>は、 <tt class="docutils literal"><span class="pre">&lt;new&gt;</span></tt> 標準ライブラリ内で定義された <tt class="docutils literal"><span class="pre">void*</span> <span class="pre">operator</span> <span class="pre">new</span> <span class="pre">(</span> <span class="pre">std::size_t,</span> <span class="pre">void*</span> <span class="pre">)</span></tt> を
+placement new 構文によって呼び出す、</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">Hoge</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">Hoge</span><span class="p">(</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>と同じ動作を行います。</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">この点は僅かに Boost と Etude で動作が異なり、
+Boost.InPlaceFactory の <tt class="docutils literal"><span class="pre">apply</span></tt> は何も値を返さない一方、
+Etude.InPlaceFactory の <tt class="docutils literal"><span class="pre">apply</span></tt> は構築されたオブジェクトのアドレスを返すようになっていますが、
+些細な違いなので無視することにします。
+（ Etude の <tt class="docutils literal"><span class="pre">apply</span></tt> が構築されたオブジェクトのアドレスを返すのは、本来不要な
+<tt class="docutils literal"><span class="pre">static_cast</span></tt> を行わずに済ませられるようにするためです）</p>
+</div>
+<p>ここで、実際に使用する場合を考えると、通常は、上記のように
+<tt class="docutils literal"><span class="pre">in_place</span></tt> 関数を呼び出した後に直接 <tt class="docutils literal"><span class="pre">apply</span></tt> するのではなく、このように</p>
+<div class="highlight-cpp"><pre>void* addr = ～;
+Hoge* p = 0;
+
+template&lt;class InPlace&gt;
+inline void construct( InPlace const&amp; x )
+{
+  if(p) {
+    p-&gt;~Hoge();
+    p = 0;
+  }
+
+  p = x.template apply&lt;Hoge&gt;(addr);
+
+}</pre>
+</div>
+<p>テンプレート経由で <tt class="docutils literal"><span class="pre">apply</span></tt> を呼び出すことになりますが、その場合、</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">template</span> <span class="pre">apply&lt;T&gt;</span></tt> の <tt class="docutils literal"><span class="pre">template</span></tt> を忘れやすい
+（一部のコンパイラは <tt class="docutils literal"><span class="pre">template</span></tt> を忘れてもコンパイルエラーにならないが、
+そのようなコンパイラは、あくまで一部でしかない）</li>
+<li><tt class="docutils literal"><span class="pre">InPlace</span></tt> が <tt class="docutils literal"><span class="pre">boost::in_place</span></tt> によって作られた場合、
+<tt class="docutils literal"><span class="pre">p</span> <span class="pre">=</span> <span class="pre">x.template</span> <span class="pre">apply&lt;Hoge&gt;(addr);</span></tt> と書くことは出来ないので、
+<tt class="docutils literal"><span class="pre">p</span> <span class="pre">=</span> <span class="pre">static_cast&lt;Hoge*&gt;(addr);</span></tt> と別個に書く必要があり、美しくない</li>
+<li>せっかく Etude.InPlaceFactory が move semantics に対応しているのに、上記のコードでは
+move 出来ていない</li>
+</ul>
+<p>といった、幾つかの問題点があります。</p>
+<p>そこで Etude.InPlaceFactory は、これらの問題を回避するために、
+<tt class="docutils literal"><span class="pre">etude::apply_in_place</span></tt> というヘルパ関数を用意しています。</p>
+<p>これと <tt class="docutils literal"><span class="pre">std::forward</span></tt> を使えば、</p>
+<div class="highlight-cpp"><pre>void* addr = ～;
+Hoge* p = 0;
+
+template&lt;class InPlace&gt;
+inline void construct( InPlace &amp;&amp; x )
+{
+  if(p) {
+    p-&gt;~Hoge();
+    p = 0;
+  }
+
+  using etude::apply_in_place;
+  p = apply_in_place&lt;Hoge&gt;( std::forward&lt;InPlace&gt;(x), addr );
+
+}</pre>
+</div>
+<p>と書くことで、上記の問題点を全て解決することができます。</p>
+<p>それに加え、 Etude.InPlaceFactory には、ある型が
+InPlaceFactory の要件を満たすか否かによって 処理を変えたい場合に備え、
+SFINAE を行うための 各種メタ関数が用意されています：</p>
+<div class="highlight-cpp"><pre>void* addr = ～;
+Hoge* p = 0;
+
+template&lt;class InPlace,
+  class = typename std::enable_if&lt;
+    etude::is_in_place_applyable&lt;InPlace, Hoge&gt;::value
+  &gt;::type
+&gt;
+inline void construct( InPlace &amp;&amp; x )
+{
+  if(p) {
+    p-&gt;~Hoge();
+    p = 0;
+  }
+
+  using etude::apply_in_place;
+  p = apply_in_place&lt;Hoge&gt;( std::forward&lt;InPlace&gt;(x), addr );
+
+}</pre>
+</div>
+<p>上記のコードの <tt class="docutils literal"><span class="pre">construct</span></tt> は、 <tt class="docutils literal"><span class="pre">InPlace</span></tt> が InPlaceFactory の場合、あるいは
+<tt class="docutils literal"><span class="pre">Hoge</span></tt> に関連付けられた TypedInPlaceFactory の場合にのみ定義され、
+それ以外の場合には定義されないため、また別の <tt class="docutils literal"><span class="pre">construct</span></tt> に処理を行わせることが可能になります。</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p><tt class="docutils literal"><span class="pre">etude::apply_in_place&lt;T&gt;</span></tt> は、渡した <tt class="docutils literal"><span class="pre">InPlace</span></tt> が
+<tt class="docutils literal"><span class="pre">T</span></tt> 型に関連付けられた TypedInPlaceFactory の場合にも 問題なく動作し、
+該当する <tt class="docutils literal"><span class="pre">apply</span></tt> 関数を呼び出すことが出来ます。</p>
+<p class="last">なお、関連付けられた型が <tt class="docutils literal"><span class="pre">T</span></tt> 以外の場合には、コンパイルエラーになります。</p>
+</div>
+<p>また、 InPlaceFactory ではなく TypedInPlaceFactory を受け入れたい場合には、
+<tt class="docutils literal"><span class="pre">etude::apply_typed_in_place</span></tt> および
+<tt class="docutils literal"><span class="pre">etude::typed_in_place_associated</span></tt> を使って、このように書くことが出来ます：</p>
+<div class="highlight-cpp"><pre>void* addr = ～;
+Hoge* p = 0;
+
+template&lt;class TypedInPlace,
+  class T = typename etude::typed_in_place_associated&lt;TypedInPlace&gt;::type
+&gt;
+inline void construct( TypedInPlace &amp;&amp; x )
+{
+  if(p) {
+    p-&gt;~Hoge();
+    p = 0;
+  }
+
+  using etude::apply_typed_in_place;
+  p = apply_typed_in_place( std::forward&lt;TypedInPlace&gt;(x), addr );
+
+}</pre>
+</div>
+<p>ここで、 <tt class="docutils literal"><span class="pre">etude::typed_in_place_associated&lt;TypedInPlace&gt;::type</span></tt> は、 <tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> が
+TypedInPlaceFactory でない場合には定義されないので、
+<tt class="docutils literal"><span class="pre">construct</span></tt> も <tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> が TypedInPlaceFactory でない場合には定義されません。
+渡された <tt class="docutils literal"><span class="pre">x</span></tt> が TypedInPlaceFactory か否かによって処理を切り替えたい場合にも
+きちんと対応できるようになっている、ということです。</p>
+</div>
+<div class="section" id="id9">
+<h3>補足<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="etude-in-place">
+<h4>etude::in_place で作られたオブジェクトのコピーについて<a class="headerlink" href="#etude-in-place" title="Permalink to this headline">¶</a></h4>
+<p><tt class="docutils literal"><span class="pre">etude::in_place</span></tt> で作成された <tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;Args...&gt;</span></tt> など、
+rvalue reference を保持する InPlaceFactories は一般に、コピーすることが出来ません。</p>
+<div class="highlight-cpp"><pre>void* addr1 = ～;
+void* addr2 = ～;
+
+template&lt;class InPlace&gt;
+inline f( InPlace &amp;&amp; x )
+{
+  InPlace y = x;
+
+  etude::apply_in_place&lt;Hoge&gt;( std::forward&lt;InPlace&gt;(x), addr1 );
+  etude::apply_in_place&lt;Hoge&gt;( std::forward&lt;InPlace&gt;(y), addr2 );
+
+}
+
+f( etude::in_place(1) );  // ダメ
+f( etude::bind_in_place(1) );  // bind_in_place ならば大丈夫</pre>
+</div>
+<p>一つの InPlaceFactories に対し 複数回 <tt class="docutils literal"><span class="pre">apply_in_place</span></tt> を使いたい場合は、
+コピーするのではなく、 <tt class="docutils literal"><span class="pre">std::forward</span></tt> を使わずに</p>
+<div class="highlight-cpp"><pre>void* addr1 = ～;
+void* addr2 = ～;
+
+template&lt;class InPlace&gt;
+inline f( InPlace &amp;&amp; x )
+{
+  etude::apply_in_place&lt;Hoge&gt;( x, addr1 );
+  etude::apply_in_place&lt;Hoge&gt;( x, addr2 );
+}
+
+f( etude::in_place(1) );  // 問題なし</pre>
+</div>
+<p>とするのがよいでしょう。（最後の <tt class="docutils literal"><span class="pre">apply_in_place</span></tt> 呼び出しでは <tt class="docutils literal"><span class="pre">forward</span></tt> しても構いません。）</p>
+<p>なお、 <tt class="docutils literal"><span class="pre">etude::in_place</span></tt> で作られたファクトリであっても、 move ならば正しく行うことが出来ます。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">InPlace</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">f</span><span class="p">(</span> <span class="n">InPlace</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">InPlace</span> <span class="n">y</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">InPlace</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+
+  <span class="cm">/* 処理 */</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>もっとも、こうしたい状況があるかどうかは分かりませんが。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id10">
+<h2>詳細データ<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="is-in-place-factory">
+<span id="index-1"></span><span id="id11"></span><h3><tt class="docutils literal"><span class="pre">is_in_place_factory</span></tt><a class="headerlink" href="#is-in-place-factory" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/is_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;boost/utility/in_place_factory.hpp&gt;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">using</span> <span class="n">boost</span><span class="o">::</span><span class="n">in_place_factory_base</span><span class="p">;</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">is_in_place_factory</span>
+    <span class="o">:</span> <span class="n">etude</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::is_in_place_factory&lt;T&gt;</span></tt> は、 <tt class="docutils literal"><span class="pre">T</span></tt> が（CV修飾された） InPlaceFactory
+（ <tt class="docutils literal"><span class="pre">boost::in_place_factory_base</span></tt> から派生したクラス）または InPlaceFactory への参照の場合には
+<tt class="docutils literal"><span class="pre">std::true_type</span></tt> を、そうでない場合には <tt class="docutils literal"><span class="pre">std::false_type</span></tt> を継承するメタ関数です。</p>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">特別な理由がなければ、このメタ関数を直接使うのではなく、
+より一般的に使える <tt class="docutils literal"><span class="pre">etude::is_in_place_applyable&lt;InPlace,</span> <span class="pre">T&gt;</span></tt><a class="reference internal" href="#is-in-place-applyable"><em>¶</em></a>
+を使う方がよいでしょう。</p>
+</div>
+</div>
+<div class="section" id="in-place-factory">
+<span id="index-2"></span><span id="id12"></span><h3><tt class="docutils literal"><span class="pre">in_place_factory</span></tt><a class="headerlink" href="#in-place-factory" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;is_in_place_factory.hpp&quot;</span>
+<span class="cp">#include &lt;tuple&gt;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="c1">// class template in_place_factory</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">in_place_factory</span>
+    <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">in_place_factory_base</span>
+  <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">tuple_type</span><span class="p">;</span>
+
+    <span class="c1">// construct, copy</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">Types</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">t</span> <span class="p">);</span>
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span><span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">src</span> <span class="p">);</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span><span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">src</span> <span class="p">);</span>
+
+    <span class="c1">// gcc 4.5.0 does not support implicit move</span>
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span> <span class="k">const</span><span class="o">&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+    <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span> <span class="o">&amp;&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+
+    <span class="c1">// no assign operator defined</span>
+    <span class="n">in_place_factory</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span> <span class="n">in_place_factory</span> <span class="k">const</span><span class="o">&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+
+    <span class="c1">// application</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">move_apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+    <span class="c1">// get arguments as tuple</span>
+    <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">move_tuple</span><span class="p">();</span>
+
+  <span class="p">};</span>
+
+  <span class="c1">// in_place_factory non-member functions</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+
+  <span class="c1">// function template in_place</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">bind_in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_ref</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_val</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">Tuple</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_from_tuple</span><span class="p">(</span> <span class="n">Tuple</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>コンストラクタを呼び出す為の引数を pack したクラスです。</p>
+<p>このクラスは Boost.InPlaceFactory の上位互換として使えます。</p>
+<div class="section" id="in-place-factory-types">
+<span id="id13"></span><h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> types<a class="headerlink" href="#in-place-factory-types" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">tuple_type</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> が内部に保持する引数パックの型です。</p>
+</div>
+</div>
+<div class="section" id="in-place-factory-constructors">
+<span id="in-place-factory-ctors"></span><h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> constructors<a class="headerlink" href="#in-place-factory-constructors" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="k">explicit</span> <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">Types</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を保持する <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">Types...</span></tt> から <tt class="docutils literal"><span class="pre">Args...</span></tt> が変換可能である（
+<tt class="docutils literal"><span class="pre">etude::is_convertible&lt;etude::types&lt;Types...&gt;,</span> <span class="pre">etude::types&lt;Args...&gt;&gt;::value</span></tt><a class="reference internal" href="types.html#is-convertible"><em>¶</em></a> が <tt class="docutils literal"><span class="pre">true</span></tt> である）必要があります。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+<span class="n">in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">渡されたタプルに格納された引数リストから <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。</p>
+<p>言語仕様上、ユーザ定義の型変換は一度しか行われないため、
+このコンストラクタに渡すタプルの型が <tt class="docutils literal"><span class="pre">std::tuple&lt;Args...&gt;</span></tt> と厳密に一致しない場合、
+たとえタプルの中身が変換可能であっても、コンパイルエラーとなります。</p>
+<p>具体的な例を挙げると、</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">in_place_factory</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">make_tuple</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+</pre></div>
+</div>
+<p>は、 <tt class="docutils literal"><span class="pre">std::make_tuple(1)</span></tt> の結果である <tt class="docutils literal"><span class="pre">std::tuple&lt;int&gt;</span></tt> と、
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;double&gt;</span></tt> のコンストラクタが要求する <tt class="docutils literal"><span class="pre">std::tuple&lt;double&gt;</span></tt>
+の型が厳密に一致しないため、 ill-formed です。</p>
+<p class="last">型の厳密に一致しないタプルから <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築したい場合には、
+<tt class="docutils literal"><span class="pre">in_place_from_tuple</span></tt> を用いて型変換を行うようにしてください。</p>
+</div>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">src</span> <span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="n">in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">src</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">異なる型の引数を保持する <tt class="docutils literal"><span class="pre">in_place_factory</span></tt> からの型変換を提供します。</p>
+<p class="compound-middle"><tt class="docutils literal"><span class="pre">Types...</span></tt> から <tt class="docutils literal"><span class="pre">Args...</span></tt> が変換可能である（
+<tt class="docutils literal"><span class="pre">etude::is_convertible&lt;etude::types&lt;Types...&gt;,</span> <span class="pre">etude::types&lt;Args...&gt;&gt;::value</span></tt><a class="reference internal" href="types.html#is-convertible"><em>¶</em></a> が <tt class="docutils literal"><span class="pre">true</span></tt> である）必要があります。</p>
+<div class="compound-last admonition hint">
+<p class="first admonition-title">Hint</p>
+<p>主に</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">in_place_factory</span><span class="o">&lt;</span><span class="kt">double</span><span class="o">&gt;</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="last">のように使います。</p>
+</div>
+</div>
+</div>
+<div class="section" id="in-place-factory-applications">
+<h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> applications<a class="headerlink" href="#in-place-factory-applications" title="Permalink to this headline">¶</a></h4>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>これらの関数はアライメントや例外安全などに問題のある、本質的に安全でない関数であり、
+安易な呼び出しは未定義動作を容易に引き起こします。</p>
+<p class="last">上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。</p>
+</div>
+<div class="compound" id="in-place-factory-apply">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を用いて、指定されたメモリ領域に <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築し、
+構築されたオブジェクトへのポインタを返します。</p>
+<p class="compound-middle">この関数は、以下のコードと同等です：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span> <span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">args</span><span class="p">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-last">ただし <tt class="docutils literal"><span class="pre">args...</span></tt> はコンストラクタで渡された引数です。</p>
+</div>
+<div class="compound" id="in-place-factory-move-apply">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span> <span class="n">T</span><span class="o">*</span> <span class="n">move_apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を用いて、指定されたメモリ領域に <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築し、
+構築されたオブジェクトへのポインタを返します。</p>
+<p class="compound-middle">その際、この関数は、格納している引数を move します。</p>
+<p class="compound-middle">この関数は、以下のコードと同等です：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span> <span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-middle">ただし <tt class="docutils literal"><span class="pre">args...</span></tt> はコンストラクタで渡された引数です。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。</p>
+<p class="last">これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+undefined behavior を引き起こす可能性がある、ということです。</p>
+</div>
+</div>
+</div>
+<div class="section" id="in-place-factory-observers">
+<h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> observers<a class="headerlink" href="#in-place-factory-observers" title="Permalink to this headline">¶</a></h4>
+<div class="compound" id="in-place-factory-get-tuple">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-last">コンストラクタで渡された引数を格納したタプルへの const 参照を得ます。</p>
+</div>
+<div class="compound" id="in-place-factory-move-tuple">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">move_tuple</span><span class="p">();</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を格納したタプルを move します。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。</p>
+<p class="last">これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+undefined behavior を引き起こす可能性がある、ということです。</p>
+</div>
+</div>
+</div>
+<div class="section" id="in-place-factory-non-member-functions">
+<h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> non-member functions<a class="headerlink" href="#in-place-factory-non-member-functions" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.get_tuple()</span></tt><a class="reference internal" href="#in-place-factory-get-tuple"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.move_tuple()</span></tt><a class="reference internal" href="#in-place-factory-move-tuple"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound" id="in-place-factory-apply-in-place">
+<span id="index-3"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.template</span> <span class="pre">apply&lt;T&gt;(</span> <span class="pre">addr</span> <span class="pre">)</span></tt><a class="reference internal" href="#in-place-factory-apply"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.template</span> <span class="pre">move_apply&lt;T&gt;(</span> <span class="pre">addr</span> <span class="pre">)</span></tt><a class="reference internal" href="#in-place-factory-move-apply"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">これらの関数は、対象オブジェクトが lvalue か rvalue かによって呼び出す関数を切り替える、
+といった面倒な手間をなくすために提供されています。</p>
+</div>
+</div>
+<div class="section" id="function-template-in-place">
+<span id="in-place"></span><span id="index-4"></span><h4>function template <tt class="docutils literal"><span class="pre">in_place</span></tt><a class="headerlink" href="#function-template-in-place" title="Permalink to this headline">¶</a></h4>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">これらの関数群は、現状あまり良い名前とは言えないため、
+より相応しい名前が見つかった場合には変更するかもしれません。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数への右辺値参照を束縛した <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数は与えられた引数を「そのままに」束縛します。</p>
+<p class="compound-middle">これはつまり、</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">apply_in_place</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">args</span><span class="p">...</span> <span class="p">),</span> <span class="n">addr</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-middle">と、</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">args</span><span class="p">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-middle">が、コンパイラの最適化に依らず、意味論的に同じ動作をする、ということです。</p>
+<p class="compound-middle">この動作は、通常、速度と意味論の双方において望ましいものですが、
+右辺値参照を扱っているため、幾つかの場合において問題が発生します。</p>
+<p class="compound-middle">まず、この関数呼び出しの結果をローカル変数に格納することはできません：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="k">auto</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="n">hoge</span><span class="p">()</span> <span class="p">);</span> <span class="c1">// ダメ。</span>
+<span class="c1">// x の参照する一時オブジェクトはここで破棄される</span>
+</pre></div>
+</div>
+<p class="compound-middle">次に、この関数呼び出しの結果を関数の引数として使う場合、
+その引数をコピーすることは出来ません。</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">InPlace</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">f</span><span class="p">(</span> <span class="n">InPlace</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">)</span> <span class="p">{</span>
+  <span class="k">auto</span> <span class="n">y</span> <span class="o">=</span> <span class="n">x</span><span class="p">;</span> <span class="c1">// x をコピー</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="n">f</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="p">);</span> <span class="c1">// コピー出来ないのでコンパイルエラー</span>
+</pre></div>
+</div>
+<p class="compound-middle">これらの問題を避けてより安全に使いたい場合は、 <tt class="docutils literal"><span class="pre">bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a>
+を使ってください。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>引数を与えず単に <tt class="docutils literal"><span class="pre">etude::in_place()</span></tt> と使う場合には、
+変数への束縛もコピーも、安全に行うことが出来ます。</p>
+<p class="last">その場合に わざわざ <tt class="docutils literal"><span class="pre">etude::bind_in_place()</span></tt> と書く必要はありません。</p>
+</div>
+</div>
+<div class="compound" id="bind-in-place">
+<span id="index-5"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">bind_in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を値として束縛した <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数の戻り値は
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;</span> <span class="pre">typename</span> <span class="pre">etude::decay_and_strip&lt;Args&gt;::type...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="types.html#decay-and-strip"><em>¶</em></a> で与えられます。</p>
+<p class="compound-middle">これは <tt class="docutils literal"><span class="pre">std::make_tuple</span></tt> で行われる型変換と同一です。
+つまり与えられた引数は基本的に値として（配列や関数の場合はポインタとして）束縛され、
+参照として束縛させたい場合には <tt class="docutils literal"><span class="pre">std::ref</span></tt> や <tt class="docutils literal"><span class="pre">std::cref</span></tt> を使う、ということです。</p>
+<p class="compound-last">この関数は本質的に安全ですが、一方で原則的に全ての引数を値によりキャプチャするため、
+コピーコストの高いオブジェクトの場合は、明示的に
+<tt class="docutils literal"><span class="pre">std::ref</span></tt> や <tt class="docutils literal"><span class="pre">std::cref</span></tt> を使うなどして、効率化を図る必要があるでしょう。</p>
+</div>
+<div class="compound" id="in-place-by-ref">
+<span id="index-6"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_ref</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を束縛した <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数は <tt class="docutils literal"><span class="pre">bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a> とは違い、
+一時オブジェクト以外は全て参照として束縛するので、
+最低限の安全性を保ったまま、余計なコピーコストを省略することが出来ます。</p>
+<p class="compound-middle">一方で、ローカル変数を参照として束縛するため、
+関数の戻り値として この関数の結果を使うことは出来ませんし、
+参照先のオブジェクトが変更された場合には意図しない結果になることもあります：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="k">auto</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place_by_ref</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+<span class="n">i</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span> <span class="c1">// x の「中身」は 42 になる</span>
+</pre></div>
+</div>
+<p class="compound-middle">一般に、この挙動は、不可解なバグを引き起こす原因となり得るので、
+基本的に、この関数ではなく <tt class="docutils literal"><span class="pre">bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a> を使い、
+コピーコストが気になる場合には、 <tt class="docutils literal"><span class="pre">std::ref</span></tt> や <tt class="docutils literal"><span class="pre">std::cref</span></tt> を使って
+「この変数は参照で渡している」
+ということを明示的に示した方がよりよい場合が多いかと思います。</p>
+<p class="compound-middle">また、この関数の限界として、 move されたオブジェクトは参照で渡すことが出来ません：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p</span><span class="p">(</span> <span class="k">new</span> <span class="kt">int</span><span class="p">()</span> <span class="p">);</span>
+<span class="k">auto</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place_by_ref</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="p">);</span>  <span class="c1">// この時点で p は move される</span>
+</pre></div>
+</div>
+<p class="compound-middle">これは、関数のオーバーロード解決時に、純粋な一時変数と
+move されたオブジェクトとを区別することは不可能である為です。</p>
+<p class="compound-middle">もし move されたオブジェクトを <tt class="docutils literal"><span class="pre">in_place_factory</span></tt> に格納したければ、</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">p</span><span class="p">(</span> <span class="k">new</span> <span class="kt">int</span><span class="p">()</span> <span class="p">);</span>
+<span class="k">auto</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">unique_ptr</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&amp;&amp;&gt;</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last">のように、明示的に <tt class="docutils literal"><span class="pre">in_place_factory</span></tt> のコンストラクタを呼び出してください。</p>
+</div>
+<div class="compound" id="in-place-by-val">
+<span id="index-7"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_val</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を値として束縛した <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数の戻り値は
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;</span> <span class="pre">typename</span> <span class="pre">std::decay&lt;Args&gt;::type...</span> <span class="pre">&gt;</span></tt>
+で与えられます。</p>
+<p class="compound-middle"><tt class="docutils literal"><span class="pre">bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a> との違いは、
+<tt class="docutils literal"><span class="pre">std::reference_wrapper&lt;T&gt;</span></tt> に包まれたオブジェクトであっても そのまま束縛する、という点です。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">std::reference_wrapper&lt;T&gt;</span></tt> 型の引数を取るコンストラクタに対して安全に引数を転送したい場合には、こちらを使うのが良いでしょう。</p>
+</div>
+<div class="compound" id="in-place-from-tuple">
+<span id="index-8"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">Tuple</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_from_tuple</span><span class="p">(</span> <span class="n">Tuple</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">引数をパックしたタプルから <tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数の戻り値は、
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;</span> <span class="pre">typename</span> <span class="pre">etude::tuple_element&lt;</span> <span class="pre">Indices,</span> <span class="pre">typename</span> <span class="pre">std::decay&lt;Tuple&gt;::type</span> <span class="pre">&gt;::type...</span> <span class="pre">&gt;</span></tt>
+で与えられます。 ただし <tt class="docutils literal"><span class="pre">Indices</span></tt> は <tt class="docutils literal"><span class="pre">0</span></tt> から <tt class="docutils literal"><span class="pre">etude::tuple_size&lt;Tuple&gt;::value</span> <span class="pre">-</span> <span class="pre">1</span></tt>
+までの各インデックスを順に並べたものになります。</p>
+<p class="compound-middle">例えば、</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">double</span><span class="p">,</span> <span class="kt">char</span> <span class="k">const</span><span class="o">*&gt;</span> <span class="n">t</span><span class="p">;</span>
+<span class="k">auto</span> <span class="n">x</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place_from_tuple</span><span class="p">(</span> <span class="n">t</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">の <tt class="docutils literal"><span class="pre">x</span></tt> は、 <tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;</span> <span class="pre">int,</span> <span class="pre">double,</span> <span class="pre">char</span> <span class="pre">const*</span> <span class="pre">&gt;</span></tt> になります。</p>
+<div class="compound-last admonition hint">
+<p class="first admonition-title">Hint</p>
+<p>この関数は、コンストラクタ呼び出しに関し、擬似的なタプルの unpack として機能します。</p>
+<p>つまり、</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">apply_in_place</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place_from_tuple</span><span class="p">(</span><span class="n">t</span><span class="p">),</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p>は、あたかも</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span><span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">unpack</span><span class="p">(</span><span class="n">t</span><span class="p">)</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="last">のように動作します。</p>
+</div>
+</div>
+</div>
+</div>
+<div class="section" id="is-typed-in-place-factory">
+<span id="index-9"></span><span id="id14"></span><h3><tt class="docutils literal"><span class="pre">is_typed_in_place_factory</span></tt><a class="headerlink" href="#is-typed-in-place-factory" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/is_typed_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;boost/utility/typed_in_place_factory.hpp&gt;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">using</span> <span class="n">boost</span><span class="o">::</span><span class="n">typed_in_place_factory_base</span><span class="p">;</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">is_typed_in_place_factory</span>
+    <span class="o">:</span> <span class="n">etude</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">etude::is_typed_in_place_factory&lt;T&gt;</span></tt> は、 <tt class="docutils literal"><span class="pre">T</span></tt> が（CV修飾された） TypedInPlaceFactory
+（ <tt class="docutils literal"><span class="pre">boost::typed_in_place_factory_base</span></tt> から派生したクラス）または
+TypedInPlaceFactory への参照の場合には <tt class="docutils literal"><span class="pre">std::true_type</span></tt> を、そうでない場合には
+<tt class="docutils literal"><span class="pre">std::false_type</span></tt> を継承するメタ関数です。</p>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">特別な理由がなければ、このメタ関数を直接使うのではなく、
+<tt class="docutils literal"><span class="pre">etude::typed_in_place_associated&lt;TypedInPlace&gt;</span></tt><a class="reference internal" href="#typed-in-place-associated"><em>¶</em></a>
+を使って、関連付けられた型も同時に取得した方が楽です。</p>
+</div>
+</div>
+<div class="section" id="typed-in-place-associated">
+<span id="index-10"></span><span id="id15"></span><h3><tt class="docutils literal"><span class="pre">typed_in_place_associated</span></tt><a class="headerlink" href="#typed-in-place-associated" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/is_typed_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">typed_in_place_associated</span><span class="p">;</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p><tt class="docutils literal"><span class="pre">T</span></tt> が（CV修飾された） TypedInPlaceFactory または TypedInPlaceFactory への参照の場合、
+<tt class="docutils literal"><span class="pre">typename</span> <span class="pre">etude::typed_in_place_associated&lt;T&gt;::type</span></tt> は
+<tt class="docutils literal"><span class="pre">typename</span> <span class="pre">std::remove_reference&lt;T&gt;::type::value_type</span></tt> に定義されます。</p>
+<p>そうでなければ <tt class="docutils literal"><span class="pre">typed_in_place_associated&lt;T&gt;::type</span></tt> は定義されません。</p>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p>このメタ関数は、例えば関数テンプレートのデフォルトテンプレート引数を用いて</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">TypedInPlace</span><span class="p">,</span>
+  <span class="k">class</span> <span class="nc">T</span> <span class="o">=</span> <span class="k">typename</span> <span class="n">etude</span><span class="o">::</span><span class="n">typed_in_place_associated</span><span class="o">&lt;</span><span class="n">TypedInPlace</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">&gt;</span>
+<span class="n">T</span><span class="o">*</span> <span class="n">some_function</span><span class="p">(</span> <span class="n">TypedInPlace</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="last">のように使うとよいでしょう。</p>
+</div>
+</div>
+<div class="section" id="typed-in-place-factory">
+<span id="index-11"></span><span id="id16"></span><h3><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt><a class="headerlink" href="#typed-in-place-factory" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/typed_in_place_factory.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;is_typed_in_place_factory.hpp&quot;</span>
+<span class="cp">#include &quot;in_place_factory.hpp&quot;</span>
+<span class="cp">#include &lt;tuple&gt;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="c1">// class template typed_in_place_factory</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">typed_in_place_factory</span>
+    <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">typed_in_place_factory_base</span>
+  <span class="p">{</span>
+    <span class="k">typedef</span> <span class="n">T</span> <span class="n">value_type</span><span class="p">;</span>
+    <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">tuple_type</span><span class="p">;</span>
+
+    <span class="c1">// construct, copy</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="k">explicit</span> <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">Types</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">t</span> <span class="p">);</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">src</span> <span class="p">);</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">src</span> <span class="p">);</span>
+
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">t</span> <span class="p">);</span>
+    <span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+
+    <span class="c1">// gcc 4.5.0 does not support implicit move</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span> <span class="k">const</span><span class="o">&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+    <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span> <span class="o">&amp;&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">default</span><span class="p">;</span>
+
+    <span class="c1">// no assign operator defined</span>
+    <span class="n">typed_in_place_factory</span><span class="o">&amp;</span> <span class="k">operator</span><span class="o">=</span><span class="p">(</span> <span class="n">typed_in_place_factory</span> <span class="k">const</span><span class="o">&amp;</span> <span class="p">)</span> <span class="o">=</span> <span class="k">delete</span><span class="p">;</span>
+
+
+    <span class="c1">// application</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+    <span class="n">T</span><span class="o">*</span> <span class="n">move_apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+
+    <span class="c1">// get arguments as tuple</span>
+    <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">move_tuple</span><span class="p">();</span>
+
+  <span class="p">};</span>
+
+  <span class="c1">// in_place_factory non-member functions</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;&amp;&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+
+  <span class="c1">// function template in_place</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">bind_in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_ref</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_val</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Tuple</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_from_tuple</span><span class="p">(</span> <span class="n">Tuple</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<p>特定の型に関連付けられた引数の pack です。</p>
+<p>このクラスは Boost.TypedInPlaceFactory の上位互換として使えます。</p>
+<div class="section" id="typed-in-place-factory-types">
+<span id="id17"></span><h4><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> types<a class="headerlink" href="#typed-in-place-factory-types" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">typedef</span> <span class="n">T</span> <span class="n">value_type</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> に関連付けられた型です。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">tuple_type</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-middle">内部に保持する引数パックの型です。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> は、内部にこの型のメンバを一つだけ保持します。</p>
+</div>
+</div>
+<div class="section" id="typed-in-place-factory-constructors">
+<span id="typed-in-place-factory-ctors"></span><h4><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> constructors<a class="headerlink" href="#typed-in-place-factory-constructors" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="k">explicit</span> <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">Types</span><span class="o">&amp;&amp;</span> <span class="p">...</span><span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を保持する <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">Types...</span></tt> から <tt class="docutils literal"><span class="pre">Args...</span></tt> が変換可能である（
+<tt class="docutils literal"><span class="pre">etude::is_convertible&lt;etude::types&lt;Types...&gt;,</span> <span class="pre">etude::types&lt;Args...&gt;&gt;::value</span></tt><a class="reference internal" href="types.html#is-convertible"><em>¶</em></a> が <tt class="docutils literal"><span class="pre">true</span></tt> である）必要があります。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+<span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">tuple_type</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">渡されたタプルに格納された引数リストから <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>このコンストラクタは都合により、任意のタプルから構築できるようには実装されていません。</p>
+<p>言語仕様上、ユーザ定義の型変換は一度しか行われないため、
+このコンストラクタに渡すタプルの型が <tt class="docutils literal"><span class="pre">std::tuple&lt;Args...&gt;</span></tt> と厳密に一致しない場合、
+たとえタプルの中身が変換可能であっても、コンパイルエラーとなります。</p>
+<p class="last">詳しくは <tt class="docutils literal"><span class="pre">in_place_factory</span></tt> の <a class="reference internal" href="#in-place-factory-ctors"><em>該当記事</em></a> を参考にしてください。</p>
+</div>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+<span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">src</span> <span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span>
+<span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">src</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">異なる型の引数 pack を保持する <tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> からの型変換を提供します。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">Types...</span></tt> から <tt class="docutils literal"><span class="pre">Args...</span></tt> が変換可能である（
+<tt class="docutils literal"><span class="pre">etude::is_convertible&lt;etude::types&lt;Types...&gt;,</span> <span class="pre">etude::types&lt;Args...&gt;&gt;::value</span></tt><a class="reference internal" href="types.html#is-convertible"><em>¶</em></a> が <tt class="docutils literal"><span class="pre">true</span></tt> である）必要があります。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">src</span> <span class="p">);</span>
+<span class="k">template</span><span class="o">&lt;</span><span class="n">class</span><span class="p">...</span> <span class="n">Types</span><span class="o">&gt;</span> <span class="n">typed_in_place_factory</span><span class="p">(</span> <span class="n">in_place_factory</span><span class="o">&lt;</span><span class="n">Types</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">src</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">特定の型に関連付けられていない <tt class="docutils literal"><span class="pre">in_place_factory</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a>
+からの型変換を提供します。</p>
+<p class="compound-middle"><tt class="docutils literal"><span class="pre">Types...</span></tt> から <tt class="docutils literal"><span class="pre">Args...</span></tt> が変換可能である（
+<tt class="docutils literal"><span class="pre">etude::is_convertible&lt;etude::types&lt;Types...&gt;,</span> <span class="pre">etude::types&lt;Args...&gt;&gt;::value</span></tt><a class="reference internal" href="types.html#is-convertible"><em>¶</em></a> が <tt class="docutils literal"><span class="pre">true</span></tt> である）必要があります。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>主に</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">hoge</span><span class="p">,</span> <span class="kt">double</span><span class="o">&gt;</span> <span class="o">=</span> <span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="last">のように使うためのものです。</p>
+</div>
+</div>
+</div>
+<div class="section" id="typed-in-place-factory-applications">
+<h4><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> applications<a class="headerlink" href="#typed-in-place-factory-applications" title="Permalink to this headline">¶</a></h4>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p>これらの関数はアライメントや例外安全などに問題のある、本質的に安全でない関数であり、
+安易な呼び出しは未定義動作を容易に引き起こします。</p>
+<p class="last">上記の説明の意味が分からない場合は、決してこの関数を自分で呼び出してはいけません。</p>
+</div>
+<div class="compound" id="typed-in-place-factory-apply">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">T</span><span class="o">*</span> <span class="n">apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を用いて、指定されたメモリ領域に <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築し、
+構築されたオブジェクトへのポインタを返します。</p>
+<p class="compound-middle">この関数は、以下のコードと同等です：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span> <span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">args</span><span class="p">...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-last">ただし <tt class="docutils literal"><span class="pre">args...</span></tt> はコンストラクタで渡された引数です。</p>
+</div>
+<div class="compound" id="typed-in-place-factory-move-apply">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">T</span><span class="o">*</span> <span class="n">move_apply</span><span class="p">(</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を用いて、指定されたメモリ領域に <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築し、
+構築されたオブジェクトへのポインタを返します。</p>
+<p class="compound-middle">その際、この関数は、格納している引数を move します。</p>
+<p class="compound-middle">この関数は、以下のコードと同等です：</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="o">::</span><span class="k">new</span> <span class="p">(</span><span class="n">addr</span><span class="p">)</span> <span class="n">T</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">Args</span><span class="o">&gt;</span><span class="p">(</span><span class="n">args</span><span class="p">)...</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-middle">ただし <tt class="docutils literal"><span class="pre">args...</span></tt> はコンストラクタで渡された引数です。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。</p>
+<p class="last">これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+undefined behavior を引き起こす可能性がある、ということです。</p>
+</div>
+</div>
+</div>
+<div class="section" id="id18">
+<h4><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> observers<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h4>
+<div class="compound" id="typed-in-place-factory-get-tuple">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-last">コンストラクタで渡された引数を格納したタプルへの const 参照を得ます。</p>
+</div>
+<div class="compound" id="typed-in-place-factory-move-tuple">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="n">tuple_type</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">move_tuple</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+</pre></div>
+</div>
+<p class="compound-middle">コンストラクタで渡された引数を格納したタプルを move します。</p>
+<div class="compound-last admonition note">
+<p class="first admonition-title">Note</p>
+<p>この関数が呼び出されると、内部に格納された変数は move され、有効な状態ではなくなります。</p>
+<p class="last">これはつまり、この関数の呼び出し後は、このクラスに対するあらゆる操作は
+undefined behavior を引き起こす可能性がある、ということです。</p>
+</div>
+</div>
+</div>
+<div class="section" id="typed-in-place-factory-non-member-functions">
+<h4><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> non-member functions<a class="headerlink" href="#typed-in-place-factory-non-member-functions" title="Permalink to this headline">¶</a></h4>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.get_tuple()</span></tt><a class="reference internal" href="#typed-in-place-factory-get-tuple"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">std</span><span class="o">::</span><span class="n">tuple</span><span class="o">&lt;</span><span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">get_tuple</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.move_tuple()</span></tt><a class="reference internal" href="#typed-in-place-factory-move-tuple"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound" id="typed-in-place-factory-apply-typed-in-place">
+<span id="index-12"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+<span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.apply(</span> <span class="pre">addr</span> <span class="pre">)</span></tt><a class="reference internal" href="#typed-in-place-factory-apply"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">x.move_apply(</span> <span class="pre">addr</span> <span class="pre">)</span></tt><a class="reference internal" href="#typed-in-place-factory-move-apply"><em>¶</em></a> と同じです。</p>
+</div>
+<div class="admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">これらの関数は、対象オブジェクトが lvalue か rvalue かによって呼び出す関数を切り替える、
+といった面倒な手間をなくすために提供されています。</p>
+</div>
+</div>
+<div class="section" id="function-template-in-place-typed-version">
+<span id="in-place-typed"></span><span id="index-13"></span><h4>function template <tt class="docutils literal"><span class="pre">in_place</span></tt> (typed version)<a class="headerlink" href="#function-template-in-place-typed-version" title="Permalink to this headline">¶</a></h4>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">これらの関数群は、現状あまり良い名前とは言えないため、
+より相応しい名前が見つかった場合には変更するかもしれません。</p>
+</div>
+<div class="compound">
+<div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数への右辺値参照を束縛した <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">in_place</span></tt><a class="reference internal" href="#in-place"><em>¶</em></a> との使い分けですが、
+関数呼び出し時に、構築対象の型を明示して</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">in_place</span><span class="o">&lt;</span><span class="n">SomeObject</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="p">)</span>
+</pre></div>
+</div>
+<p class="compound-middle">のように使った場合には、こちらが呼ばれます。</p>
+<p class="compound-last">この関数は、戻り値が TypedInPlaceFactory である以外は、
+<tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">in_place</span></tt><a class="reference internal" href="#in-place"><em>¶</em></a> と同じように動作します。
+詳しい解説は <a class="reference internal" href="#in-place"><em>そちら</em></a> を参照してください。</p>
+</div>
+<div class="compound" id="bind-in-place-typed">
+<span id="index-14"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">bind_in_place</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を値として束縛した <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数の戻り値は
+<tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">typename</span> <span class="pre">etude::decay_and_strip&lt;Args&gt;::type...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="types.html#decay-and-strip"><em>¶</em></a> で与えられます。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">bind_in_place</span></tt><a class="reference internal" href="#bind-in-place"><em>¶</em></a> との使い分けに関しては
+<a class="reference internal" href="#in-place-typed"><em>こちら</em></a> を、
+渡された引数がどのように束縛されるかは
+<a class="reference internal" href="#bind-in-place"><em>こちら</em></a> を、それぞれ参照してください。</p>
+</div>
+<div class="compound" id="in-place-by-ref-typed">
+<span id="index-15"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">Args</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_ref</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を束縛した <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">in_place_by_ref</span></tt><a class="reference internal" href="#in-place-by-ref"><em>¶</em></a> との使い分けに関しては
+<a class="reference internal" href="#in-place-typed"><em>こちら</em></a> を、
+渡された引数がどのように束縛されるかは
+<a class="reference internal" href="#in-place-by-ref"><em>こちら</em></a> を、それぞれ参照してください。</p>
+</div>
+<div class="compound" id="in-place-by-val-typed">
+<span id="index-16"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="n">class</span><span class="p">...</span> <span class="n">Args</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_by_val</span><span class="p">(</span> <span class="n">Args</span><span class="o">&amp;&amp;</span><span class="p">...</span> <span class="n">args</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">与えられた引数を値として束縛した <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-middle">この関数の戻り値は
+<tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">typename</span> <span class="pre">std::decay&lt;Args&gt;::type...</span> <span class="pre">&gt;</span></tt>
+で与えられます。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">in_place_by_val</span></tt><a class="reference internal" href="#in-place-by-val"><em>¶</em></a> との使い分けに関しては
+<a class="reference internal" href="#in-place-typed"><em>こちら</em></a> を、
+渡された引数がどのように束縛されるかは
+<a class="reference internal" href="#in-place-by-val"><em>こちら</em></a> を、それぞれ参照してください。</p>
+</div>
+<div class="compound" id="in-place-from-tuple-typed">
+<span id="index-17"></span><div class="compound-first highlight-cpp"><div class="highlight"><pre><span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">Tuple</span><span class="o">&gt;</span>
+<span class="kr">inline</span> <span class="n">typed_in_place_factory</span><span class="o">&lt;</span><span class="n">T</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="p">...</span><span class="o">&gt;</span> <span class="n">in_place_from_tuple</span><span class="p">(</span> <span class="n">Tuple</span> <span class="o">&amp;&amp;</span> <span class="n">t</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">引数をパックしたタプルから <tt class="docutils literal"><span class="pre">typed_in_place_factory&lt;T,</span> <span class="pre">Args...&gt;</span></tt> を構築します。</p>
+<p class="compound-last"><tt class="docutils literal"><span class="pre">in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> 版の
+<tt class="docutils literal"><span class="pre">in_place_from_tuple</span></tt><a class="reference internal" href="#in-place-from-tuple"><em>¶</em></a> との使い分けに関しては
+<a class="reference internal" href="#in-place-typed"><em>こちら</em></a> を、
+渡された引数がどのように束縛されるかは
+<a class="reference internal" href="#in-place-from-tuple"><em>こちら</em></a> を、それぞれ参照してください。</p>
+</div>
+</div>
+</div>
+<div class="section" id="is-in-place-applyable">
+<span id="index-18"></span><span id="id19"></span><h3><tt class="docutils literal"><span class="pre">is_in_place_applyable</span></tt><a class="headerlink" href="#is-in-place-applyable" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/apply_in_place.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;is_in_place_factory.hpp&quot;</span>
+<span class="cp">#include &quot;is_typed_in_place_factory.hpp&quot;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">InPlace</span><span class="p">,</span> <span class="k">class</span> <span class="nc">T</span><span class="o">&gt;</span>
+  <span class="k">struct</span> <span class="n">is_in_place_applyable</span>
+    <span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">integral_constant</span><span class="o">&lt;</span><span class="kt">bool</span><span class="p">,</span> <span class="n">see</span><span class="o">-</span><span class="n">below</span><span class="o">&gt;</span> <span class="p">{};</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="compound">
+<p class="compound-first">このメタ関数は、
+<tt class="docutils literal"><span class="pre">is_in_place_factory&lt;InPlace&gt;::value</span></tt><a class="reference internal" href="#is-in-place-factory"><em>¶</em></a>
+が <tt class="docutils literal"><span class="pre">true</span></tt> の場合、または
+<tt class="docutils literal"><span class="pre">typename</span> <span class="pre">typed_in_place_associated&lt;InPlace&gt;::type</span></tt><a class="reference internal" href="#typed-in-place-associated"><em>¶</em></a>
+が存在し <tt class="docutils literal"><span class="pre">T</span></tt> 型である場合には <tt class="docutils literal"><span class="pre">std::true_type</span></tt> を継承し、
+それ以外の場合には <tt class="docutils literal"><span class="pre">std::false_type</span></tt> を継承します。</p>
+<div class="compound-last admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">このメタ関数は、主に後述の <tt class="docutils literal"><span class="pre">apply_in_place</span></tt><a class="reference internal" href="#apply-in-place"><em>¶</em></a>
+を呼び出すか否かを判定する為に使います。</p>
+</div>
+</div>
+</div>
+<div class="section" id="apply-in-place">
+<span id="index-19"></span><span id="id20"></span><h3><tt class="docutils literal"><span class="pre">apply_in_place</span></tt><a class="headerlink" href="#apply-in-place" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/apply_in_place.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;is_in_place_factory.hpp&quot;</span>
+<span class="cp">#include &quot;is_typed_in_place_factory.hpp&quot;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">T</span><span class="p">,</span> <span class="k">class</span> <span class="nc">InPlace</span><span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_in_place</span><span class="p">(</span> <span class="n">InPlace</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+  <span class="cm">/*</span>
+<span class="cm">  // in header &quot;in_place_factory.hpp&quot;</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_in_place( in_place_factory&lt;Args...&gt; &amp; x, void* addr );</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_in_place( in_place_factory&lt;Args...&gt; const&amp; x, void* addr );</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_in_place( in_place_factory&lt;Args...&gt; &amp;&amp; x, void* addr );</span>
+<span class="cm">  */</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="compound">
+<p class="compound-first"><tt class="docutils literal"><span class="pre">addr</span></tt> で示される領域に、 <tt class="docutils literal"><span class="pre">InPlace</span></tt> を適用することで <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築します。</p>
+<p class="compound-middle">この関数は、
+<tt class="docutils literal"><span class="pre">typename</span> <span class="pre">typed_in_place_associated&lt;InPlace&gt;::type</span></tt><a class="reference internal" href="#typed-in-place-associated"><em>¶</em></a>
+が存在し <tt class="docutils literal"><span class="pre">T</span></tt> 型である場合には</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">InPlace</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">を<a class="reference internal" href="#apply-typed-in-place"><em>¶</em></a> 、それ以外の場合には</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">InPlace</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="k">template</span> <span class="n">apply</span><span class="o">&lt;</span><span class="n">T</span><span class="o">&gt;</span><span class="p">(</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">を呼び出します。</p>
+<p class="compound-middle">この関数の戻り値は構築されたオブジェクトのアドレスになります。</p>
+<div class="compound-middle admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#in-place-factory"><em>¶</em></a> および
+<tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">Args...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a>
+に対する <tt class="docutils literal"><span class="pre">apply_in_place</span></tt> 呼び出しは、
+overload resolution により、各々のヘッダで定義された
+<tt class="docutils literal"><span class="pre">apply_in_place</span></tt><a class="reference internal" href="#in-place-factory-apply-in-place"><em>¶</em></a> または
+<tt class="docutils literal"><span class="pre">apply_typed_in_place</span></tt><a class="reference internal" href="#typed-in-place-factory-apply-typed-in-place"><em>¶</em></a>
+が選択されます。</p>
+</div>
+<div class="compound-last admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">この関数は、 Boost.InPlaceFactory と Boost.TypedInPlaceFactory 、
+<tt class="docutils literal"><span class="pre">etude::in_place_factory&lt;Args...&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a> 、
+および <tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">Args...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a>
+を、統一的なインターフェイスで扱うために用意されています。</p>
+</div>
+</div>
+</div>
+<div class="section" id="apply-typed-in-place">
+<span id="index-20"></span><span id="id21"></span><h3><tt class="docutils literal"><span class="pre">apply_typed_in_place</span></tt><a class="headerlink" href="#apply-typed-in-place" title="Permalink to this headline">¶</a></h3>
+<dl class="docutils">
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/memory/apply_in_place.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+<dt>定義</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &quot;is_typed_in_place_factory.hpp&quot;</span>
+
+<span class="k">namespace</span> <span class="n">etude</span> <span class="p">{</span>
+
+  <span class="k">template</span><span class="o">&lt;</span><span class="k">class</span> <span class="nc">TypedInPlace</span><span class="p">,</span>
+    <span class="k">class</span> <span class="nc">T</span> <span class="o">=</span> <span class="k">typename</span> <span class="n">std</span><span class="o">::</span><span class="n">remove_reference</span><span class="o">&lt;</span><span class="n">TypedInPlace</span><span class="o">&gt;::</span><span class="n">type</span><span class="o">::</span><span class="n">value_type</span>
+  <span class="o">&gt;</span>
+  <span class="kr">inline</span> <span class="n">T</span><span class="o">*</span> <span class="n">apply_typed_in_place</span><span class="p">(</span> <span class="n">TypedInPlace</span> <span class="o">&amp;&amp;</span> <span class="n">x</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">addr</span> <span class="p">);</span>
+
+  <span class="cm">/*</span>
+<span class="cm">  // in header &quot;typed_in_place_factory.hpp&quot;</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_typed_in_place( typed_in_place_factory&lt;T, Args...&gt; &amp; x, void* addr );</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_typed_in_place( typed_in_place_factory&lt;T, Args...&gt; const&amp; x, void* addr );</span>
+<span class="cm">  template&lt;class T, class... Args&gt;</span>
+<span class="cm">  inline T* apply_typed_in_place( typed_in_place_factory&lt;T, Args...&gt; &amp;&amp; x, void* addr );</span>
+<span class="cm">  */</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="compound">
+<p class="compound-first"><tt class="docutils literal"><span class="pre">addr</span></tt> で示される領域に、 <tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> を適用して <tt class="docutils literal"><span class="pre">T</span></tt> 型のオブジェクトを構築します。
+<tt class="docutils literal"><span class="pre">T</span></tt> 型は <tt class="docutils literal"><span class="pre">TypedInPlace</span></tt> に関連付けられた型で、自動的に型推論されます。</p>
+<p class="compound-middle">この関数は</p>
+<div class="compound-middle highlight-cpp"><div class="highlight"><pre><span class="n">std</span><span class="o">::</span><span class="n">forward</span><span class="o">&lt;</span><span class="n">TypedInPlace</span><span class="o">&gt;</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">apply</span><span class="p">(</span> <span class="n">addr</span> <span class="p">);</span>
+</pre></div>
+</div>
+<p class="compound-middle">を呼び出します。</p>
+<p class="compound-middle">戻り値は構築されたオブジェクトのアドレスになります。</p>
+<div class="compound-middle admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last"><tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">Args...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a>
+に対する <tt class="docutils literal"><span class="pre">apply_typed_in_place</span></tt> 呼び出しは、 overload resolution により、
+<tt class="docutils literal"><span class="pre">&lt;etude/memory/typed_inplace_factory.hpp&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a>
+で定義された
+<tt class="docutils literal"><span class="pre">apply_typed_in_place</span></tt><a class="reference internal" href="#typed-in-place-factory-apply-typed-in-place"><em>¶</em></a>
+が選択されます。</p>
+</div>
+<div class="compound-last admonition hint">
+<p class="first admonition-title">Hint</p>
+<p class="last">この関数は、 <tt class="docutils literal"><span class="pre">etude::typed_in_place_factory&lt;</span> <span class="pre">T,</span> <span class="pre">Args...</span> <span class="pre">&gt;</span></tt><a class="reference internal" href="#typed-in-place-factory"><em>¶</em></a>
+の <tt class="docutils literal"><span class="pre">apply</span></tt><a class="reference internal" href="#typed-in-place-factory-apply"><em>¶</em></a> と
+<tt class="docutils literal"><span class="pre">move_apply</span></tt><a class="reference internal" href="#typed-in-place-factory-move-apply"><em>¶</em></a> 、および
+Boost.TypedInPlaceFactory の <tt class="docutils literal"><span class="pre">apply</span></tt> 呼び出しを、
+統一的なインターフェイスで扱うために用意されています。</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">In-Place Factories</a><ul>
+<li><a class="reference internal" href="#id1">概要</a></li>
+<li><a class="reference internal" href="#id2">使い方（利用側）</a><ul>
+<li><a class="reference internal" href="#id3">基本的な使用法</a><ul>
+<li><a class="reference internal" href="#id4">注意点</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id5">より高度な使用法</a><ul>
+<li><a class="reference internal" href="#inplacefactory">タプルに束ねられた引数リストから InPlaceFactory への変換</a></li>
+<li><a class="reference internal" href="#id6">InPlaceFactory の要件を満たすクラスの自作</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id7">使い方（実装側）</a><ul>
+<li><a class="reference internal" href="#id8">基本的な実装法</a></li>
+<li><a class="reference internal" href="#id9">補足</a><ul>
+<li><a class="reference internal" href="#etude-in-place">etude::in_place で作られたオブジェクトのコピーについて</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a class="reference internal" href="#id10">詳細データ</a><ul>
+<li><a class="reference internal" href="#is-in-place-factory"><tt class="docutils literal"><span class="pre">is_in_place_factory</span></tt></a></li>
+<li><a class="reference internal" href="#in-place-factory"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt></a><ul>
+<li><a class="reference internal" href="#in-place-factory-types"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> types</a></li>
+<li><a class="reference internal" href="#in-place-factory-constructors"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> constructors</a></li>
+<li><a class="reference internal" href="#in-place-factory-applications"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> applications</a></li>
+<li><a class="reference internal" href="#in-place-factory-observers"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> observers</a></li>
+<li><a class="reference internal" href="#in-place-factory-non-member-functions"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> non-member functions</a></li>
+<li><a class="reference internal" href="#function-template-in-place">function template <tt class="docutils literal"><span class="pre">in_place</span></tt></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#is-typed-in-place-factory"><tt class="docutils literal"><span class="pre">is_typed_in_place_factory</span></tt></a></li>
+<li><a class="reference internal" href="#typed-in-place-associated"><tt class="docutils literal"><span class="pre">typed_in_place_associated</span></tt></a></li>
+<li><a class="reference internal" href="#typed-in-place-factory"><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt></a><ul>
+<li><a class="reference internal" href="#typed-in-place-factory-types"><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> types</a></li>
+<li><a class="reference internal" href="#typed-in-place-factory-constructors"><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> constructors</a></li>
+<li><a class="reference internal" href="#typed-in-place-factory-applications"><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> applications</a></li>
+<li><a class="reference internal" href="#id18"><tt class="docutils literal"><span class="pre">in_place_factory</span></tt> observers</a></li>
+<li><a class="reference internal" href="#typed-in-place-factory-non-member-functions"><tt class="docutils literal"><span class="pre">typed_in_place_factory</span></tt> non-member functions</a></li>
+<li><a class="reference internal" href="#function-template-in-place-typed-version">function template <tt class="docutils literal"><span class="pre">in_place</span></tt> (typed version)</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#is-in-place-applyable"><tt class="docutils literal"><span class="pre">is_in_place_applyable</span></tt></a></li>
+<li><a class="reference internal" href="#apply-in-place"><tt class="docutils literal"><span class="pre">apply_in_place</span></tt></a></li>
+<li><a class="reference internal" href="#apply-typed-in-place"><tt class="docutils literal"><span class="pre">apply_typed_in_place</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="noncopyable.html"
+                        title="previous chapter">Noncopyable</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="types.html"
+                        title="next chapter">Type Traits</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/in-place.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="types.html" title="Type Traits"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="noncopyable.html" title="Noncopyable"
+             >previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" >ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010-11, Takaya Saito (SubaruG).
+      Last updated on 09/04, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

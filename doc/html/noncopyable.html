@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Noncopyable &mdash; Etude C++ Libraries: Documentation</title>
+    <link rel="stylesheet" href="_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries: Documentation" href="index.html" />
+    <link rel="up" title="ライブラリ一覧" href="libs.html" />
+    <link rel="next" title="In-Place Factories" href="in-place.html" />
+    <link rel="prev" title="ライブラリ一覧" href="libs.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="libs.html" title="ライブラリ一覧"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" accesskey="U">ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="noncopyable">
+<span id="index-0"></span><h1>Noncopyable<a class="headerlink" href="#noncopyable" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>使い道</dt>
+<dd><ul class="first last simple">
+<li>コピーできないクラスであることを明示する</li>
+<li>既存のクラスに対するコピー不能なラッパーを提供する</li>
+</ul>
+</dd>
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/noncopyable.hpp&gt;</span>
+<span class="cp">#include &lt;etude/immovable.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.boost.org/doc/libs/1_45_0/libs/utility/utility.htm#Class_noncopyable">boost::noncopyable</a> に対し <tt class="docutils literal"><span class="pre">=</span> <span class="pre">delete;</span></tt> や move semantics を対応させ、更に既存のクラスに対するラッパー機能を追加したものです。</p>
+<p>copy は不可能だが move は出来る <tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> と、 copy も move も不可能な <tt class="docutils literal"><span class="pre">etude::immovable&lt;T&gt;</span></tt> の二種類が用意されています。</p>
+<p>まず基本的な使用法としては、テンプレート引数に何も渡さずに使うことで、 <tt class="docutils literal"><span class="pre">boost::noncopyable</span></tt> と同様に「 <tt class="docutils literal"><span class="pre">private</span></tt> 継承させることで、コピー出来ないクラスであることを明示する」ことができます。</p>
+<p>boost::noncopyable との違いは、</p>
+<ul class="simple">
+<li>move できるか否かを選べる</li>
+<li>コンストラクタとデストラクタが trivial である</li>
+</ul>
+<p>の二点。</p>
+<p>特に「 copy は禁止したいけど、 move は禁止したくない」ケースは、 C++0x でコードを書く上で頻出するので、そのような場合に、簡潔にその意図を示せるクラスがあるのは便利です。</p>
+<p>Etude.Noncopyable では更に、 <tt class="docutils literal"><span class="pre">etude::noncopyable</span></tt> や <tt class="docutils literal"><span class="pre">etude::immovable</span></tt> の基底クラスを、テンプレートによって自由に指定できるようになっています。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">struct</span> <span class="n">X</span> <span class="p">{};</span>
+
+<span class="k">struct</span> <span class="n">Y</span>
+  <span class="o">:</span> <span class="n">etude</span><span class="o">::</span><span class="n">noncopyable</span><span class="o">&lt;</span><span class="n">X</span><span class="o">&gt;</span> <span class="c1">// etude::noncopyable&lt;X&gt; は X を継承する</span>
+<span class="p">{</span>
+  <span class="c1">// 実装...</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>特に、 Boost.Operators のような実装用の空クラスと組み合わせて使い、</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="k">struct</span> <span class="n">Hoge</span>
+  <span class="o">:</span> <span class="k">private</span> <span class="n">etude</span><span class="o">::</span><span class="n">noncopyable</span><span class="o">&lt;</span> <span class="n">boost</span><span class="o">::</span><span class="n">totally_ordered</span><span class="o">&lt;</span><span class="n">Hoge</span><span class="o">&gt;</span> <span class="o">&gt;</span>
+<span class="p">{</span>
+  <span class="k">friend</span> <span class="kt">bool</span> <span class="k">operator</span><span class="o">==</span><span class="p">(</span> <span class="n">Hoge</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Hoge</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span> <span class="p">);</span>
+  <span class="k">friend</span> <span class="kt">bool</span> <span class="k">operator</span><span class="o">&lt;</span><span class="p">(</span> <span class="n">Hoge</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">lhs</span><span class="p">,</span> <span class="n">Hoge</span> <span class="k">const</span><span class="o">&amp;</span> <span class="n">rhs</span> <span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+</div>
+<p>このように書くことで、所謂 Base Class Chaining を行う際の継承順序を柔軟に変更させることが可能になります。</p>
+<p>また、 <tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> が <tt class="docutils literal"><span class="pre">T</span></tt> を public 継承する、というのはつまり、 <tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> は <tt class="docutils literal"><span class="pre">T</span></tt> 型と全く同じように扱うことができる、ということです。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">noncopyable</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">vec</span><span class="p">(</span> <span class="p">{</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span> <span class="p">}</span> <span class="p">);</span> <span class="c1">// コンストラクタは explicit</span>
+
+<span class="c1">// public 継承しているので、元々のクラスと同じように扱える</span>
+<span class="n">vec</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span> <span class="mi">4</span> <span class="p">);</span> <span class="n">vec</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span> <span class="mi">5</span> <span class="p">);</span>
+<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> <span class="c1">// 3</span>
+</pre></div>
+</div>
+<p>つまり <tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> は <tt class="docutils literal"><span class="pre">T</span></tt> 型を保持する noncopyable なラッパとして使うこともでき、その際に便利なよう、 <tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> は <tt class="docutils literal"><span class="pre">T</span></tt> がクラス以外の場合にも <tt class="docutils literal"><span class="pre">T</span></tt> 型に対するラッパとして使用できるようになっています。</p>
+<p>なお、これらの機能は <tt class="docutils literal"><span class="pre">etude::immovable&lt;T&gt;</span></tt> でも全く同様に使えます。</p>
+</div>
+<div class="section" id="id2">
+<h2>使い方<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p><tt class="docutils literal"><span class="pre">etude::noncopyable&lt;&gt;</span></tt> や <tt class="docutils literal"><span class="pre">etude::immovable&lt;&gt;</span></tt> を使うには、単純に private 継承すれば問題ありません。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/noncopyable.hpp&gt;</span>
+<span class="cp">#include &lt;etude/immovable.hpp&gt;</span>
+
+<span class="k">class</span> <span class="nc">hoge</span>
+  <span class="o">:</span> <span class="k">private</span> <span class="n">etude</span><span class="o">::</span><span class="n">noncopyable</span><span class="o">&lt;&gt;</span>
+<span class="p">{</span>
+  <span class="c1">// 実装</span>
+  <span class="c1">// ...</span>
+<span class="p">};</span>
+<span class="k">class</span> <span class="nc">fuga</span>
+  <span class="o">:</span> <span class="k">private</span> <span class="n">etude</span><span class="o">::</span><span class="n">immovable</span><span class="o">&lt;&gt;</span>
+<span class="p">{</span>
+  <span class="c1">// 実装</span>
+  <span class="c1">// ...</span>
+<span class="p">};</span>
+
+<span class="c1">// ...</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">hoge</span> <span class="n">x</span><span class="p">;</span>
+  <span class="c1">// hoge y = x; // コンパイルエラー！</span>
+  <span class="n">hoge</span> <span class="n">z</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">x</span><span class="p">);</span> <span class="c1">// move は可能</span>
+
+  <span class="n">fuga</span> <span class="n">s</span><span class="p">;</span>
+  <span class="c1">// fuga t = s;  // コンパイルエラー！</span>
+  <span class="c1">// fuga u = std::move(s);  // immovable の場合は move も出来ない</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>public 継承でも「コピーを禁止する」意図からすれば問題はありませんが、多重継承時に共通の基底クラスになる可能性や、またリスコフの置換原則を考えても、 private 継承にしたほうが無難です。</p>
+<p><tt class="docutils literal"><span class="pre">etude::noncopyable&lt;T&gt;</span></tt> や <tt class="docutils literal"><span class="pre">etude::immovable&lt;T&gt;</span></tt> は、 <tt class="docutils literal"><span class="pre">T</span></tt> を public 継承したクラスです。 explicit なコンストラクタを介し、 <tt class="docutils literal"><span class="pre">T</span></tt> のコンストラクタに引数を転送させることが出来ます。</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">noncopyable</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">pair</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;&gt;</span> <span class="n">p</span><span class="p">(</span> <span class="mi">1</span><span class="p">,</span> <span class="s">&quot;hoge&quot;</span> <span class="p">);</span>
+<span class="c1">// auto p2 = p; // コンパイルエラー！</span>
+</pre></div>
+</div>
+<p>こちらは private 継承させることで base class chaining に使ったり、あるいは noncopyable なラッパクラスとして使用することが出来ます。 <tt class="docutils literal"><span class="pre">T</span></tt> はクラス以外であっても構いません：</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="n">etude</span><span class="o">::</span><span class="n">immovable</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">i</span><span class="p">(</span> <span class="mi">0</span> <span class="p">);</span> <span class="c1">// おｋ。</span>
+<span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>  <span class="c1">// 0</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>詳細データ<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="etude-noncopyable-hpp">
+<span id="index-1"></span><h3><tt class="docutils literal"><span class="pre">&lt;etude/noncopyable.hpp&gt;</span></tt><a class="headerlink" href="#etude-noncopyable-hpp" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-cpp"><pre>namespace etude {
+ namespace noncopyable_ { // ADL 回避
+
+  template&lt;class Base = void&gt;
+  struct noncopyable
+    : public etude::make_derivable&lt;Base&gt;::type
+  {
+    noncopyable() = default;
+
+    noncopyable( noncopyable const&amp; )    = delete;
+    void operator=( noncopyable const&amp; ) = delete;
+
+    noncopyable( noncopyable&amp;&amp; )            = default;
+    noncopyable&amp; operator=( noncopyable&amp;&amp; ) = default;
+
+
+    // Base の構築
+
+    // Base 自体から構築。ただし explicit
+    template&lt; class T = Base,
+      class = typename std::enable_if&lt;
+        std::is_constructible&lt;Base, T&amp;&amp;&gt;::value
+      &gt;::type
+    &gt;
+    explicit noncopyable( Base &amp;&amp; x )
+      : base_( std::forward&lt;Base&gt;(x) ) {}
+
+    // その他の構築も全て explicit
+    template&lt; class... Args,
+      class = typename std::enable_if&lt;
+        std::is_constructible&lt;Base, Args...&gt;::value
+      &gt;::type
+    &gt;
+    explicit noncopyable( Args&amp;&amp;... args )
+      : base_( std::forward&lt;Args&gt;(args)... ) {}
+
+  };
+
+  template&lt;&gt;
+  struct noncopyable&lt;void&gt;
+  {
+    noncopyable() = default;
+
+    noncopyable( noncopyable const&amp; )    = delete;
+    void operator=( noncopyable const&amp; ) = delete;
+
+    noncopyable( noncopyable&amp;&amp; )            = default;
+    noncopyable&amp; operator=( noncopyable&amp;&amp; ) = default;
+
+  };
+
+ }
+ using namespace noncopyable_;
+}</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">etude::noncopyable&lt;&gt;</span></tt> は、以下の条件を満たす単純な空のクラスです：</p>
+<ul class="simple">
+<li>non-copy-constructible</li>
+<li>non-copy-assignable</li>
+<li>move-constructible</li>
+<li>move-assignable</li>
+<li>trivially-default-constructible</li>
+<li>trivially-destructible</li>
+</ul>
+<p>通常このクラスは、 private 継承することによりコピー禁止を明示する目的で使われます。</p>
+<p><tt class="docutils literal"><span class="pre">etude::noncopyable&lt;Base&gt;</span></tt> は、以下の条件を満たす、 <tt class="docutils literal"><span class="pre">Base</span></tt> を public 継承したクラスです：</p>
+<ul class="simple">
+<li>non-copy-constructible</li>
+<li>non-copy-assignable</li>
+<li>move-constructible （もし Base が move-constructible ならば）</li>
+<li>move-assignable （もし Base が move-assignable ならば）</li>
+</ul>
+<p>ただし <tt class="docutils literal"><span class="pre">Base</span></tt> がクラスでない場合には、代わりに <tt class="docutils literal"><span class="pre">etude::wrapper&lt;Base&gt;</span></tt> を継承します。</p>
+</div>
+<div class="section" id="etude-immovable-hpp">
+<span id="index-2"></span><h3><tt class="docutils literal"><span class="pre">&lt;etude/immovable.hpp&gt;</span></tt><a class="headerlink" href="#etude-immovable-hpp" title="Permalink to this headline">¶</a></h3>
+<div class="highlight-cpp"><pre>namespace etude {
+ namespace immovable_ { // ADL 回避
+
+  template&lt;class Base = void&gt;
+  struct immovable
+    : public etude::make_derivable&lt;Base&gt;::type
+  {
+    immovable() = default;
+
+    immovable( immovable const&amp; )      = delete;
+    void operator=( immovable const&amp; ) = delete;
+
+    immovable( immovable&amp;&amp; )      = delete;
+    void operator=( immovable&amp;&amp; ) = delete;
+
+
+    // Base の構築
+
+    // Base 自体から構築。ただし explicit
+    template&lt; class T = Base,
+      class = typename std::enable_if&lt;
+        std::is_constructible&lt;Base, T&amp;&amp;&gt;::value
+      &gt;::type
+    &gt;
+    explicit immovable( Base &amp;&amp; x )
+      : base_( std::forward&lt;Base&gt;(x) ) {}
+
+    // その他の構築も全て explicit
+    template&lt; class... Args,
+      class = typename std::enable_if&lt;
+        std::is_constructible&lt;Base, Args...&gt;::value
+      &gt;::type
+    &gt;
+    explicit immovable( Args&amp;&amp;... args )
+      : base_( std::forward&lt;Args&gt;(args)... ) {}
+
+  };
+
+  template&lt;&gt;
+  struct immovable&lt;void&gt;
+  {
+    immovable() = default;
+
+    immovable( immovable const&amp; )      = delete;
+    void operator=( immovable const&amp; ) = delete;
+
+    immovable( immovable&amp;&amp; )      = delete;
+    void operator=( immovable&amp;&amp; ) = delete;
+
+  };
+
+ }
+ using namespace immovable_;
+}</pre>
+</div>
+<p><tt class="docutils literal"><span class="pre">etude::immovable&lt;&gt;</span></tt> は、以下の条件を満たす単純な空のクラスです：</p>
+<ul class="simple">
+<li>non-copy-constructible</li>
+<li>non-copy-assignable</li>
+<li>non-move-constructible</li>
+<li>non-move-assignable</li>
+<li>trivially-default-constructible</li>
+<li>trivially-destructible</li>
+</ul>
+<p>通常このクラスは、 private 継承することによりコピー禁止を明示する目的で使われます。</p>
+<p><tt class="docutils literal"><span class="pre">etude::immovable&lt;Base&gt;</span></tt> は、以下の条件を満たす、 <tt class="docutils literal"><span class="pre">Base</span></tt> を public 継承したクラスです：</p>
+<ul class="simple">
+<li>non-copy-constructible</li>
+<li>non-copy-assignable</li>
+<li>non-move-constructible</li>
+<li>non-move-assignable</li>
+</ul>
+<p>ただし <tt class="docutils literal"><span class="pre">Base</span></tt> がクラスでない場合には、代わりに <tt class="docutils literal"><span class="pre">etude::wrapper&lt;Base&gt;</span></tt> を継承します。</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Noncopyable</a><ul>
+<li><a class="reference internal" href="#id1">概要</a></li>
+<li><a class="reference internal" href="#id2">使い方</a></li>
+<li><a class="reference internal" href="#id3">詳細データ</a><ul>
+<li><a class="reference internal" href="#etude-noncopyable-hpp"><tt class="docutils literal"><span class="pre">&lt;etude/noncopyable.hpp&gt;</span></tt></a></li>
+<li><a class="reference internal" href="#etude-immovable-hpp"><tt class="docutils literal"><span class="pre">&lt;etude/immovable.hpp&gt;</span></tt></a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="libs.html"
+                        title="previous chapter">ライブラリ一覧</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="in-place.html"
+                        title="next chapter">In-Place Factories</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/noncopyable.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="libs.html" title="ライブラリ一覧"
+             >previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" >ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010-11, Takaya Saito (SubaruG).
+      Last updated on 09/04, 2011.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>

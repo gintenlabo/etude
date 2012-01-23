@@ -1,0 +1,188 @@
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Optional &mdash; Etude C++ Libraries: Documentation</title>
+    <link rel="stylesheet" href="_static/etude.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0.0.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Etude C++ Libraries: Documentation" href="index.html" />
+    <link rel="up" title="ライブラリ一覧" href="libs.html" />
+    <link rel="next" title="Type Traits" href="types.html" />
+    <link rel="prev" title="In-Place Factories" href="in-place.html" /> 
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="types.html" title="Type Traits"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" accesskey="U">ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="optional">
+<span id="index-0"></span><h1>Optional<a class="headerlink" href="#optional" title="Permalink to this headline">¶</a></h1>
+<dl class="docutils">
+<dt>使い道</dt>
+<dd><ul class="first last simple">
+<li><tt class="docutils literal"><span class="pre">T</span></tt> 型かもしれないし，そうではないかもしれない型 <tt class="docutils literal"><span class="pre">optional&lt;T&gt;</span></tt> を提供する</li>
+</ul>
+</dd>
+<dt>必要ヘッダ</dt>
+<dd><div class="first last highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;etude/optional.hpp&gt;</span>
+</pre></div>
+</div>
+</dd>
+</dl>
+<div class="section" id="id1">
+<h2>概要<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<p><a class="reference external" href="http://www.boost.org/doc/libs/1_48_0/libs/optional/doc/html/index.html">boost::optional</a>
+に対して move semantics を導入し，更に参照や簡単なクラスに対する最適化を行ったものです．</p>
+<p>最終的には Boost へのフィードバック，更に標準ライブラリでの採用を目指しています．</p>
+</div>
+<div class="section" id="id2">
+<h2>使い方<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>基本的な使い方は， Boost.Optional と同一です．</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;iostream&gt;</span>
+<span class="cp">#include &lt;etude/optional.hpp&gt;</span>
+
+<span class="c1">// 関数の戻り値として</span>
+<span class="n">etude</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">&gt;</span> <span class="n">getline_optinal</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">istream</span><span class="o">&amp;</span> <span class="n">is</span> <span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">buf</span><span class="p">;</span>
+  <span class="k">if</span><span class="p">(</span> <span class="n">std</span><span class="o">::</span><span class="n">getline</span><span class="p">(</span> <span class="n">is</span><span class="p">,</span> <span class="n">buf</span> <span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="p">{</span>
+    <span class="k">return</span> <span class="n">boost</span><span class="o">::</span><span class="n">none</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">while</span><span class="p">(</span> <span class="k">auto</span> <span class="n">line</span> <span class="o">=</span> <span class="n">getline_optional</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">cin</span><span class="p">)</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="o">*</span><span class="n">line</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="in-place.html"><em>InPlaceFactory</em></a> による初期化も， Boost.Optional と同様に備えています．</p>
+<p>また， Etude.Optional に特有の機能として， <tt class="docutils literal"><span class="pre">emplace_construct</span></tt> による直接初期化があります．
+これは C++11 の STL における <tt class="docutils literal"><span class="pre">emplace</span></tt> 系列と同じく，与えられた引数から直接コンストラクタを呼ぶものです．</p>
+<div class="highlight-cpp"><div class="highlight"><pre><span class="cp">#include &lt;vector&gt;</span>
+<span class="cp">#include &lt;etude/optional.hpp&gt;</span>
+
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// *x を vector&lt;int&gt;( 10, 0 ) で直接初期化</span>
+  <span class="n">etude</span><span class="o">::</span><span class="n">optional</span><span class="o">&lt;</span><span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span> <span class="n">x</span><span class="p">(</span> <span class="n">etude</span><span class="o">::</span><span class="n">emplace_construct</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">0</span> <span class="p">);</span>
+
+  <span class="c1">// ～</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="id3">
+<h2>詳細データ<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h2>
+<p>under construction.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Optional</a><ul>
+<li><a class="reference internal" href="#id1">概要</a></li>
+<li><a class="reference internal" href="#id2">使い方</a></li>
+<li><a class="reference internal" href="#id3">詳細データ</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="in-place.html"
+                        title="previous chapter">In-Place Factories</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="types.html"
+                        title="next chapter">Type Traits</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/optional.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="types.html" title="Type Traits"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="in-place.html" title="In-Place Factories"
+             >previous</a> |</li>
+        <li><a href="index.html">Etude C++ Libraries</a> &raquo;</li>
+          <li><a href="libs.html" >ライブラリ一覧</a> &raquo;</li> 
+      </ul>
+    </div>
+    <div class="footer">
+        &copy; Copyright 2010-11, Takaya Saito (SubaruG).
+      Last updated on 01/24, 2012.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.0.5.
+    </div>
+  </body>
+</html>
