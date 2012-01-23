@@ -30,7 +30,7 @@ namespace etude {
    public:
     unrebindable() = default;
     
-    // gcc-4.5.x には implicit move がないので = default; する
+    // operator= を明示的に禁止する関係で必要
     unrebindable( unrebindable const& ) = default;
     unrebindable( unrebindable && )     = default;
     
@@ -67,7 +67,9 @@ namespace etude {
   {
     unrebindable() = default;
     
-    // 空なら move は関係ないので = default; しない
+    // operator= を明示的に禁止する関係で必要
+    unrebindable( unrebindable const& ) = default;
+    unrebindable( unrebindable && )     = default;
     
     // 再代入禁止
     void operator=( unrebindable const& ) = delete;
