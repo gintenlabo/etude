@@ -87,3 +87,41 @@
     
     - 名前空間を使うなどして， SFINAE 有り版を用意してもいい
 
+- Perfect Forward に対する対応について
+
+  - 既存の Perfect Forward には問題がある
+  
+    - 非 const の参照を，そのまま転送できてしまう
+    
+      - ``f(x)`` という形から ``x`` が変更される可能性を予期できない
+      - 折角 ``std::ref`` という参照をラップする手段が用意されたので，そっちを使ってもらいたい
+    
+    - ``std::forward`` は ``constexpr`` ではないので ``constexpr`` 性を伝搬できない
+  
+  - 三種類の forwarding policy を用意し，使い分ける
+  
+    - １． Reference Forwarding
+      
+      - 標準ライブラリの forwarding policy
+      - 全て参照として，そのまま伝搬する
+      - 非 ``const`` な lvalue reference を そのまま転送できる，唯一の方法
+      - 一回でも他の Forwarding Policy が使われると，それに影響される
+      
+        - 多段の転送がかかる場合は，こちらを使う
+    
+    - ２． Safe Reference Forwarding
+    
+      - 「安全な」 Forwarding Policy
+      - lvalue reference は ``const`` を付加して伝搬する
+      
+        - 非 ``const`` な lvalue reference を転送したい場合には ``std::ref`` のような特別な仕組みを用意する
+      
+      - rvalue reference は そのまま伝搬する
+    
+    - ３． Normal Forwarding
+    
+      - ``std::make_tuple`` と似た forwarding policy
+      - まず lvalue reference なら ``const`` を付与する
+      - その後， ``decay`` により参照から値に変更する
+      
+        - ``std::reference_wrapper`` に包まれていた場合，参照に変換する
