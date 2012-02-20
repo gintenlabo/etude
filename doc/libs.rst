@@ -7,6 +7,7 @@
    
    config/index
    type_traits/index
+   optional/index
 
 
 :doc:`config/index`
