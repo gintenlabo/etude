@@ -21,6 +21,7 @@
 #include "../types/is_copy_constructible.hpp"
 #include "../types/is_move_constructible.hpp"
 #include "../types/is_assignable.hpp"
+#include "../types/is_trivially_destructible.hpp"
 #include "../memory/apply_in_place.hpp"
 
 #include "../noncopyable.hpp"
@@ -278,7 +279,7 @@ namespace etude {
   template<class T>
   struct optional_impl_< T,
     typename std::enable_if<
-      std::has_trivial_destructor<T>::value
+      etude::is_trivially_destructible<T>::value
     >::type
   >
     : optional_impl_select_base_<T>::type

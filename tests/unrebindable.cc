@@ -27,7 +27,7 @@ int main()
   STATIC_ASSERT(( std::is_empty<etude::unrebindable<>>::value ));
   
   STATIC_ASSERT(( std::has_trivial_default_constructor<etude::unrebindable<>>::value ));
-  STATIC_ASSERT(( std::has_trivial_destructor<etude::unrebindable<>>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<etude::unrebindable<>>::value ));
 
 
   // base class chaining

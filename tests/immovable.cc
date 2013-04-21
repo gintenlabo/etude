@@ -27,7 +27,7 @@ int main()
   STATIC_ASSERT(( std::is_empty<etude::immovable<>>::value ));
   
   STATIC_ASSERT(( std::has_trivial_default_constructor<etude::immovable<>>::value ));
-  STATIC_ASSERT(( std::has_trivial_destructor<etude::immovable<>>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<etude::immovable<>>::value ));
 
 
   // base class chaining

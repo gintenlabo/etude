@@ -13,6 +13,7 @@
 
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
+#include "../../etude/types/is_trivially_destructible.hpp"
 #include "../../etude/types/storage_of.hpp"
 #include "../../etude/types/storage_size.hpp"
 #include "../../etude/types/storage_align.hpp"
@@ -52,7 +53,7 @@ inline void basic_check()
   // trivially default-constructible class
   STATIC_ASSERT(( std::has_trivial_default_constructor<storage_type>::value ));
   // trivially destructible class
-  STATIC_ASSERT(( std::has_trivial_destructor<storage_type>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<storage_type>::value ));
   /*
   // non-copyable class
   STATIC_ASSERT(( !std::is_copy_constructible<storage_type>::value ));

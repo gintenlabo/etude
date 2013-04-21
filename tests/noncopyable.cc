@@ -27,7 +27,7 @@ int main()
   STATIC_ASSERT(( std::is_empty<etude::noncopyable<>>::value ));
   
   STATIC_ASSERT(( std::has_trivial_default_constructor<etude::noncopyable<>>::value ));
-  STATIC_ASSERT(( std::has_trivial_destructor<etude::noncopyable<>>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<etude::noncopyable<>>::value ));
 
 
   // base class chaining

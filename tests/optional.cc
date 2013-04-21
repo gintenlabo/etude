@@ -24,7 +24,7 @@ template class etude::optional<int&&>;
 #include "../etude/utility/less_pointer.hpp"
 
 // etude::optional<int> は trivially destructible
-STATIC_ASSERT(( std::has_trivial_destructor< etude::optional<int> >::value ));
+STATIC_ASSERT(( etude::is_trivially_destructible< etude::optional<int> >::value ));
 // etude::optional<T&> は trivially copyable かつ standard layout
 STATIC_ASSERT(( is_trivially_copyable< etude::optional<int&> >::value ));
 STATIC_ASSERT(( std::is_standard_layout< etude::optional<int&> >::value ));
@@ -73,8 +73,8 @@ inline void basic_check( Args&&... args )
   ));
   // T が trivially destructible ならば optional<T> も trivially destructible
   STATIC_ASSERT ((
-    std::has_trivial_destructor<optional_t>::value ==
-    std::has_trivial_destructor<T>::value
+    etude::is_trivially_destructible<optional_t>::value ==
+    etude::is_trivially_destructible<T>::value
   ));
   // T が参照ならば trivially copyable
   STATIC_ASSERT ((

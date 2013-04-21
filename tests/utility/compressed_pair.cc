@@ -10,6 +10,7 @@
 #include <type_traits>
 #include <utility>
 
+#include "../../etude/types/is_trivially_destructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 // チェック本体
@@ -31,8 +32,8 @@ void check()
       == std::is_standard_layout<pair_type>::value ));
   // trivially destructible class か
   STATIC_ASSERT((
-    ( std::has_trivial_destructor<T1>::value && std::has_trivial_destructor<T2>::value )
-      == std::has_trivial_destructor<pair_type>::value ));
+    ( etude::is_trivially_destructible<T1>::value && etude::is_trivially_destructible<T2>::value )
+      == etude::is_trivially_destructible<pair_type>::value ));
   
   // element access
   STATIC_ASSERT(( std::is_same<
