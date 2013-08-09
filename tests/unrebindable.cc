@@ -1,6 +1,6 @@
 //
-//  etude/unrebindable.hpp Ç…ëŒÇ∑ÇÈÉeÉXÉg
-//    Ç∆Ç¢Ç§ÇÊÇËédól
+//  etude/unrebindable.hpp „Å´ÂØæ„Åô„Çã„ÉÜ„Çπ„Éà
+//    „Å®„ÅÑ„ÅÜ„Çà„Çä‰ªïÊßò
 //
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -17,7 +17,7 @@
 
 int main()
 {
-  // etude::unrebindable<> Ç…ëŒÇµÇƒ
+  // etude::unrebindable<> „Å´ÂØæ„Åó„Å¶
   STATIC_ASSERT((  is_copy_constructible<etude::unrebindable<>>::value ));
   STATIC_ASSERT((  is_move_constructible<etude::unrebindable<>>::value ));
   
@@ -27,7 +27,7 @@ int main()
   STATIC_ASSERT(( std::is_empty<etude::unrebindable<>>::value ));
   
   STATIC_ASSERT(( std::has_trivial_default_constructor<etude::unrebindable<>>::value ));
-  STATIC_ASSERT(( std::has_trivial_destructor<etude::unrebindable<>>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<etude::unrebindable<>>::value ));
 
 
   // base class chaining
@@ -41,7 +41,7 @@ int main()
   STATIC_ASSERT(( !is_copy_assignable<etude::unrebindable<X>>::value ));
   STATIC_ASSERT(( !is_move_assignable<etude::unrebindable<X>>::value ));
   
-  // ctor ì]ëó
+  // ctor Ëª¢ÈÄÅ
   STATIC_ASSERT(( !std::is_convertible<X&&, etude::unrebindable<X>>::value ));
   STATIC_ASSERT(( etude::is_constructible<etude::unrebindable<X>, X&&>::value ));
   STATIC_ASSERT(( !etude::is_constructible<etude::unrebindable<X>, int>::value ));
@@ -54,7 +54,7 @@ int main()
   STATIC_ASSERT(( !is_copy_assignable<etude::unrebindable<int>>::value ));
   STATIC_ASSERT(( !is_move_assignable<etude::unrebindable<int>>::value ));
   
-  // ctor ì]ëó
+  // ctor Ëª¢ÈÄÅ
   STATIC_ASSERT(( !std::is_convertible<int, etude::unrebindable<int>>::value ));
   STATIC_ASSERT(( etude::is_constructible<etude::unrebindable<int>, int>::value ));
   STATIC_ASSERT(( !etude::is_constructible<etude::unrebindable<int>, void*>::value ));

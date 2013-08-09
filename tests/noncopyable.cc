@@ -1,6 +1,6 @@
 //
-//  etude/noncopyable.hpp Ç…ëŒÇ∑ÇÈÉeÉXÉg
-//    Ç∆Ç¢Ç§ÇÊÇËédól
+//  etude/noncopyable.hpp „Å´ÂØæ„Åô„Çã„ÉÜ„Çπ„Éà
+//    „Å®„ÅÑ„ÅÜ„Çà„Çä‰ªïÊßò
 //
 //  Copyright (C) 2011  Takaya Saito (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -17,7 +17,7 @@
 
 int main()
 {
-  // etude::noncopyable<> Ç…ëŒÇµÇƒ
+  // etude::noncopyable<> „Å´ÂØæ„Åó„Å¶
   STATIC_ASSERT(( !is_copy_constructible<etude::noncopyable<>>::value ));
   STATIC_ASSERT((  is_move_constructible<etude::noncopyable<>>::value ));
   
@@ -27,7 +27,7 @@ int main()
   STATIC_ASSERT(( std::is_empty<etude::noncopyable<>>::value ));
   
   STATIC_ASSERT(( std::has_trivial_default_constructor<etude::noncopyable<>>::value ));
-  STATIC_ASSERT(( std::has_trivial_destructor<etude::noncopyable<>>::value ));
+  STATIC_ASSERT(( etude::is_trivially_destructible<etude::noncopyable<>>::value ));
 
 
   // base class chaining
@@ -41,7 +41,7 @@ int main()
   STATIC_ASSERT(( !is_copy_assignable<etude::noncopyable<X>>::value ));
   STATIC_ASSERT((  is_move_assignable<etude::noncopyable<X>>::value ));
   
-  // ctor ì]ëó
+  // ctor Ëª¢ÈÄÅ
   STATIC_ASSERT(( !std::is_convertible<X&&, etude::noncopyable<X>>::value ));
   STATIC_ASSERT(( etude::is_constructible<etude::noncopyable<X>, X&&>::value ));
   STATIC_ASSERT(( !etude::is_constructible<etude::noncopyable<X>, int>::value ));
@@ -54,7 +54,7 @@ int main()
   STATIC_ASSERT(( !is_copy_assignable<etude::noncopyable<int>>::value ));
   STATIC_ASSERT((  is_move_assignable<etude::noncopyable<int>>::value ));
   
-  // ctor ì]ëó
+  // ctor Ëª¢ÈÄÅ
   STATIC_ASSERT(( !std::is_convertible<int, etude::noncopyable<int>>::value ));
   STATIC_ASSERT(( etude::is_constructible<etude::noncopyable<int>, int>::value ));
   STATIC_ASSERT(( !etude::is_constructible<etude::noncopyable<int>, void*>::value ));

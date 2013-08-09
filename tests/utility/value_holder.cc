@@ -9,12 +9,13 @@
 //
 
 #include "../../etude/utility/value_holder.hpp"
-#include "../../etude/types/is_constructible.hpp"
 #include "../../etude/unpack.hpp"
 #include <type_traits>
 #include <utility>
 #include <boost/assert.hpp>
 
+#include "../../etude/types/is_constructible.hpp"
+#include "../../etude/types/is_trivially_destructible.hpp"
 #define STATIC_ASSERT( expr ) static_assert( expr, #expr )
 
 // チェック本体
@@ -36,8 +37,8 @@ void check()
   ));
   // trivially destructible class か
   STATIC_ASSERT((
-    ( std::is_reference<T>::value && std::has_trivial_destructor<holder>::value ) ||
-    std::has_trivial_destructor<T>::value == std::has_trivial_destructor<holder>::value
+    ( std::is_reference<T>::value && etude::is_trivially_destructible<holder>::value ) ||
+    etude::is_trivially_destructible<T>::value == etude::is_trivially_destructible<holder>::value
   ));
   
   // get
