@@ -175,25 +175,12 @@ namespace etude {
         construct( std::forward<U>(x) );
       }
     }
-    // assignable でないなら construct を使う
-    // 自己代入になりうる場合はチェックする
-    template< class U,
-      class = typename std::enable_if<
-        !etude::is_assignable<T, U>::value &&
-        std::is_convertible<typename std::decay<U>::type*, T*>::type
-      >::type
-    >
-    void assign_( U && x, ... )
-    {
-      if( boost::addressof(x) != this->get() ) {
-        construct( std::forward<U>(x) );
-      }
-    }
     // それ以外は単純に construct する
     template<class U>
-    void assign_( U && x, ... )
+    void assign_( U && x_, ... )
     {
-      construct( std::forward<U>(x) );
+      T x = std::forward<U>(x_);  // 自己代入回避
+      construct( std::forward<T>(x) );
     }
     
   };
