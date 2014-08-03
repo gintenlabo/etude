@@ -1,3 +1,5 @@
+# -*- python -*-
+
 APPNAME = 'etude'
 VERSION = '0.0.0'
 
