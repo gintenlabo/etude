@@ -1,0 +1,13 @@
+# general
+*~
+*.o
+*.pyc
+*.gch
+*.out
+
+# for waf
+build/
+.waf-*
+.waf3-*
+.lock-*
+.unittest-gtest/
