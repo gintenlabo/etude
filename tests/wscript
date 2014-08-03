@@ -1,0 +1,23 @@
+# -*- python -*-
+
+subdirs=''
+
+def options(opt):
+  opt.recurse(subdirs)
+
+def configure(conf):
+  conf.recurse(subdirs)
+
+def build(bld):
+  tests = [
+    'sample.cc',
+  ]
+  for test in tests:
+    target = test[0:test.rfind('.')] + "-test"
+    bld.program(
+      features='gtest',
+      source=test,
+      target=target,
+      use='etude_headers')
+
+  bld.recurse(subdirs)

@@ -1,0 +1,17 @@
+# -*- python -*-
+
+subdirs=''
+
+def options(opt):
+  opt.recurse(subdirs)
+
+def configure(conf):
+  conf.recurse(subdirs)
+
+def build(bld):
+  headers = [
+    'sample.hpp',
+  ]
+  bld.install_files("${INCLUDEDIR}/etude/", headers)
+
+  bld.recurse(subdirs)

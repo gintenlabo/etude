@@ -6,7 +6,7 @@ VERSION = '0.0.0'
 srcdir = '.'
 blddir = 'build'
 
-subdirs=''
+subdirs='etude tests'
 
 def options(opt):
   opt.load('compiler_cxx')
@@ -25,4 +25,5 @@ def configure(conf):
   conf.recurse(subdirs)
 
 def build(bld):
+  bld(name='etude_headers', export_includes='./')
   bld.recurse(subdirs)
