@@ -11,6 +11,7 @@ subdirs=''
 def options(opt):
   opt.load('compiler_cxx')
   opt.load('unittest_gtest')
+  opt.load('gnu_dirs')
 
   opt.recurse(subdirs)
 
@@ -19,6 +20,7 @@ def configure(conf):
 
   conf.load('compiler_cxx')
   conf.load('unittest_gtest')
+  conf.load('gnu_dirs')
 
   conf.recurse(subdirs)
 
