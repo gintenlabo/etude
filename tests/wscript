@@ -1,23 +1,22 @@
 # -*- python -*-
-
-subdirs=''
+from os.path import splitext
 
 def options(opt):
-  opt.recurse(subdirs)
+  pass
 
 def configure(conf):
-  conf.recurse(subdirs)
+  pass
 
 def build(bld):
-  tests = [
-    'sample.cc',
-  ]
+  use_libs = 'etude_headers'
+  test_pattern = '**/*.cc'
+
+  tests = bld.path.ant_glob(test_pattern)
   for test in tests:
-    target = test[0:test.rfind('.')] + "-test"
+    filename = test.path_from(bld.path)
+    target, ext = splitext(filename)
     bld.program(
       features='gtest',
-      source=test,
+      source=filename,
       target=target,
-      use='etude_headers')
-
-  bld.recurse(subdirs)
+      use=use_libs)

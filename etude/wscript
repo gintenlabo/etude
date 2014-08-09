@@ -1,17 +1,13 @@
 # -*- python -*-
 
-subdirs=''
-
 def options(opt):
-  opt.recurse(subdirs)
+  pass
 
 def configure(conf):
-  conf.recurse(subdirs)
+  pass
 
 def build(bld):
-  headers = [
-    'sample.hpp',
-  ]
-  bld.install_files("${INCLUDEDIR}/etude/", headers)
+  header_pattern = '**/*.hpp'
 
-  bld.recurse(subdirs)
+  headers = bld.path.ant_glob(header_pattern)
+  bld.install_files("${INCLUDEDIR}/etude/", headers, relative_trick=True)
