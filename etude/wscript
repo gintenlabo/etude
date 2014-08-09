@@ -1,0 +1,13 @@
+# -*- python -*-
+
+def options(opt):
+  pass
+
+def configure(conf):
+  pass
+
+def build(bld):
+  header_pattern = '**/*.hpp'
+
+  headers = bld.path.ant_glob(header_pattern)
+  bld.install_files("${INCLUDEDIR}/etude/", headers, relative_trick=True)

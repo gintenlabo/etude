@@ -1,0 +1,22 @@
+# -*- python -*-
+from os.path import splitext
+
+def options(opt):
+  pass
+
+def configure(conf):
+  pass
+
+def build(bld):
+  use_libs = 'etude_headers'
+  test_pattern = '**/*.cc'
+
+  tests = bld.path.ant_glob(test_pattern)
+  for test in tests:
+    filename = test.path_from(bld.path)
+    target, ext = splitext(filename)
+    bld.program(
+      features='gtest',
+      source=filename,
+      target=target,
+      use=use_libs)
