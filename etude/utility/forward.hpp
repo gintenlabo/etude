@@ -15,11 +15,10 @@
 namespace etude {
 
 // constexpr version of std::move
-// unlike std::move, rvalue references are not supported
-// (you should use this function iff you are moving lvalues)
 template<class T>
-constexpr T&& move(T& x) noexcept {
-  return static_cast<T&&>(x);
+constexpr auto move(T&& x) noexcept
+    -> typename std::remove_reference<T>::type&& {
+  return static_cast<typename std::remove_reference<T>::type&&>(x);
 }
 
 // constexpr version of std::forward
