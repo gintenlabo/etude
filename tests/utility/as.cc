@@ -2,6 +2,7 @@
 
 #include <utility>
 #include <gtest/gtest.h>
+#include "etude/utility/forward.hpp"
 
 template<class To, class From,
   class = decltype(etude::as<To>(std::declval<From>()))
@@ -17,7 +18,7 @@ constexpr bool fails_to_call_as_(From&&, ...) noexcept {
 
 template<class To, class From>
 constexpr bool fails_to_call_as(From && x) noexcept {
-  return fails_to_call_as_<To>(static_cast<From&&>(x), 0);
+  return fails_to_call_as_<To>(etude::forward<From>(x), 0);
 }
 
 TEST(as, trivial) {
