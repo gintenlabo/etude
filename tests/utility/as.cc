@@ -28,6 +28,14 @@ TEST(as, trivial) {
   EXPECT_EQ(nullptr, etude::as<void*>(0));
 }
 
+TEST(as, vector_initialization) {
+  auto v = etude::as<std::vector<int>>({1, 2, 3});
+  ASSERT_EQ(3u, v.size());
+  EXPECT_EQ(1, v[0]);
+  EXPECT_EQ(2, v[1]);
+  EXPECT_EQ(3, v[2]);
+}
+
 TEST(as, immovable_class) {
   struct tested_t {
     tested_t() = default;
