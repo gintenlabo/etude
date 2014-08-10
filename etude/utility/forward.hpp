@@ -1,6 +1,6 @@
 //
-//  etude::move, etude::forward
-//    constexpr versions of std::move and std::forward
+//  etude::forward
+//    strict and constexpr version of std::forward
 //
 //  Copyright (C) 2014  Takaya SAITO (SubaruG)
 //    Distributed under the Boost Software License, Version 1.0.
@@ -13,13 +13,6 @@
 #include "avoid_deduction.hpp"
 
 namespace etude {
-
-// constexpr version of std::move
-template<class T>
-constexpr auto move(T&& x) noexcept
-    -> typename std::remove_reference<T>::type&& {
-  return static_cast<typename std::remove_reference<T>::type&&>(x);
-}
 
 // constexpr version of std::forward
 // unlike std::forward, rvalue reference version is deleted for all type
