@@ -4,6 +4,8 @@
 #include <gtest/gtest.h>
 #include "etude/utility/forward.hpp"
 
+#define STATIC_ASSERT(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
+
 template<class To, class From,
   class = decltype(etude::as<To>(std::declval<From>()))
 >
@@ -26,6 +28,12 @@ TEST(as, trivial) {
   EXPECT_TRUE(fails_to_call_as<void*>(int{}));
 
   EXPECT_EQ(nullptr, etude::as<void*>(0));
+}
+
+TEST(as, constexpr) {
+  constexpr int i = etude::as<int>(0);
+  constexpr double d = etude::as<double>(i);
+  STATIC_ASSERT(d == i);
 }
 
 TEST(as, vector_initialization) {
