@@ -60,3 +60,67 @@ TEST(as, immovable_class) {
   EXPECT_FALSE(fails_to_call_as<tested_t const&>(int{}));
   EXPECT_TRUE(fails_to_call_as<tested_t&>(int{}));
 }
+
+TEST(as, noexcept) {
+  int i = 0;
+  EXPECT_TRUE(noexcept(etude::as<int>(i)));
+  EXPECT_TRUE(noexcept(etude::as<double>(i)));
+  EXPECT_TRUE(noexcept(etude::as<double&&>(i)));
+
+  struct may_throw_in_move {
+    may_throw_in_move() noexcept = default;
+    may_throw_in_move(may_throw_in_move const&) /*noexcept*/ {
+    }
+  };
+  EXPECT_FALSE(noexcept(etude::as<may_throw_in_move>(may_throw_in_move{})));
+  EXPECT_TRUE(noexcept(etude::as<may_throw_in_move&&>(may_throw_in_move{})));
+}
+
+TEST(as, references) {
+  struct base {
+    base() = default;
+    base(const base&) = delete;
+    void operator=(const base&) = delete;
+  };
+  struct derived : base {
+  };
+
+  base b = {};
+  derived d = {};
+
+  EXPECT_FALSE(fails_to_call_as<base&>(b));
+  EXPECT_FALSE(fails_to_call_as<base const&>(b));
+  EXPECT_TRUE(fails_to_call_as<base&&>(b));
+
+  EXPECT_TRUE(fails_to_call_as<base&>(std::move(b)));
+  EXPECT_FALSE(fails_to_call_as<base const&>(std::move(b)));
+  EXPECT_FALSE(fails_to_call_as<base&&>(std::move(b)));
+
+  EXPECT_TRUE(fails_to_call_as<derived&>(b));
+  EXPECT_FALSE(fails_to_call_as<base&>(d));
+}
+
+TEST(as, references_to_temporary) {
+  int i = 0;
+
+  EXPECT_FALSE(fails_to_call_as<int&>(i));
+  EXPECT_FALSE(fails_to_call_as<int const&>(i));
+  EXPECT_TRUE(fails_to_call_as<int&&>(i));
+
+  EXPECT_TRUE(fails_to_call_as<double&>(i));
+  EXPECT_FALSE(fails_to_call_as<double const&>(i));
+  EXPECT_FALSE(fails_to_call_as<double&&>(i));
+
+  struct dangling_detector {
+    int value;
+
+    /*explicit*/ dangling_detector(int x)
+        : value(x) {
+    }
+
+    ~dangling_detector() {
+      value = 0;
+    }
+  };
+  EXPECT_EQ(1, etude::as<dangling_detector const&>(1).value);
+}
