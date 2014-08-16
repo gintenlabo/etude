@@ -22,7 +22,7 @@ void as_(typename avoid_deduction<T>::type) noexcept {
 }
 
 // Effective version; use perfect forward to minimize copy/move
-// references are not handled well; temporary may bre returned
+// references are not handled well; temporary may be returned
 template <class To, class From,
   typename std::enable_if<
       !std::is_reference<To>::value>::type* = nullptr,
