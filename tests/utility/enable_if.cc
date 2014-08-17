@@ -7,12 +7,12 @@
 #define STATIC_ASSERT(...) static_assert(__VA_ARGS__, #__VA_ARGS__)
 
 template<class T,
-    ETUDE_ENABLE_IF(std::is_integral<T>::value)>
+  ETUDE_ENABLE_IF(std::is_integral<T>::value)>
 constexpr bool is_integral(T const&) {
   return true;
 }
 template<class T,
-    ETUDE_ENABLE_IF(!std::is_integral<T>::value)>
+  ETUDE_ENABLE_IF(!std::is_integral<T>::value)>
 constexpr bool is_integral(T const&) {
   return false;
 }
@@ -23,12 +23,12 @@ TEST(enable_if, trivial) {
 }
 
 template<class T,
-    ETUDE_ENABLE_IF(sizeof(T) > sizeof(void*))>
+  ETUDE_ENABLE_IF(sizeof(T) > sizeof(void*))>
 constexpr bool is_bigger_than_pointer(T const&) {
   return true;
 }
 template<class T,
-    ETUDE_ENABLE_IF(sizeof(T) <= sizeof(void*))>
+  ETUDE_ENABLE_IF(sizeof(T) <= sizeof(void*))>
 constexpr bool is_bigger_than_pointer(T const&) {
   return false;
 }
@@ -39,12 +39,12 @@ TEST(enable_if, using_greater_than) {
 }
 
 template<class T, class U,
-    ETUDE_ENABLE_IF(std::is_same<T, U>::value)>
+  ETUDE_ENABLE_IF(std::is_same<T, U>::value)>
 constexpr bool is_same(T const&, U const&) {
   return true;
 }
 template<class T, class U,
-    ETUDE_ENABLE_IF(!std::is_same<T, U>::value)>
+  ETUDE_ENABLE_IF(!std::is_same<T, U>::value)>
 constexpr bool is_same(T const&, U const&) {
   return false;
 }
