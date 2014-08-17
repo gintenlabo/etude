@@ -9,6 +9,7 @@
 #ifndef ETUDE_UTILITY_INCLUDED_AS_HPP_
 #define ETUDE_UTILITY_INCLUDED_AS_HPP_
 
+#include <type_traits>
 #include <utility>
 
 #include "avoid_deduction.hpp"
