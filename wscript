@@ -28,8 +28,13 @@ def configure(conf):
     conf.env.CXXFLAGS += ['-Og']
 
   if conf.options.enable_gcov:
-    conf.env.CXXFLAGS += ['-fprofile-arcs', '-ftest-coverage']
-    conf.env.LINKFLAGS += ['-fprofile-arcs']
+    cxxflags_for_gcov = ['-fprofile-arcs', '-ftest-coverage']
+    linkflags_for_gcov = ['-fprofile-arcs']
+    conf.check_cxx(cxxflags=cxxflags_for_gcov,
+                   linkflags=linkflags_for_gcov,
+                   mondatory=True)
+    conf.env.CXXFLAGS += cxxflags_for_gcov
+    conf.env.LINKFLAGS += linkflags_for_gcov
 
   conf.load('unittest_gtest')
   conf.load('gnu_dirs')
