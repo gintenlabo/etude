@@ -22,16 +22,17 @@ def options(opt):
 def configure(conf):
   conf.env.CXXFLAGS += ['-std=gnu++11', '-Wall', '-Wextra', '-g']
 
+  conf.load('compiler_cxx')
+
+  if conf.check_cxx(cxxflags='-Og', mandatory=False):
+    conf.env.CXXFLAGS += ['-Og']
+
   if conf.options.enable_gcov:
     conf.env.CXXFLAGS += ['-fprofile-arcs', '-ftest-coverage']
     conf.env.LINKFLAGS += ['-fprofile-arcs']
 
-  conf.load('compiler_cxx')
   conf.load('unittest_gtest')
   conf.load('gnu_dirs')
-
-  if conf.check_cxx(cxxflags='-Og', mandatory=False):
-    conf.env.CXXFLAGS += ['-Og']
 
   conf.recurse(subdirs)
 
