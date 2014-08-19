@@ -13,10 +13,18 @@ def options(opt):
   opt.load('unittest_gtest')
   opt.load('gnu_dirs')
 
+  opt.add_option('--enable-gcov',
+                 dest='enable_gcov', action='store_true', default=False,
+                 help='enable gcov to measure coverage')
+
   opt.recurse(subdirs)
 
 def configure(conf):
   conf.env.CXXFLAGS += ['-std=gnu++11', '-Og', '-Wall', '-Wextra', '-g']
+
+  if conf.options.enable_gcov:
+    conf.env.CXXFLAGS += ['-fprofile-arcs', '-ftest-coverage']
+    conf.env.LINKFLAGS += ['-fprofile-arcs']
 
   conf.load('compiler_cxx')
   conf.load('unittest_gtest')
