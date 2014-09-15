@@ -16,6 +16,7 @@
 #include "enable_if.hpp"
 
 namespace etude {
+namespace immutable_adl_guard_ {
 
 struct in_place_t {
 };
@@ -94,6 +95,9 @@ template<class T, class... Args>
 immutable<T> make_immutable(Args&&... args) {
   return immutable<T>(in_place, std::forward<Args>(args)...);
 }
+
+}  // namespace immutable_adl_guard_
+using namespace immutable_adl_guard_;
 
 }  // namespace etude
 
