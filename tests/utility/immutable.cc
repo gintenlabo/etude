@@ -52,6 +52,13 @@ TEST(immutable, accept_shared_non_unique) {
   }, std::invalid_argument);
 }
 
+TEST(immutable, make_immutable_from_static_object) {
+  static int const obj = 0;
+  auto x = etude::make_immutable_from_static_object(obj);
+  EXPECT_FALSE(x.unique());
+  EXPECT_EQ(&obj, x.get_ptr());
+}
+
 TEST(immutable, modifiers) {
   auto x = etude::make_immutable<int>(1);
   auto y = etude::make_immutable<int>(2);

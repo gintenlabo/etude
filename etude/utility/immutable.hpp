@@ -22,6 +22,10 @@ struct in_place_t {
 };
 constexpr in_place_t in_place = {};
 
+struct unsafe_accept_shared_t {
+};
+constexpr unsafe_accept_shared_t unsafe_accept_shared = {};
+
 template<class T>
 struct immutable {
   // create empty immutable object
@@ -41,6 +45,12 @@ struct immutable {
       throw std::invalid_argument("shared_ptr should be unique");
     }
     p_ = std::move(p);
+  }
+
+  // accept const shared_ptr (which is unsafe)
+  // p should be immutable and should never be unique
+  immutable(unsafe_accept_shared_t, std::shared_ptr<T const> const& p) noexcept
+      : p_(p, const_cast<T*>(p.get())) {
   }
 
   explicit operator bool() const noexcept {
@@ -91,10 +101,23 @@ struct immutable {
   std::shared_ptr<T> p_;
 };
 
+// helper functions
+
+// make immutable object
 template<class T, class... Args>
 immutable<T> make_immutable(Args&&... args) {
   return immutable<T>(in_place, std::forward<Args>(args)...);
 }
+
+// from static object
+template<class T>
+immutable<T> make_immutable_from_static_object(T const& x) noexcept {
+  std::shared_ptr<T const> p(std::shared_ptr<T>{}, std::addressof(x));
+  return immutable<T>(unsafe_accept_shared, std::move(p));
+}
+// non-const object or rvalues are forbidden
+template<class T>
+void make_immutable_from_static_object(T && x) = delete;
 
 }  // namespace immutable_adl_guard_
 using namespace immutable_adl_guard_;
