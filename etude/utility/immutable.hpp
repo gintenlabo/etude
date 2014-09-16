@@ -28,6 +28,11 @@ constexpr unsafe_accept_shared_t unsafe_accept_shared = {};
 
 template<class T>
 struct immutable {
+  // requirements
+  static_assert(std::is_object<T>::value, "T should be an object type");
+  static_assert(std::is_same<T, typename std::decay<T>::type>::value,
+      "T should not be cv-qualified types or arrays");
+
   // create empty immutable object
   constexpr immutable() noexcept
       : p_(nullptr) {
