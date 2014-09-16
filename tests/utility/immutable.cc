@@ -104,3 +104,12 @@ TEST(immutable, modify_with) {
   EXPECT_EQ(2, *x);
   EXPECT_EQ(0, *y);
 }
+
+TEST(immutable, incomplete_type) {
+  class hoge;
+  etude::immutable<hoge> x;
+  EXPECT_FALSE(static_cast<bool>(x));
+  EXPECT_FALSE(x.unique());
+  EXPECT_EQ(nullptr, x.get_ptr());
+  EXPECT_EQ(nullptr, x.get_shared());
+}
