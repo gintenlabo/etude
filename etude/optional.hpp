@@ -117,6 +117,7 @@ namespace etude {
       class = typename std::enable_if<
         !std::is_reference<T>::value &&
         std::is_convertible<U, T>::value &&
+        !std::is_same<typename std::decay<U>::type, optional<T>>::value &&
         !etude::is_in_place_applyable<U, T>::value  // InPlace の場合はそっち優先
       >::type
     >
