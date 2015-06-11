@@ -313,6 +313,12 @@ struct Z
   
 };
 
+struct convertible_from_everything {
+  template<class T>
+  convertible_from_everything(T &&) {
+  }
+};
+
 #include <boost/none.hpp>
 int test_main( int, char** )
 {
@@ -519,6 +525,13 @@ int test_main( int, char** )
     STATIC_ASSERT((
       etude::is_equality_comparable<etude::optional<int const&>, etude::optional<char&>>::value
     ));
+  }
+  
+  {
+    etude::optional<convertible_from_everything> x;
+    BOOST_CHECK( !x );
+    etude::optional<convertible_from_everything> y = x;
+    BOOST_CHECK( !y );
   }
   
   return 0;
